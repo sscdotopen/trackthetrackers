@@ -21,14 +21,18 @@ package io.ssc.trackthetrackers.analysis
 import io.ssc.trackthetrackers.Edge
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.api.scala._
+import org.apache.flink.core.fs.FileSystem.WriteMode
 
 /**
  * http://konect.uni-koblenz.de/statistics/power
+ *
+ * Be aware that this code only considers the outdegree distribution currently
+ *
  */
 object PowerLawExponentEstimation extends App {
 
   estimatePowerLawExponent("/home/ssc/Entwicklung/projects/trackthetrackers/src/main/resources/ucidatagama/links.tsv",
-    "/tmp/flink-scala/")
+    "/tmp/flink-scala/estimatedExponent")
 
   def estimatePowerLawExponent(linksFile: String, outputPath: String) = {
 
@@ -37,14 +41,13 @@ object PowerLawExponentEstimation extends App {
     val edges = env.readCsvFile[Edge](linksFile, fieldDelimiter = '\t')
 
     val verticesWithDegree =
-      edges.flatMap { edge => Array(edge.src -> 1, edge.target -> 1) }
+      edges.map { edge => edge.src -> 1 }
            .groupBy(0)
            .reduce { (vertexWithCount1, vertexWithCount2) =>
               vertexWithCount1._1 -> (vertexWithCount1._2 + vertexWithCount2._2)
            }
 
-    val minDegree = verticesWithDegree.map { v => println(v);
-      v }.min(1).map { _._2 }
+    val minDegree = verticesWithDegree.min(1).map { _._2 }
 
     val numVertices =
       verticesWithDegree.map { vertexWithDegree => Tuple1(vertexWithDegree._1) }
@@ -53,19 +56,19 @@ object PowerLawExponentEstimation extends App {
 
     val estimatedExponent =
       verticesWithDegree.cross(minDegree) { (vertexWithDegree, minDegree) =>
-        println("minDegree " + minDegree)
           math.log(vertexWithDegree._2.toDouble / minDegree)
         }
         .reduce { _ + _ }
-        .cross(numVertices) { (sum, numVertices) =>
-        println(numVertices)
-        println(sum)
-        1.0 + (numVertices / sum) }
+        .cross(numVertices) { (v, n) =>
+
+          val gamma = 1.0 + (n / v)
+          val sigma = math.sqrt(n) / v
+
+          (gamma, sigma)
+        }
 
 
-//    estimatedExponent.writeAsText(outputPath + "estimatedExponent", writeMode = WriteMode.OVERWRITE)
-
-    estimatedExponent.print()
+    estimatedExponent.writeAsText(outputPath, writeMode = WriteMode.OVERWRITE)
 
     env.execute()
   }
