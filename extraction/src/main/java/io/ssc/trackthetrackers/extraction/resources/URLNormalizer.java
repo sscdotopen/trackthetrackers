@@ -110,8 +110,6 @@ class URLNormalizer {
       if(url.matches("((ht|f)tp(s?))://((www.)?)((\\w|\\W){1,})/(.*)")) {
           url = url.substring(url.indexOf("://") + 3);
     	  url = url.substring(0, url.indexOf("/"));
-
-          return url;
       }
 
       return url;
