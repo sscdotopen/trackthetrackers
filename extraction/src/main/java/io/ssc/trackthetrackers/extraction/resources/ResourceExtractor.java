@@ -45,10 +45,10 @@ public class ResourceExtractor {
     Set<Resource> resources = Sets.newHashSet();
 
     Document doc = Jsoup.parse(html);
-    Elements iframes = doc.select("iframe");
+    Elements iframes = doc.select("iframe[src]");
     Elements scripts = doc.select("script");
-    Elements links   = doc.select("link");
-    Elements imgs    = doc.select("img");
+    Elements links   = doc.select("link[href]");
+    Elements imgs    = doc.select("img[src]");
 
     Elements all = iframes.clone();
     all.addAll(scripts);
@@ -59,16 +59,23 @@ public class ResourceExtractor {
     for (Element tag: all) {
       String uri = tag.attr("src");
 
-      uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-      // normalize link
-      try {
-        uri = urlNormalizer.normalize(uri);
-        uri = urlNormalizer.extractDomain(uri);
-      } catch (MalformedURLException e) {
-        //System.out.println("Unable to process resource: " + uri);
+      if(!uri.contains(".")) {
+          uri = tag.attr("href");
       }
-      if (uri.contains(".")) {
-        resources.add(new Resource(uri, type(tag.tag().toString())));
+
+
+      if(uri.contains(".")) {
+          uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
+          // normalize link
+          try {
+              uri = urlNormalizer.normalize(uri);
+              uri = urlNormalizer.extractDomain(uri);
+          } catch (MalformedURLException e) {
+              //System.out.println("Unable to process resource: " + uri);
+          }
+          if (uri.contains(".")) {
+              resources.add(new Resource(uri, type(tag.tag().toString())));
+          }
       }
 
       /*

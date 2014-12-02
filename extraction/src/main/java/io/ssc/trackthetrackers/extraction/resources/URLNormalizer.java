@@ -137,14 +137,14 @@ class URLNormalizer {
         urlString = urlString.trim();                 // remove extra spaces
 
         //add protocol if not existent
-        if (urlString.startsWith(".")){
+        if (urlString.startsWith(".")) {
             urlString = urlString.substring(1);
-        }
-        if (!urlString.contains("//")){
-            urlString = "//" + urlString;
         }
 
         if (!urlString.contains(":")) {
+            if (!urlString.startsWith("//")) {
+                urlString = "//" + urlString;
+            }
             urlString = "http:" + urlString;
         }
 
