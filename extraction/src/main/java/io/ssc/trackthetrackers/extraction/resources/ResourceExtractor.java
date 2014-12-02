@@ -21,32 +21,18 @@ package io.ssc.trackthetrackers.extraction.resources;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
 import com.google.common.collect.Sets;
 
 public class ResourceExtractor {
 
-  private final Pattern originPattern = Pattern.compile("(<)(iframe|script|link|img)(.+)(</iframe>|</script>|/>)");
-
-  private final Pattern resourcePattern = Pattern.compile(
-      "\\b(((ht|f)tp(s?)\\:\\/\\/|~\\/|\\/)|www.)" +
-          "(\\w+:\\w+@)?(([-\\w]+\\.)+(com|org|net|gov" +
-          "|mil|biz|info|mobi|name|aero|jobs|museum" +
-          "|travel|[a-z]{2}))(:[\\d]{1,5})?" +
-          "(((\\/([-\\w~!$+|.,=]|%[a-f\\d]{2})+)+|\\/)+|\\?|#)?" +
-          "((\\?([-\\w~!$+|.,*:]|%[a-f\\d{2}])+=?" +
-          "([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)" +
-          "(&(?:[-\\w~!$+|.,*:]|%[a-f\\d{2}])+=?" +
-          "([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)*)*" +
-          "(#([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)?\\b");
-
-  private final Pattern javascriptPattern = Pattern.compile(
-    "(http://|https://|ftp://)((\\w|[^a-zA-Z_0-9/])+)(\")((\\w|[^a-zA-Z_0-9/])+)([\\.]{1})(com|org|net|gov|mil|biz" +
-    "|info|mobi|name|aero|jobs|museum|travel|[a-z]{2})");
-
   private final URLNormalizer urlNormalizer = new URLNormalizer();
+
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
@@ -58,43 +44,105 @@ public class ResourceExtractor {
 
     Set<Resource> resources = Sets.newHashSet();
 
-    Matcher matcher = originPattern.matcher(html);
-    boolean findSomething;
-    while (matcher.find()) {
-      Resource.Type type = type(matcher.group(2).toLowerCase());
-      Matcher matcher2 = resourcePattern.matcher(matcher.group(3));
-      findSomething = false;
-      // check resources for images, scripts, iframes and links
-      while (matcher2.find()) {
-        findSomething = true;
-        String uri = matcher2.group();
-        uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-        // normalize link
-        try {
-          uri = urlNormalizer.normalize(uri);
-          uri = urlNormalizer.extractDomain(uri);
-        } catch (MalformedURLException e) {
-          //System.out.println("Unable to process resource: " + uri);
-        }
-        resources.add(new Resource(uri, type));
+    Document doc = Jsoup.parse(html);
+    Elements iframes = doc.select("iframe");
+    Elements scripts = doc.select("script");
+    Elements links   = doc.select("link");
+    Elements imgs    = doc.select("img");
+
+    Elements all = iframes.clone();
+    all.addAll(scripts);
+    all.addAll(links);
+    all.addAll(imgs);
+
+
+    for (Element tag: all) {
+      String uri = tag.attr("src");
+
+      uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
+      // normalize link
+      try {
+        uri = urlNormalizer.normalize(uri);
+        uri = urlNormalizer.extractDomain(uri);
+      } catch (MalformedURLException e) {
+        //System.out.println("Unable to process resource: " + uri);
       }
-      // check inner javascript ressources
-      if (Resource.Type.SCRIPT.equals(type) && !findSomething) {
-        Matcher matcher3 = javascriptPattern.matcher(matcher.group(3));
-        while (matcher3.find()) {
-          // concatenate ressource string
-            String uri = matcher3.group(1).concat(matcher3.group(5)).concat(matcher3.group(7)).concat(matcher3.group(8));
-            // normalize link
-            try {
-              uri = urlNormalizer.normalize(uri);
-              uri = urlNormalizer.extractDomain(uri);
-            } catch (MalformedURLException e) {
-              //System.out.println("Unable to process resource: " + uri);
+      if (uri.contains(".")) {
+        resources.add(new Resource(uri, type(tag.tag().toString())));
+      }
+
+      /*
+        Handle all cases where the script element is built by Javascript:
+        e.g:
+
+        <!-- BEGIN GOOGLE ANALYTICS CODE -->
+        <script type="text/javascript">
+            //<![CDATA[
+            (function(doc) {
+                var ga = doc.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == doc.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; <!-- we need this url -->
+                var s = doc.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })(document);
+            //]]>
+        </script>
+        <!-- END GOOGLE ANALYTICS CODE -->
+      */
+      //TODO: currently it is not possible to detect the domain if the src is concatenated by variables
+      if (tag.tag().toString().equals("script")){
+        if (tag.data().contains("src")) {
+            String [] endTags = {";","type","%3E%3C",">"};
+            String [] startTags = {"src","=",")"};
+
+            int srcStart = tag.data().indexOf("src");
+            String cDATA = tag.data().substring(srcStart);
+
+            //first delete the part right to the url
+            for (String endTag : endTags) {
+                int srcEnd = cDATA.indexOf(endTag);
+                if (srcEnd != -1) {
+                    String temp = cDATA.substring(0, srcEnd);
+                    if (temp.contains(".")) {
+                        cDATA = temp;
+                    }
+                }
             }
-            resources.add(new Resource(uri, type));
+
+            //first delete the part left to the url
+            for (String endTag : endTags) {
+                int srcEnd = cDATA.indexOf(endTag);
+                if (srcEnd != -1) {
+                    String temp = cDATA.substring(srcEnd+1);
+                    if (temp.contains(".")) {
+                        cDATA = temp;
+                    }
+                }
+            }
+
+            //delete right string separator
+            int lastSeparator = Math.max(cDATA.lastIndexOf('\''), cDATA.lastIndexOf('\"'));
+            if (lastSeparator != -1) {
+                cDATA = cDATA.substring(0, lastSeparator);
+            } else {
+                continue;
+            }
+
+            //delete left string separator
+            lastSeparator = Math.max(cDATA.lastIndexOf('\''),cDATA.lastIndexOf('\"'));
+            cDATA = cDATA.substring(lastSeparator+1);
+
+            try {
+              cDATA = urlNormalizer.normalize(cDATA);
+              cDATA = urlNormalizer.extractDomain(cDATA);
+              if (cDATA.contains(".") && !cDATA.contains("///")) {
+                resources.add(new Resource(cDATA, type(tag.tag().toString())));
+              }
+            } catch(Exception e) {}
+
         }
       }
+
     }
+
     return resources;
   }
 
