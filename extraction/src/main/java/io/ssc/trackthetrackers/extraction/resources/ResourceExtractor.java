@@ -21,11 +21,15 @@ package io.ssc.trackthetrackers.extraction.resources;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
+
+import org.apache.commons.validator.routines.DomainValidator;
 
 import com.google.common.collect.Sets;
 
@@ -33,6 +37,9 @@ public class ResourceExtractor {
 
   private final URLNormalizer urlNormalizer = new URLNormalizer();
 
+  private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
+
+  private final int stackOverFlowLimit = 15000;
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
@@ -71,7 +78,7 @@ public class ResourceExtractor {
           } catch (MalformedURLException e) {
               //TODO do something, at least log or count this
           }
-          if (uri.contains(".")) {
+        if (isValidDomain(uri)) {
               resources.add(new Resource(uri, type(tag.tag().toString())));
           }
       }
@@ -93,62 +100,47 @@ public class ResourceExtractor {
         <!-- END GOOGLE ANALYTICS CODE -->
       */
       //TODO: currently it is not possible to detect the domain if the src is concatenated by variables
-      if (tag.tag().toString().equals("script")){
-        if (tag.data().contains("src")) {
-          String [] endTags = { ";", "type", "%3E%3C", ">" };
-          String [] startTags = { "src", "=", ")" };
+      String script = tag.data();
+      if (tag.tag().toString().equals("script") && script.length() < stackOverFlowLimit){
 
-          int srcStart = tag.data().indexOf("src");
-          String cDATA = tag.data().substring(srcStart);
+        if (script.contains("src") || script.contains(".post(") ||  script.contains("url") && script.contains(".ajax") || script.contains("require")) {
 
-          //first delete the part right to the url
-          for (String endTag : endTags) {
-            int srcEnd = cDATA.indexOf(endTag);
-            if (srcEnd != -1) {
-              String temp = cDATA.substring(0, srcEnd);
-              if (temp.contains(".")) {
-                cDATA = temp;
+          Matcher matcher = javascriptPattern.matcher(tag.data());
+          while (matcher.find()) {
+
+            for(int i = 0; i < matcher.groupCount(); i++) {
+              String url = matcher.group(i);
+
+              if (url != null && url.contains(".") && !url.contains("\"") && !url.contains("'")) {
+                if (!url.contains(":") || url.contains("://")) {
+                  try {
+                    url = urlNormalizer.normalize(url);
+                    url = urlNormalizer.extractDomain(url);
+                    if (isValidDomain(url)) {
+                      resources.add(new Resource(url, type(tag.tag().toString())));
+                      break;
+                    }
+                  } catch (Exception e) {
+                    //TODO do something, at least log or count this
+                  }
+                }
               }
             }
-          }
-
-          //first delete the part left to the url
-          for (String endTag : endTags) {
-            int srcEnd = cDATA.indexOf(endTag);
-            if (srcEnd != -1) {
-              String temp = cDATA.substring(srcEnd + 1);
-              if (temp.contains(".")) {
-                cDATA = temp;
-              }
-            }
-          }
-
-          //delete right string separator
-          int lastSeparator = Math.max(cDATA.lastIndexOf('\''), cDATA.lastIndexOf('\"'));
-          if (lastSeparator != -1) {
-            cDATA = cDATA.substring(0, lastSeparator);
-          } else {
-            continue;
-          }
-
-          //delete left string separator
-          lastSeparator = Math.max(cDATA.lastIndexOf('\''),cDATA.lastIndexOf('\"'));
-          cDATA = cDATA.substring(lastSeparator + 1);
-
-          try {
-            cDATA = urlNormalizer.normalize(cDATA);
-            cDATA = urlNormalizer.extractDomain(cDATA);
-            if (cDATA.contains(".") && !cDATA.contains("///")) {
-             resources.add(new Resource(cDATA, type(tag.tag().toString())));
-            }
-          } catch(Exception e) {
-            //TODO do something, at least log or count this
           }
         }
       }
     }
 
     return resources;
+  }
+
+  private boolean isValidDomain(String url) {
+      if (!url.contains(".") || url.contains("///")) return false;
+
+      int startTopLevelDomain = url.lastIndexOf('.');
+      String topLevelDomain = url.substring(startTopLevelDomain+1);
+      DomainValidator dv = DomainValidator.getInstance();
+      return dv.isValidTld(topLevelDomain);
   }
 
   private Resource.Type type(String tag) {
