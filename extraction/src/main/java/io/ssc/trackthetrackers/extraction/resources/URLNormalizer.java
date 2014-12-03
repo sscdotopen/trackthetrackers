@@ -143,7 +143,10 @@ class URLNormalizer {
             if (!urlString.startsWith("//")) {
                 urlString = "//" + urlString;
             }
-            urlString = "http:" + urlString;
+            urlString = ":" + urlString;
+        }
+        if (urlString.startsWith(":")) {
+            urlString = "http" + urlString;
         }
 
         URL url = new URL(urlString);

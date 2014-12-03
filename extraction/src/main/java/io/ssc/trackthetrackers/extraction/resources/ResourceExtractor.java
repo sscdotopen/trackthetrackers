@@ -39,7 +39,7 @@ public class ResourceExtractor {
 
   private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
-  private final int stackOverFlowLimit = 15000;
+  private final int stackOverFlowLimit = 6000;
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
@@ -103,7 +103,7 @@ public class ResourceExtractor {
       String script = tag.data();
       if (tag.tag().toString().equals("script") && script.length() < stackOverFlowLimit){
 
-        if (script.contains("src") || script.contains(".post(") ||  script.contains("url") && script.contains(".ajax") || script.contains("require")) {
+        if (script.contains("src") || script.contains("CDATA") || script.contains(".post(") ||  script.contains("url") && script.contains(".ajax") || script.contains("require")) {
 
           Matcher matcher = javascriptPattern.matcher(tag.data());
           while (matcher.find()) {

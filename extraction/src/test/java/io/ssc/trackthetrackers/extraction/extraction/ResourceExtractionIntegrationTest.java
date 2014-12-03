@@ -116,6 +116,15 @@ public class ResourceExtractionIntegrationTest {
   }
 
 
+  @Test
+  public void prosiebenDe() throws IOException {
+
+    Iterable<Resource> resources = extractResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
+
+    assertViewersFound(resources, "ad.71i.de", "service.maxymiser.net");
+  }
+
+
   private void assertViewersFound(Iterable<Resource> resources, String... urls) {
 
     Set<String> viewersExtracted = Sets.newHashSet();
