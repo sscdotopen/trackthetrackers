@@ -39,7 +39,8 @@ public class ResourceExtractionIntegrationTest {
       System.out.println(resource);
     }
 
-    assertViewersFound(resources, "spiegel.ivwbox.de", "adserv.quality-channel.de", "www.facebook.com", "platform.twitter.com");
+    assertViewersFound(resources, "spiegel.ivwbox.de", "adserv.quality-channel.de", "www.facebook.com",
+                                  "platform.twitter.com");
   }
 
   @Test
@@ -51,22 +52,26 @@ public class ResourceExtractionIntegrationTest {
       System.out.println(resource);
     }
 
-      assertViewersFound(resources, "www.everestjs.net", "pixel.everesttech.net", "ad-emea.doubleclick.net", "fls.doubleclick.net", "uidbox.uimserv.net",
-       "www.googleadservices.com", "google-analytics.com", "www.facebook.com", "connect.facebook.net", "sonar.sociomantic.com", "skin.ztat.net");
+      assertViewersFound(resources, "www.everestjs.net", "pixel.everesttech.net", "ad-emea.doubleclick.net",
+                                    "fls.doubleclick.net", "uidbox.uimserv.net", "www.googleadservices.com",
+                                    "google-analytics.com", "www.facebook.com", "connect.facebook.net",
+                                    "sonar.sociomantic.com", "skin.ztat.net");
   }
 
   @Test
   public void techcrunchCom() throws IOException {
 
-    Iterable<Resource> resources = extractResources("http://techcrunch.com",
-        Resources.getResource("techcrunch.com.html"));
+    Iterable<Resource> resources =
+        extractResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
 
     for (Resource resource : resources) {
       System.out.println(resource);
     }
 
-    assertViewersFound(resources, "pshared.5min.com", "o.aolcdn.com", "static.chartbeat.com", "connect.facebook.net","js.adsonar.com", "s.gravatar.com", "stats.wordpress.com",
-            "google-analytics.com", "cdn.insights.gravity.com","d.adsbyisocket.com", "quantserve.com", "scorecardresearch.com", "platform.twitter.com");
+    assertViewersFound(resources, "pshared.5min.com", "o.aolcdn.com", "static.chartbeat.com", "connect.facebook.net",
+                                  "js.adsonar.com", "s.gravatar.com", "stats.wordpress.com", "google-analytics.com",
+                                  "cdn.insights.gravity.com", "d.adsbyisocket.com", "quantserve.com",
+                                  "scorecardresearch.com", "platform.twitter.com");
 
     //the following were missed:
     //  assertViewersFound(resources,"disqus.com");

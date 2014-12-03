@@ -18,7 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
-import io.ssc.trackthetrackers.analysis.{Edge, GraphUtils}
+import io.ssc.trackthetrackers.analysis.GraphUtils
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.java.aggregation.Aggregations
 import org.apache.flink.api.scala.ExecutionEnvironment
@@ -39,13 +39,13 @@ object DanglingPageRank extends App {
   def pageRank(urisFile: String, linksFile: String, numVertices: Long, teleportationProbability: Double,
                maxIterations: Int, epsilon: Double, outputPath: String) = {
 
-    val env = ExecutionEnvironment.getExecutionEnvironment
+    implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
     val initialRanks =
-        env.readCsvFile[(String, Long)](urisFile, "\n", '\t')
-           .map { uriWithId => RankedVertex(uriWithId._2 , 1.0 / numVertices) }
+        GraphUtils.readVertices(urisFile)
+           .map { annotatedVertex => RankedVertex(annotatedVertex.id , 1.0 / numVertices) }
 
-    val edges = GraphUtils.toAdjacencyList(env.readCsvFile[Edge](linksFile, fieldDelimiter = '\t'))
+    val edges = GraphUtils.toAdjacencyList(GraphUtils.readEdges(linksFile))
 
     val danglingVertices =
       initialRanks.coGroup(edges).where("id").equalTo("src") {
@@ -74,7 +74,8 @@ object DanglingPageRank extends App {
         .map(new RecomputeRank(teleportationProbability, numVertices))
         .withBroadcastSet(danglingRank, "danglingRank")
 
-      val terminated = currentRanks.join(newRanks).where("id").equalTo("id") {
+      val terminated =
+        currentRanks.join(newRanks).where("id").equalTo("id") {
           (currentRank, newRank) => math.abs(currentRank.rank - newRank.rank)
         }
         .reduce { _ + _ }

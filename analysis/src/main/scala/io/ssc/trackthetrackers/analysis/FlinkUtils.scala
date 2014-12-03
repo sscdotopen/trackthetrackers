@@ -23,7 +23,7 @@ import org.apache.flink.api.scala._
 
 object FlinkUtils {
 
-  def groupCount[T](data: DataSet[T], extractKey: (T) => Long): DataSet[(Long, Long)] = {
+  def countByKey[T](data: DataSet[T], extractKey: (T) => Long): DataSet[(Long, Long)] = {
 
     data.groupBy { extractKey }
         .reduceGroup { group => countBy(extractKey, group) }

@@ -22,13 +22,12 @@ import org.apache.flink.api.scala.{DataSet, _}
 
 object GraphUtils {
 
-  //TODO should return a long...
-  def numVertices(edges: DataSet[Edge]): DataSet[Int] = {
+  def readVertices(file: String)(implicit env: ExecutionEnvironment) = {
+    env.readCsvFile[AnnotatedVertex](file, "\n", '\t')
+  }
 
-    val srcVertices = edges map { edge => Tuple1(edge.src) }
-    val targetVertices = edges map { edge => Tuple1(edge.target) }
-
-    (srcVertices union targetVertices).distinct.reduceGroup { _.size }
+  def readEdges(file: String)(implicit env: ExecutionEnvironment) = {
+    env.readCsvFile[Edge](file, "\n", '\t')
   }
 
   def toAdjacencyList(edges: DataSet[Edge]): DataSet[AdjacencyList] = {

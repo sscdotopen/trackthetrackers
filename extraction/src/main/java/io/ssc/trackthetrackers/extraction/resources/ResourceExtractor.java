@@ -55,16 +55,14 @@ public class ResourceExtractor {
     all.addAll(links);
     all.addAll(imgs);
 
-
     for (Element tag: all) {
       String uri = tag.attr("src");
 
-      if(!uri.contains(".")) {
-          uri = tag.attr("href");
+      if (!uri.contains(".")) {
+        uri = tag.attr("href");
       }
 
-
-      if(uri.contains(".")) {
+      if (uri.contains(".")) {
           uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
           // normalize link
           try {
@@ -97,57 +95,57 @@ public class ResourceExtractor {
       //TODO: currently it is not possible to detect the domain if the src is concatenated by variables
       if (tag.tag().toString().equals("script")){
         if (tag.data().contains("src")) {
-            String [] endTags = {";","type","%3E%3C",">"};
-            String [] startTags = {"src","=",")"};
+          String [] endTags = { ";", "type", "%3E%3C", ">" };
+          String [] startTags = { "src", "=", ")" };
 
-            int srcStart = tag.data().indexOf("src");
-            String cDATA = tag.data().substring(srcStart);
+          int srcStart = tag.data().indexOf("src");
+          String cDATA = tag.data().substring(srcStart);
 
-            //first delete the part right to the url
-            for (String endTag : endTags) {
-                int srcEnd = cDATA.indexOf(endTag);
-                if (srcEnd != -1) {
-                    String temp = cDATA.substring(0, srcEnd);
-                    if (temp.contains(".")) {
-                        cDATA = temp;
-                    }
-                }
-            }
-
-            //first delete the part left to the url
-            for (String endTag : endTags) {
-                int srcEnd = cDATA.indexOf(endTag);
-                if (srcEnd != -1) {
-                    String temp = cDATA.substring(srcEnd+1);
-                    if (temp.contains(".")) {
-                        cDATA = temp;
-                    }
-                }
-            }
-
-            //delete right string separator
-            int lastSeparator = Math.max(cDATA.lastIndexOf('\''), cDATA.lastIndexOf('\"'));
-            if (lastSeparator != -1) {
-                cDATA = cDATA.substring(0, lastSeparator);
-            } else {
-                continue;
-            }
-
-            //delete left string separator
-            lastSeparator = Math.max(cDATA.lastIndexOf('\''),cDATA.lastIndexOf('\"'));
-            cDATA = cDATA.substring(lastSeparator+1);
-
-            try {
-              cDATA = urlNormalizer.normalize(cDATA);
-              cDATA = urlNormalizer.extractDomain(cDATA);
-              if (cDATA.contains(".") && !cDATA.contains("///")) {
-                resources.add(new Resource(cDATA, type(tag.tag().toString())));
+          //first delete the part right to the url
+          for (String endTag : endTags) {
+            int srcEnd = cDATA.indexOf(endTag);
+            if (srcEnd != -1) {
+              String temp = cDATA.substring(0, srcEnd);
+              if (temp.contains(".")) {
+                cDATA = temp;
               }
-            } catch(Exception e) {}
+            }
+          }
 
+          //first delete the part left to the url
+          for (String endTag : endTags) {
+            int srcEnd = cDATA.indexOf(endTag);
+            if (srcEnd != -1) {
+              String temp = cDATA.substring(srcEnd + 1);
+              if (temp.contains(".")) {
+                cDATA = temp;
+              }
+            }
+          }
+
+          //delete right string separator
+          int lastSeparator = Math.max(cDATA.lastIndexOf('\''), cDATA.lastIndexOf('\"'));
+          if (lastSeparator != -1) {
+            cDATA = cDATA.substring(0, lastSeparator);
+          } else {
+            continue;
+          }
+
+          //delete left string separator
+          lastSeparator = Math.max(cDATA.lastIndexOf('\''),cDATA.lastIndexOf('\"'));
+          cDATA = cDATA.substring(lastSeparator + 1);
+
+          try {
+            cDATA = urlNormalizer.normalize(cDATA);
+            cDATA = urlNormalizer.extractDomain(cDATA);
+            if (cDATA.contains(".") && !cDATA.contains("///")) {
+             resources.add(new Resource(cDATA, type(tag.tag().toString())));
+            }
+          } catch(Exception e) {
+            //TODO do something, at least log or count,this
+          }
         }
       }
-
     }
 
     return resources;
@@ -163,7 +161,6 @@ public class ResourceExtractor {
     if ("img".equals(tag)) {
       return Resource.Type.IMAGE;
     }
-
     if ("iframe".equals(tag)) {
       return Resource.Type.IFRAME;
     }

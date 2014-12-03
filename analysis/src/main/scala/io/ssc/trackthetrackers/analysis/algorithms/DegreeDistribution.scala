@@ -18,7 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
-import io.ssc.trackthetrackers.analysis.{Edge, FlinkUtils}
+import io.ssc.trackthetrackers.analysis.{GraphUtils, Edge, FlinkUtils}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.api.scala._
@@ -30,10 +30,10 @@ object DegreeDistribution extends App {
 
   def fromEdges(linksFile: String, outputPath: String, numVertices: Long) = {
 
-    val env = ExecutionEnvironment.getExecutionEnvironment
+    implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edges = env.readCsvFile[Edge](linksFile, fieldDelimiter = '\t')
-
+    val edges = GraphUtils.readEdges(linksFile)
+    
     //TODO add overall deg dist
     val outDegreeDist = degreeDist({ _.src }, edges, numVertices)
     val inDegreeDist = degreeDist({ _.target }, edges, numVertices)
@@ -46,9 +46,9 @@ object DegreeDistribution extends App {
 
   private[this] def degreeDist(extract: Edge => Long, edges: DataSet[Edge], numVertices: Long) = {
 
-    FlinkUtils.groupCount(edges, extract)
+    FlinkUtils.countByKey(edges, extract)
       .groupBy { _._2 }
-      .reduceGroup({ verticesWithDegree =>
+      .reduceGroup { verticesWithDegree =>
 
         val degree = verticesWithDegree.next()._2
 
@@ -59,7 +59,7 @@ object DegreeDistribution extends App {
         }
 
         degree -> (count / numVertices)
-      })
+      }
   }
 
 }

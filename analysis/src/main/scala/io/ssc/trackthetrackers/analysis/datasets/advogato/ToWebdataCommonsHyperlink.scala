@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.analysis.datasets.cfindergoogle
+package io.ssc.trackthetrackers.analysis.datasets.advogato
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Paths, Files}
@@ -25,18 +25,18 @@ import scala.io.Source
 import scala.util.Random
 
 /*
-* http://konect.uni-koblenz.de/networks/cfinder-google
+* http://konect.uni-koblenz.de/networks/advogato
 **/
 object ToWebdataCommonsHyperlink extends App {
 
-  val datasetDirectory = "/home/ssc/Desktop/tmp3/cfinder-google/"
-  val urlsFile = datasetDirectory + "ent.cfinder-google.url.name"
-  val linksFile = datasetDirectory + "out.cfinder-google"
-  val outputDir = "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/cfindergoogle"
+  val datasetDirectory = "/home/ssc/Entwicklung/konect/advogato/"
+  val namesFile = datasetDirectory + "ent.advogato.user.name"
+  val linksFile = datasetDirectory + "out.advogato"
+  val outputDir = "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/advogato"
 
   var index = 0
   // evil map with side effects...
-  val indexedUris = (Source.fromFile(urlsFile).getLines
+  val indexedUris = (Source.fromFile(namesFile).getLines
     .map { line =>
       index += 1
       line + "\t" + index
@@ -44,7 +44,10 @@ object ToWebdataCommonsHyperlink extends App {
 
   val links = (Source.fromFile(linksFile).getLines
       .filter { line => !line.startsWith("%") }
-      .map { _.trim.replaceAll(" ", "\t") }).mkString("\n")
+      .map { line =>
+        val tokens = line.trim.split(" ")
+        tokens(0) + "\t" + tokens(1)
+      }).mkString("\n")
 
   Files.write(Paths.get(outputDir + "/uris.tsv"), indexedUris.getBytes(StandardCharsets.UTF_8))
   Files.write(Paths.get(outputDir + "/links.tsv"), links.getBytes(StandardCharsets.UTF_8))

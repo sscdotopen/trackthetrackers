@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis
 
+case class AnnotatedVertex(annotation: String, id: Long)
 case class Edge(src: Long, target: Long)
 
 case class AdjacencyList(src: Long, targets: Array[Long])

@@ -18,7 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
-import io.ssc.trackthetrackers.analysis.Edge
+import io.ssc.trackthetrackers.analysis.{GraphUtils, Edge}
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.api.scala._
 import org.apache.flink.core.fs.FileSystem.WriteMode
@@ -36,9 +36,9 @@ object PowerLawExponentEstimation extends App {
 
   def estimatePowerLawExponent(linksFile: String, outputPath: String) = {
 
-    val env = ExecutionEnvironment.getExecutionEnvironment
+    implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edges = env.readCsvFile[Edge](linksFile, fieldDelimiter = '\t')
+    val edges = GraphUtils.readEdges(linksFile)
 
     val verticesWithDegree =
       edges.map { edge => edge.src -> 1 }
@@ -66,7 +66,6 @@ object PowerLawExponentEstimation extends App {
 
           (gamma, sigma)
         }
-
 
     estimatedExponent.writeAsText(outputPath, writeMode = WriteMode.OVERWRITE)
 
