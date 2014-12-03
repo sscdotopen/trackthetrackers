@@ -47,8 +47,8 @@ public class ResourceExtractor {
     Document doc = Jsoup.parse(html);
     Elements iframes = doc.select("iframe[src]");
     Elements scripts = doc.select("script");
-    Elements links   = doc.select("link[href]");
-    Elements imgs    = doc.select("img[src]");
+    Elements links = doc.select("link[href]");
+    Elements imgs = doc.select("img[src]");
 
     Elements all = iframes.clone();
     all.addAll(scripts);
@@ -69,7 +69,7 @@ public class ResourceExtractor {
               uri = urlNormalizer.normalize(uri);
               uri = urlNormalizer.extractDomain(uri);
           } catch (MalformedURLException e) {
-              //System.out.println("Unable to process resource: " + uri);
+              //TODO do something, at least log or count this
           }
           if (uri.contains(".")) {
               resources.add(new Resource(uri, type(tag.tag().toString())));
@@ -142,7 +142,7 @@ public class ResourceExtractor {
              resources.add(new Resource(cDATA, type(tag.tag().toString())));
             }
           } catch(Exception e) {
-            //TODO do something, at least log or count,this
+            //TODO do something, at least log or count this
           }
         }
       }
