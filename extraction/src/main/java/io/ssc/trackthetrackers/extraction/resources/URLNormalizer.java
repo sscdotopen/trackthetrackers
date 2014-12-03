@@ -80,17 +80,38 @@ class URLNormalizer {
 
   public String expandIfInternalLink(String prefixForInternalLinks, String link) {
    if (!link.startsWith("http") && !link.startsWith("ftp") && !link.startsWith("https")) {
-     return prefixForInternalLinks + link;
+     if (!link.startsWith("//")) {
+         return prefixForInternalLinks + link;
+     } else {
+         return "http:" + link;
+     }
+
    }
    return link;
   }
+
+  public String removeQuestionMark(String url){
+
+      int startQuestionMark = url.indexOf('?');
+      if (startQuestionMark == -1) {
+          return url;
+      }
+      return url.substring(0,startQuestionMark);
+  }
+
+
   
-  public String extractDomain(String url) {	  
+  public String extractDomain(String url) {
       // extract domain from url
-      if(url.matches("((ht|f)tp(s?))://((\\w|\\W){1,})/(.*)")) {
-    	  url = url.substring(url.indexOf("://") + 3);
+
+      //remove question mark operator in the case of e.g. php
+      url = removeQuestionMark(url);
+
+      if(url.matches("((ht|f)tp(s?))://((www.)?)((\\w|\\W){1,})/(.*)")) {
+          url = url.substring(url.indexOf("://") + 3);
     	  url = url.substring(0, url.indexOf("/"));
       }
+
       return url;
   }
 
@@ -112,6 +133,18 @@ class URLNormalizer {
             return urlString;
 
         urlString = urlString.trim();                 // remove extra spaces
+
+        //add protocol if not existent
+        if (urlString.startsWith(".")) {
+            urlString = urlString.substring(1);
+        }
+
+        if (!urlString.contains(":")) {
+            if (!urlString.startsWith("//")) {
+                urlString = "//" + urlString;
+            }
+            urlString = "http:" + urlString;
+        }
 
         URL url = new URL(urlString);
 

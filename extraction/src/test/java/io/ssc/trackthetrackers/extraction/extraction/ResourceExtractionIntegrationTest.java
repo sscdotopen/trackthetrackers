@@ -23,6 +23,7 @@ import com.google.common.io.Resources;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 import org.junit.Test;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.URL;
@@ -38,7 +39,7 @@ public class ResourceExtractionIntegrationTest {
       System.out.println(resource);
     }
 
-    //assertViewersFound(resources, "spiegel.ivwbox.de", "adserv.quality-channel.de", "facebook.com");
+    assertViewersFound(resources, "spiegel.ivwbox.de", "adserv.quality-channel.de", "www.facebook.com", "platform.twitter.com");
   }
 
   @Test
@@ -50,8 +51,8 @@ public class ResourceExtractionIntegrationTest {
       System.out.println(resource);
     }
 
-//    assertViewersFound(resources, "everestjs.net", "pixel.everesttech.net", "fls.doubleclick.net", "uidbox.uimserv.net",
-//        "sonar.sociomantic.com", "googleadservices.com", "google-analytics.com", "connect.facebook.net");
+      assertViewersFound(resources, "www.everestjs.net", "pixel.everesttech.net", "ad-emea.doubleclick.net", "fls.doubleclick.net", "uidbox.uimserv.net",
+       "www.googleadservices.com", "google-analytics.com", "www.facebook.com", "connect.facebook.net", "sonar.sociomantic.com", "skin.ztat.net");
   }
 
   @Test
@@ -63,6 +64,12 @@ public class ResourceExtractionIntegrationTest {
     for (Resource resource : resources) {
       System.out.println(resource);
     }
+
+    assertViewersFound(resources, "pshared.5min.com", "o.aolcdn.com", "static.chartbeat.com", "connect.facebook.net","js.adsonar.com", "s.gravatar.com", "stats.wordpress.com",
+            "google-analytics.com", "cdn.insights.gravity.com","d.adsbyisocket.com", "quantserve.com", "scorecardresearch.com", "platform.twitter.com");
+
+    //the following were missed:
+    //  assertViewersFound(resources,"disqus.com");
   }
 
 
@@ -76,7 +83,7 @@ public class ResourceExtractionIntegrationTest {
           break;
         }
       }
-      //assertTrue("Resource extraction missed [" + url + "]", found);
+      Assert.assertTrue("Resource extraction missed [" + url + "]",found);
     }
   }
 
