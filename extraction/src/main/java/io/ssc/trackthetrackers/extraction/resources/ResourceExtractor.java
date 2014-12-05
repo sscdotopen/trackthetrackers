@@ -29,11 +29,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.commons.validator.routines.DomainValidator;
 
 import com.google.common.collect.Sets;
 
 public class ResourceExtractor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
 
   private final URLNormalizer urlNormalizer = new URLNormalizer();
 
@@ -42,7 +47,6 @@ public class ResourceExtractor {
   private final int stackOverFlowLimit = 6000;
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
-
     if (sourceUrl == null) {
       return Collections.emptySet();
     }
@@ -76,9 +80,11 @@ public class ResourceExtractor {
               uri = urlNormalizer.normalize(uri);
               uri = urlNormalizer.extractDomain(uri);
           } catch (MalformedURLException e) {
-              //TODO do something, at least log or count this
+              if (LOG.isWarnEnabled()) {
+                  LOG.warn("Malformed URL: \"" + uri + "\"");
+              }
           }
-        if (isValidDomain(uri)) {
+          if (isValidDomain(uri)) {
               resources.add(new Resource(uri, type(tag.tag().toString())));
           }
       }
@@ -99,7 +105,6 @@ public class ResourceExtractor {
         </script>
         <!-- END GOOGLE ANALYTICS CODE -->
       */
-      //TODO: currently it is not possible to detect the domain if the src is concatenated by variables
       String script = tag.data();
       if (tag.tag().toString().equals("script") && script.length() < stackOverFlowLimit){
 
@@ -120,8 +125,10 @@ public class ResourceExtractor {
                       resources.add(new Resource(url, type(tag.tag().toString())));
                       break;
                     }
-                  } catch (Exception e) {
-                    //TODO do something, at least log or count this
+                  } catch (MalformedURLException e) {
+                      if (LOG.isWarnEnabled()) {
+                          LOG.warn("Malformed URL: \"" + uri + "\"");
+                      }
                   }
                 }
               }
@@ -135,10 +142,12 @@ public class ResourceExtractor {
   }
 
   private boolean isValidDomain(String url) {
-      if (!url.contains(".") || url.contains("///")) return false;
+      if (!url.contains(".") || url.contains("///")) {
+          return false;
+      }
 
       int startTopLevelDomain = url.lastIndexOf('.');
-      String topLevelDomain = url.substring(startTopLevelDomain+1);
+      String topLevelDomain = url.substring(startTopLevelDomain + 1);
       DomainValidator dv = DomainValidator.getInstance();
       return dv.isValidTld(topLevelDomain);
   }
