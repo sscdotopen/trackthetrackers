@@ -222,7 +222,7 @@ class URLNormalizer {
         // "http://www.foo.com/../" should return a http 404 error instead of
         // redirecting to "http://www.foo.com".
         //
-        Perl5Matcher matcher = (Perl5Matcher)matchers.get();
+        Perl5Matcher matcher = matchers.get();
 
         while (oldLen != newLen) {
             // substitue first occurence of "/xx/../" by "/"

@@ -109,8 +109,8 @@ public class ResourceExtractionIntegrationTest {
         extractResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
 
     assertViewersFound(resources, "s3-ak.buzzfed.com", "www.googletagservices.com", "ct.buzzfeed.com",
-                                  "google-analytics.com", "stats.g.doubleclick.net", "quantserve.com", "scorecardresearch.com",
-                                  "ad.doubleclick.net", "pixel.quantserve.com",
+                                  "google-analytics.com", "stats.g.doubleclick.net", "quantserve.com",
+                                  "scorecardresearch.com", "ad.doubleclick.net", "pixel.quantserve.com",
                                   "www.facebook.com", "ads.audienceamplify.com", "rtd.tubemogul.com", "ib.adnxs.com",
                                   "connect.facebook.net");
   }

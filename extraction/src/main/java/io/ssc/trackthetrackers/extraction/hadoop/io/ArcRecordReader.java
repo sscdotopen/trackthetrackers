@@ -44,7 +44,6 @@ public class ArcRecordReader implements RecordReader<Text, ArcRecord> {
 
   private static final Logger log = LoggerFactory.getLogger(ArcRecordReader.class);
 
-  private FSDataInputStream fsIn;
   private GzipCompressorInputStream gzipIn;
   private long fileLength;
 
@@ -65,10 +64,8 @@ public class ArcRecordReader implements RecordReader<Text, ArcRecord> {
 
     FileSystem fs = file.getFileSystem(job);
 
-    fsIn = fs.open(file);
-
     // create a GZIP stream that *does not* automatically read through members
-    gzipIn = new GzipCompressorInputStream(this.fsIn, false);
+    gzipIn = new GzipCompressorInputStream(fs.open(file), false);
 
     fileLength = fs.getFileStatus(file).getLen();
 

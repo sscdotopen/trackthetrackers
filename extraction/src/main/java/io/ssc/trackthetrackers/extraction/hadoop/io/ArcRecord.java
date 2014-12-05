@@ -37,15 +37,12 @@ import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.ContentType;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.io.AbstractSessionInputBuffer;
 import org.apache.http.impl.io.DefaultHttpResponseParser;
 import org.apache.http.message.BasicLineParser;
 import org.apache.http.params.BasicHttpParams;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +80,7 @@ public class ArcRecord implements Writable {
 
   private String readLine(InputStream in) throws IOException {
 
-    StringBuffer line = new StringBuffer(128);
+    StringBuilder line = new StringBuilder(128);
 
     // read a line of content
     int b = in.read();
@@ -176,7 +173,7 @@ public class ArcRecord implements Writable {
     ipAddress =  metadata[1];
     archiveDate =  format.parse(metadata[2]);
     contentType =  metadata[3];
-    contentLength = (new Integer(metadata[4])).intValue();
+    contentLength = new Integer(metadata[4]);
   }
 
   /**

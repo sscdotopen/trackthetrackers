@@ -44,7 +44,7 @@ public class ResourceExtractor {
 
   private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
-  private final int stackOverFlowLimit = 6000;
+  private static final int STACK_OVERFLOW_LIMIT = 6000;
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
     if (sourceUrl == null) {
@@ -106,9 +106,10 @@ public class ResourceExtractor {
         <!-- END GOOGLE ANALYTICS CODE -->
       */
       String script = tag.data();
-      if (tag.tag().toString().equals("script") && script.length() < stackOverFlowLimit){
+      if (tag.tag().toString().equals("script") && script.length() < STACK_OVERFLOW_LIMIT){
 
-        if (script.contains("src") || script.contains("CDATA") || script.contains(".post(") ||  script.contains("url") && script.contains(".ajax") || script.contains("require")) {
+        if (script.contains("src") || script.contains("CDATA") || script.contains(".post(") ||
+            script.contains("url") && script.contains(".ajax") || script.contains("require")) {
 
           Matcher matcher = javascriptPattern.matcher(tag.data());
           while (matcher.find()) {
@@ -142,14 +143,14 @@ public class ResourceExtractor {
   }
 
   private boolean isValidDomain(String url) {
-      if (!url.contains(".") || url.contains("///")) {
-          return false;
-      }
+    if (!url.contains(".") || url.contains("///")) {
+      return false;
+    }
 
-      int startTopLevelDomain = url.lastIndexOf('.');
-      String topLevelDomain = url.substring(startTopLevelDomain + 1);
-      DomainValidator dv = DomainValidator.getInstance();
-      return dv.isValidTld(topLevelDomain);
+    int startTopLevelDomain = url.lastIndexOf('.');
+    String topLevelDomain = url.substring(startTopLevelDomain + 1);
+    DomainValidator dv = DomainValidator.getInstance();
+    return dv.isValidTld(topLevelDomain);
   }
 
   private Resource.Type type(String tag) {
