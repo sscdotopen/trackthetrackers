@@ -1,0 +1,15 @@
+
+option java_package = "io.ssc.trackthetrackers.extraction.proto";
+option java_outer_classname = "ParsedPageProtos";
+
+message ParsedPage {
+
+  required string url = 1;
+  required int64 archiveTime = 2;
+
+  repeated string scripts = 3;
+  repeated string iframes = 4;
+  repeated string links = 5;
+  repeated string images = 6;
+
+}

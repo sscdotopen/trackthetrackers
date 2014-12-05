@@ -23,13 +23,21 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
+import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
@@ -61,15 +69,14 @@ public class ExtractionJob extends HadoopJob {
     return 0;
   }
 
-  static class CommonCrawlExtractionMapper extends MapReduceBase implements Mapper<Writable, ArcRecord, Text, Text> {
+  static class CommonCrawlExtractionMapper extends MapReduceBase implements Mapper<Writable, ArcRecord, NullWritable, ParsedPageWritable> {
 
-    private final Text url = new Text();
-    private final Text watchers = new Text();
+    private final ParsedPageWritable writable = new ParsedPageWritable();
 
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
     @Override
-    public void map(Writable key, ArcRecord record, OutputCollector<Text, Text> collector,
+    public void map(Writable key, ArcRecord record, OutputCollector<NullWritable, ParsedPageWritable> collector,
         Reporter reporter) throws IOException {
 
       if ("text/html".equals(record.getContentType())) {
@@ -103,17 +110,27 @@ public class ExtractionJob extends HadoopJob {
           reporter.incrCounter(Counters.PAGES, 1);
           reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
 
-          StringBuilder concatenatedResources = new StringBuilder();
+          ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
+
+          builder
+              .setUrl(record.getURL())
+              .setArchiveTime(record.getArchiveDate().getTime());
+
           for (Resource resource : resources) {
-            //System.out.println("\t" + resource.url() + " " +  resource.type());
-            concatenatedResources.append(resource.url());
-            concatenatedResources.append(',');
+            if (Resource.Type.SCRIPT.equals(resource.type())) {
+              builder.addScripts(resource.url());
+            } else if (Resource.Type.IFRAME.equals(resource.type())) {
+              builder.addIframes(resource.url());
+            } else if (Resource.Type.LINK.equals(resource.type())) {
+              builder.addLinks(resource.url());
+            } else if (Resource.Type.IMAGE.equals(resource.type())) {
+              builder.addImages(resource.url());
+            }
           }
 
-          url.set(record.getURL());
-          watchers.set(concatenatedResources.toString());
+          writable.setParsedPage(builder.build());
 
-          collector.collect(url, watchers);
+          collector.collect(NullWritable.get(), writable);
 
         } catch (ProtocolException pe) {
           // do nothing here

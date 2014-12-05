@@ -29,9 +29,6 @@ import org.apache.hadoop.util.Tool;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * a very simple base class for hadoop jobs
- */
 public abstract class HadoopJob extends Configured implements Tool {
 
   protected Map<String,String> parseArgs(String[] args) {
@@ -41,7 +38,7 @@ public abstract class HadoopJob extends Configured implements Tool {
 
     Map<String,String> parsedArgs = Maps.newHashMap();
     for (int n = 0; n < args.length; n += 2) {
-      parsedArgs.put(args[n], args[n+1]);
+      parsedArgs.put(args[n], args[n + 1]);
     }
     return Collections.unmodifiableMap(parsedArgs);
   }

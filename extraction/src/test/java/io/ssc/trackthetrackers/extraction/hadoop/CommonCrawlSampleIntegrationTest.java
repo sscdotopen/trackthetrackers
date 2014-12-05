@@ -26,7 +26,7 @@ public class CommonCrawlSampleIntegrationTest {
   public static void main(String[] args) throws Exception {
 
     ExtractionJob extraction = new ExtractionJob();
-    AggregateWatchersJob aggregateWatchers = new AggregateWatchersJob();
+    AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
 
     ToolRunner.run(extraction, new String[] {
         "--input", "/home/ssc/Entwicklung/projects/trackthetrackers/extraction/src/test/resources/commoncrawl/",
