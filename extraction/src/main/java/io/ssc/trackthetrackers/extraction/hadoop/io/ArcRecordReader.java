@@ -23,13 +23,13 @@ import java.io.IOException;
 
 import java.lang.Math;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileSplit;
-import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,29 +40,33 @@ import org.slf4j.LoggerFactory;
  * Set "io.file.buffer.size" to define the amount of data that should be
  * buffered from S3.
  */
-public class ArcRecordReader implements RecordReader<Text, ArcRecord> {
+public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
 
   private static final Logger log = LoggerFactory.getLogger(ArcRecordReader.class);
 
   private GzipCompressorInputStream gzipIn;
   private long fileLength;
 
-  /**
-   *
-   */
-  public ArcRecordReader(Configuration job, FileSplit split) throws IOException {
+  private Text key;
+  private ArcRecord value = new ArcRecord();
 
+  @Override
+  public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException, InterruptedException {
+    FileSplit split = (FileSplit) genericSplit;
     if (split.getStart() != 0) {
+      //TODO: check this
+      /*
       IOException ex = new IOException("Invalid ARC file split start " + split.getStart()
           + ": ARC files are not splittable");
       log.error(ex.getMessage(), ex);
-      throw ex; 
+      throw ex;
+      */
     }
 
     // open the file and seek to the start of the split
     final Path file = split.getPath();
 
-    FileSystem fs = file.getFileSystem(job);
+    FileSystem fs = file.getFileSystem(context.getConfiguration());
 
     // create a GZIP stream that *does not* automatically read through members
     gzipIn = new GzipCompressorInputStream(fs.open(file), false);
@@ -87,24 +91,36 @@ public class ArcRecordReader implements RecordReader<Text, ArcRecord> {
     gzipIn.nextMember();
   }
 
-  public Text createKey() {
-    return new Text();
-  }
-
-  public ArcRecord createValue() {
-    return new ArcRecord();
-  }
-
   private static byte[] checkBuffer = new byte[64];
 
-  public synchronized boolean next(Text key, ArcRecord value) throws IOException {
+  @Override
+  public Text getCurrentKey() throws IOException,InterruptedException {
+    return key;
+  }
+
+  @Override
+  public ArcRecord getCurrentValue() throws IOException, InterruptedException {
+    System.out.println(value);
+    return value;
+  }
+
+  public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
 
     boolean isValid = true;
+
+    if (key == null) {
+      key = new Text();
+    }
+    if (value == null) {
+      value = new ArcRecord();
+    }
     
     // try reading an ARC record from the stream
     try {
       isValid = value.readFrom(gzipIn);
     } catch (EOFException ex) {
+      key = null;
+      value = null;
       return false;
     }
 

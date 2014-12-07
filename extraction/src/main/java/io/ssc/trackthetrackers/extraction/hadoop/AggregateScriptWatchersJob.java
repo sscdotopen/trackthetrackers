@@ -18,24 +18,22 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
+import io.ssc.trackthetrackers.extraction.thrift.ParsedPage;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reducer;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
-import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import parquet.hadoop.thrift.ParquetThriftInputFormat;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class AggregateScriptWatchersJob extends HadoopJob {
@@ -43,55 +41,86 @@ public class AggregateScriptWatchersJob extends HadoopJob {
   @Override
   public int run(String[] args) throws Exception {
 
+
+
     Map<String,String> parsedArgs = parseArgs(args);
 
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    JobConf conf = mapReduce(inputPath, outputPath, SequenceFileInputFormat.class, SequenceFileOutputFormat.class,
-                             WatchersMapper.class, NullWritable.class, ParsedPageWritable.class,
-                             CountWatchingsReducer.class, Text.class, LongWritable.class);
-    conf.setCombinerClass(CountWatchingsReducer.class);
+
+    Class mapperClass = WatchersMapper.class;
+    Class reducerClass = CountWatchingsReducer.class;
+    Path input = inputPath;
+    Path output = outputPath;
+    Class inputFormatClass = ParquetThriftInputFormat.class;
+    Class outputFormatClass = SequenceFileOutputFormat.class;
+
+    Class reducerKeyClass =  Text.class;
+    Class reducerValueClass = LongWritable.class;
+
+
+    Configuration conf = new Configuration();
 
     FileSystem.get(conf).delete(outputPath, true);
-    JobClient.runJob(conf);
+
+    {
+      Job job = new Job(conf, mapperClass.getSimpleName() + "-" + reducerClass.getSimpleName());
+      job.setJarByClass(this.getClass());
+
+      job.setInputFormatClass(ParquetThriftInputFormat.class);
+      ParquetThriftInputFormat.setReadSupportClass(job, ParsedPage.class);
+      ParquetThriftInputFormat.addInputPath(job, input);
+
+      job.setMapperClass(mapperClass);
+
+      job.setReducerClass(reducerClass);
+      job.setOutputKeyClass(reducerKeyClass);
+      job.setOutputValueClass(reducerValueClass);
+
+      job.setOutputFormatClass(outputFormatClass);
+      SequenceFileOutputFormat.setOutputPath(job, output);
+      SequenceFileOutputFormat.setCompressOutput(job, true);
+
+      job.waitForCompletion(true);
+    }
 
     return 0;
   }
 
-  static class WatchersMapper extends MapReduceBase
-      implements Mapper<NullWritable, ParsedPageWritable, Text, LongWritable> {
+
+  static class WatchersMapper extends Mapper<Void, ParsedPage, Text, LongWritable> {
 
     private final Text watcher = new Text();
     private final LongWritable one = new LongWritable(1);
 
-    @Override
-    public void map(NullWritable nil, ParsedPageWritable parsedPageWritable,
-                    OutputCollector<Text, LongWritable> collector, Reporter reporter)
-      throws IOException {
-
-      ParsedPageProtos.ParsedPage parsedPage = parsedPageWritable.getParsedPage();
-      for (String aWatcher : parsedPage.getScriptsList()) {
-        watcher.set(aWatcher);
-        collector.collect(watcher, one);
+    public void map(Void key, ParsedPage parsedPage, Mapper<Void,ParsedPage,Text,LongWritable>.Context context) throws IOException, InterruptedException
+    {
+      if(parsedPage != null) {
+        List<String> list = parsedPage.getScripts();
+        if(list != null && list.size() > 0) {
+          for (String aWatcher : list) {
+            watcher.set(aWatcher);
+            context.write(watcher, one);
+          }
+        }
       }
     }
   }
 
-  static class CountWatchingsReducer extends MapReduceBase implements Reducer<Text, LongWritable, Text, LongWritable> {
+  static class CountWatchingsReducer extends Reducer<Text, LongWritable, Text, LongWritable> {
 
     private final LongWritable count = new LongWritable();
 
-    @Override
-    public void reduce(Text watcher, Iterator<LongWritable> counts, OutputCollector<Text, LongWritable> collector,
-                       Reporter reporter) throws IOException {
+    public void reduce(Text watcher, Iterator<LongWritable> counts, Context context) throws IOException,InterruptedException{
       long sum = 0;
       while (counts.hasNext()) {
         sum += counts.next().get();
       }
-
       count.set(sum);
-      collector.collect(watcher, count);
+      context.write(watcher, count);
     }
   }
+
+
 }

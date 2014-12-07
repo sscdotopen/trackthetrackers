@@ -147,6 +147,10 @@ public class ResourceExtractor {
       return false;
     }
 
+    if (url.contains(";") || url.contains("=") || url.contains("?")) {
+        return false;
+    }
+
     int startTopLevelDomain = url.lastIndexOf('.');
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
     DomainValidator dv = DomainValidator.getInstance();

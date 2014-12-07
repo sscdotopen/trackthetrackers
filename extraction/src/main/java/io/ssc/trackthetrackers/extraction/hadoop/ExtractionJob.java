@@ -18,29 +18,31 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
+
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
-import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
+
+import io.ssc.trackthetrackers.extraction.thrift.ParsedPage;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.conf.Configuration;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
+
+import parquet.hadoop.metadata.CompressionCodecName;
+import parquet.hadoop.thrift.ParquetThriftOutputFormat;
+
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,24 +62,44 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    JobConf conf = mapOnly(inputPath, outputPath, ArcInputFormat.class, SequenceFileOutputFormat.class,
-        CommonCrawlExtractionMapper.class, Text.class, Text.class);
+
+
+    Configuration conf = new Configuration();
 
     FileSystem.get(conf).delete(outputPath, true);
-    JobClient.runJob(conf);
+
+    Job job = new Job(conf, CommonCrawlExtractionMapper.class.getSimpleName());
+
+    job.setJarByClass(ExtractionJob.class);
+
+    job.setMapperClass(CommonCrawlExtractionMapper.class);
+
+    job.setNumReduceTasks(0);
+
+    FileInputFormat.addInputPath(job,inputPath);
+    job.setInputFormatClass(ArcInputFormat.class);
+
+
+    job.setOutputFormatClass(ParquetThriftOutputFormat.class);
+    ParquetThriftOutputFormat.setOutputPath(job, outputPath);
+    ParquetThriftOutputFormat.setThriftClass(job, ParsedPage.class);
+
+    ParquetThriftOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+    ParquetThriftOutputFormat.setEnableDictionary(job, true);
+
+
+    job.waitForCompletion(true);
 
     return 0;
   }
 
-  static class CommonCrawlExtractionMapper extends MapReduceBase implements Mapper<Writable, ArcRecord, NullWritable, ParsedPageWritable> {
-
-    private final ParsedPageWritable writable = new ParsedPageWritable();
+  static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPage> {
 
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
     @Override
-    public void map(Writable key, ArcRecord record, OutputCollector<NullWritable, ParsedPageWritable> collector,
-        Reporter reporter) throws IOException {
+    public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException
+    {
 
       if ("text/html".equals(record.getContentType())) {
         //System.out.println(record.getURL());
@@ -107,30 +129,29 @@ public class ExtractionJob extends HadoopJob {
 
           Iterable<Resource> resources = resourceExtractor.extractResources(record.getURL(), html);
 
+          /*
           reporter.incrCounter(Counters.PAGES, 1);
           reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
+          */
 
-          ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
+          ParsedPage pp = new ParsedPage();
 
-          builder
-              .setUrl(record.getURL())
-              .setArchiveTime(record.getArchiveDate().getTime());
+          pp.setUrl(record.getURL());
+          pp.setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
-              builder.addScripts(resource.url());
+              pp.addToScripts(resource.url());
             } else if (Resource.Type.IFRAME.equals(resource.type())) {
-              builder.addIframes(resource.url());
+              pp.addToIframes(resource.url());
             } else if (Resource.Type.LINK.equals(resource.type())) {
-              builder.addLinks(resource.url());
+              pp.addToLinks(resource.url());
             } else if (Resource.Type.IMAGE.equals(resource.type())) {
-              builder.addImages(resource.url());
+              pp.addToImages(resource.url());
             }
           }
 
-          writable.setParsedPage(builder.build());
-
-          collector.collect(NullWritable.get(), writable);
+          context.write(null, pp);
 
         } catch (ProtocolException pe) {
           // do nothing here

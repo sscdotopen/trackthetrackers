@@ -21,9 +21,6 @@ package io.ssc.trackthetrackers.extraction.hadoop;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.util.Tool;
 
 import java.util.Collections;
@@ -43,6 +40,7 @@ public abstract class HadoopJob extends Configured implements Tool {
     return Collections.unmodifiableMap(parsedArgs);
   }
 
+  /*
   protected JobConf mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
                             Class keyClass, Class valueClass) {
     JobConf conf = new JobConf(getClass());
@@ -87,6 +85,6 @@ public abstract class HadoopJob extends Configured implements Tool {
     conf.setOutputValueClass(reducerValueClass);
 
     return conf;
-  }
+  }*/
 
 }
