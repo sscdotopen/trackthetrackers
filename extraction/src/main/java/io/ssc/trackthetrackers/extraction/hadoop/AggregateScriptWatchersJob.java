@@ -50,12 +50,14 @@ public class AggregateScriptWatchersJob extends HadoopJob {
 
 
     Class mapperClass = WatchersMapper.class;
-    Class reducerClass = CountWatchingsReducer.class;
+
     Path input = inputPath;
     Path output = outputPath;
+
     Class inputFormatClass = ParquetThriftInputFormat.class;
     Class outputFormatClass = SequenceFileOutputFormat.class;
 
+    Class reducerClass = CountWatchingsReducer.class;
     Class reducerKeyClass =  Text.class;
     Class reducerValueClass = LongWritable.class;
 
@@ -68,15 +70,19 @@ public class AggregateScriptWatchersJob extends HadoopJob {
       Job job = new Job(conf, mapperClass.getSimpleName() + "-" + reducerClass.getSimpleName());
       job.setJarByClass(this.getClass());
 
-      job.setInputFormatClass(ParquetThriftInputFormat.class);
+      job.setInputFormatClass(inputFormatClass);
       ParquetThriftInputFormat.setReadSupportClass(job, ParsedPage.class);
       ParquetThriftInputFormat.addInputPath(job, input);
 
       job.setMapperClass(mapperClass);
+      job.setMapOutputKeyClass(reducerKeyClass);
+      job.setMapOutputValueClass(reducerValueClass);
 
       job.setReducerClass(reducerClass);
       job.setOutputKeyClass(reducerKeyClass);
       job.setOutputValueClass(reducerValueClass);
+
+      job.setCombinerClass(reducerClass);
 
       job.setOutputFormatClass(outputFormatClass);
       SequenceFileOutputFormat.setOutputPath(job, output);
@@ -112,10 +118,10 @@ public class AggregateScriptWatchersJob extends HadoopJob {
 
     private final LongWritable count = new LongWritable();
 
-    public void reduce(Text watcher, Iterator<LongWritable> counts, Context context) throws IOException,InterruptedException{
+    public void reduce(Text watcher, Iterable<LongWritable> counts, Context context) throws IOException,InterruptedException{
       long sum = 0;
-      while (counts.hasNext()) {
-        sum += counts.next().get();
+      while (counts.iterator().hasNext()) {
+        sum += counts.iterator().next().get();
       }
       count.set(sum);
       context.write(watcher, count);
