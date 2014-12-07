@@ -41,8 +41,6 @@ public class AggregateScriptWatchersJob extends HadoopJob {
   @Override
   public int run(String[] args) throws Exception {
 
-
-
     Map<String,String> parsedArgs = parseArgs(args);
 
     Path inputPath = new Path(parsedArgs.get("--input"));
@@ -103,7 +101,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     public void map(Void key, ParsedPage parsedPage, Mapper<Void,ParsedPage,Text,LongWritable>.Context context) throws IOException, InterruptedException
     {
       if(parsedPage != null) {
-        List<String> list = parsedPage.getScripts();
+        List<String> list = parsedPage.getScripts(); //TODO: why only scripts?
         if(list != null && list.size() > 0) {
           for (String aWatcher : list) {
             watcher.set(aWatcher);
