@@ -128,7 +128,7 @@ public class ResourceExtractor {
                     }
                   } catch (MalformedURLException e) {
                       if (LOG.isWarnEnabled()) {
-                          LOG.warn("Malformed URL: \"" + uri + "\"");
+                          LOG.warn("Malformed URL: \"" + url + "\"");
                       }
                   }
                 }
@@ -145,6 +145,10 @@ public class ResourceExtractor {
   private boolean isValidDomain(String url) {
     if (!url.contains(".") || url.contains("///")) {
       return false;
+    }
+
+    if (url.contains(";") || url.contains("=") || url.contains("?")) {
+          return false;
     }
 
     int startTopLevelDomain = url.lastIndexOf('.');

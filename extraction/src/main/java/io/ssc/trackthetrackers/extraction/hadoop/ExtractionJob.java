@@ -61,7 +61,7 @@ public class ExtractionJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     JobConf conf = mapOnly(inputPath, outputPath, ArcInputFormat.class, SequenceFileOutputFormat.class,
-        CommonCrawlExtractionMapper.class, Text.class, Text.class);
+        CommonCrawlExtractionMapper.class, NullWritable.class, ParsedPageWritable.class);
 
     FileSystem.get(conf).delete(outputPath, true);
     JobClient.runJob(conf);
@@ -109,6 +109,8 @@ public class ExtractionJob extends HadoopJob {
 
           reporter.incrCounter(Counters.PAGES, 1);
           reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
+
+          System.out.println("pagecount: " + reporter.getCounter(Counters.PAGES).getCounter());
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 

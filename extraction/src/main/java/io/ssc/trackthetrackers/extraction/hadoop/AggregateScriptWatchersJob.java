@@ -49,7 +49,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     JobConf conf = mapReduce(inputPath, outputPath, SequenceFileInputFormat.class, SequenceFileOutputFormat.class,
-                             WatchersMapper.class, NullWritable.class, ParsedPageWritable.class,
+                             WatchersMapper.class, Text.class, LongWritable.class,
                              CountWatchingsReducer.class, Text.class, LongWritable.class);
     conf.setCombinerClass(CountWatchingsReducer.class);
 

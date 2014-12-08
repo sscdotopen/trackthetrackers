@@ -79,7 +79,6 @@ public abstract class HadoopJob extends Configured implements Tool {
     conf.setOutputFormat(outputFormatClass);
 
     conf.setMapperClass(mapperClass);
-    conf.setMapOutputKeyClass(mapperKeyClass);
     conf.setMapOutputValueClass(mapperValueClass);
 
     conf.setReducerClass(reducerClass);
