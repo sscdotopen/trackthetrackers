@@ -23,26 +23,21 @@ import com.google.common.io.Closeables;
 
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
+import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 
-import io.ssc.trackthetrackers.extraction.thrift.ParsedPage;
-
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.conf.Configuration;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
 
 import parquet.hadoop.metadata.CompressionCodecName;
-import parquet.hadoop.thrift.ParquetThriftOutputFormat;
-
+import parquet.proto.ProtoParquetOutputFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -62,38 +57,19 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
+    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, CommonCrawlExtractionMapper.class,
+            null, null, true);
 
-
-    Configuration conf = new Configuration();
-
-    FileSystem.get(conf).delete(outputPath, true);
-
-    Job job = new Job(conf, CommonCrawlExtractionMapper.class.getSimpleName());
-
-    job.setJarByClass(ExtractionJob.class);
-
-    job.setMapperClass(CommonCrawlExtractionMapper.class);
-
-    job.setNumReduceTasks(0);
-
-    FileInputFormat.addInputPath(job,inputPath);
-    job.setInputFormatClass(ArcInputFormat.class);
-
-
-    job.setOutputFormatClass(ParquetThriftOutputFormat.class);
-    ParquetThriftOutputFormat.setOutputPath(job, outputPath);
-    ParquetThriftOutputFormat.setThriftClass(job, ParsedPage.class);
-
-    ParquetThriftOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
-    ParquetThriftOutputFormat.setEnableDictionary(job, true);
-
+    ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
+    ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+    ProtoParquetOutputFormat.setEnableDictionary(job, true);
 
     job.waitForCompletion(true);
 
     return 0;
   }
 
-  static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPage> {
+  static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPageProtos.ParsedPage> {
 
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
@@ -134,24 +110,25 @@ public class ExtractionJob extends HadoopJob {
           reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
           */
 
-          ParsedPage pp = new ParsedPage();
+          ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
-          pp.setUrl(record.getURL());
-          pp.setArchiveTime(record.getArchiveDate().getTime());
+          builder
+                  .setUrl(record.getURL())
+                  .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
-              pp.addToScripts(resource.url());
+              builder.addScripts(resource.url());
             } else if (Resource.Type.IFRAME.equals(resource.type())) {
-              pp.addToIframes(resource.url());
+              builder.addIframes(resource.url());
             } else if (Resource.Type.LINK.equals(resource.type())) {
-              pp.addToLinks(resource.url());
+              builder.addLinks(resource.url());
             } else if (Resource.Type.IMAGE.equals(resource.type())) {
-              pp.addToImages(resource.url());
+              builder.addImages(resource.url());
             }
           }
 
-          context.write(null, pp);
+          context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
           // do nothing here

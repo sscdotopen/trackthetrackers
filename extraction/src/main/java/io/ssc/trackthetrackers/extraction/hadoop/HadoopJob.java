@@ -19,10 +19,16 @@
 package io.ssc.trackthetrackers.extraction.hadoop;
 
 import com.google.common.collect.Maps;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -40,51 +46,62 @@ public abstract class HadoopJob extends Configured implements Tool {
     return Collections.unmodifiableMap(parsedArgs);
   }
 
-  /*
-  protected JobConf mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                            Class keyClass, Class valueClass) {
-    JobConf conf = new JobConf(getClass());
-    conf.setJobName(mapperClass.getSimpleName());
 
-    conf.setNumReduceTasks(0);
+  protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                            Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+    Job job = map(input, output, inputFormatClass, outputFormatClass,
+            mapperClass, keyClass, valueClass, deleteOutputFolder);
 
-    FileOutputFormat.setOutputPath(conf, output);
-    FileOutputFormat.setCompressOutput(conf, true);
+    job.setNumReduceTasks(0);
 
-    FileInputFormat.addInputPath(conf, input);
-    conf.setInputFormat(inputFormatClass);
-
-    conf.setOutputFormat(outputFormatClass);
-    conf.setOutputKeyClass(keyClass);
-    conf.setOutputValueClass(valueClass);
-
-    conf.setMapperClass(mapperClass);
-
-    return conf;
+    return job;
   }
 
-  protected JobConf mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass,
+  private Job map (Path input, Path output, Class inputFormatClass, Class outputFormatClass,
+                   Class mapperClass, Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+    Configuration conf = new Configuration();
+
+    if (deleteOutputFolder) {
+      FileSystem.get(conf).delete(output, true);
+    }
+
+    Job job = new Job(conf, mapperClass.getSimpleName());
+
+    job.setJarByClass(getClass());
+
+    job.setMapperClass(mapperClass);
+    if (keyClass != null && valueClass != null) {
+      job.setMapOutputKeyClass(keyClass);
+      job.setMapOutputValueClass(valueClass);
+    }
+
+    FileInputFormat.addInputPath(job,input);
+    job.setInputFormatClass(inputFormatClass);
+
+    job.setOutputFormatClass(outputFormatClass);
+    FileOutputFormat.setOutputPath(job, output);
+
+    return job;
+  }
+
+
+  protected Job mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass,
                               Class mapperClass, Class mapperKeyClass, Class mapperValueClass,
-                              Class reducerClass, Class reducerKeyClass, Class reducerValueClass) {
-    JobConf conf = new JobConf(getClass());
-    conf.setJobName(mapperClass.getSimpleName() + "-" + reducerClass.getSimpleName());
+                              Class reducerClass, Class reducerKeyClass, Class reducerValueClass,
+                              boolean deleteOutputFolder) throws IOException {
 
-    FileOutputFormat.setOutputPath(conf, output);
-    FileOutputFormat.setCompressOutput(conf, true);
+    Job job = map(input, output, inputFormatClass, outputFormatClass,
+            mapperClass, mapperKeyClass, mapperValueClass, deleteOutputFolder);
 
-    FileInputFormat.addInputPath(conf, input);
-    conf.setInputFormat(inputFormatClass);
-    conf.setOutputFormat(outputFormatClass);
+    job.setReducerClass(reducerClass);
+    job.setOutputKeyClass(reducerKeyClass);
+    job.setOutputValueClass(reducerValueClass);
 
-    conf.setMapperClass(mapperClass);
-    conf.setMapOutputKeyClass(mapperKeyClass);
-    conf.setMapOutputValueClass(mapperValueClass);
+    job.setCombinerClass(reducerClass);
 
-    conf.setReducerClass(reducerClass);
-    conf.setOutputKeyClass(reducerKeyClass);
-    conf.setOutputValueClass(reducerValueClass);
+    FileOutputFormat.setCompressOutput(job, true);
 
-    return conf;
-  }*/
+    return job;
+  }
 
 }
