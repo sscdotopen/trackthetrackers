@@ -43,12 +43,17 @@ import parquet.proto.ProtoParquetOutputFormat;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.TreeSet;
 
 public class ExtractionJob extends HadoopJob {
 
   public static enum Counters {
     PAGES, RESOURCES
   }
+
+  private static long count = 0;
+
+  private static TreeSet<String> pages = new TreeSet<String>();
 
   @Override
   public int run(String[] args) throws Exception {
@@ -112,7 +117,10 @@ public class ExtractionJob extends HadoopJob {
           context.getCounter(Counters.PAGES).increment(1);
           context.getCounter(Counters.RESOURCES).increment(Iterables.size(resources));
 
-          System.out.println("pagecount: " + reporter.getCounter(Counters.PAGES).getCounter());
+          count++;
+          System.out.println("pagecount: " + count);
+
+          System.out.println(pages.add(record.getURL()));
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
