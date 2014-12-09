@@ -29,6 +29,7 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
   private Text _key;
   private ArcRecord _value;
   private Configuration _conf;
+  private boolean done;
 
   /**
    *
@@ -36,15 +37,21 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
   public void initialize(InputSplit insplit, TaskAttemptContext context)
           throws IOException {
 
+    done = false;
+
     _conf = context.getConfiguration();
 
     FileSplit split = (FileSplit) insplit;
 
+
     if (split.getStart() != 0) {
+      done = true;
+      /*
       IOException ex = new IOException("Invalid ARC file split start "
               + split.getStart() + ": ARC files are not splittable");
       LOG.error(ex.getMessage());
       throw ex;
+      */
     }
 
     // open the file and seek to the start of the split
@@ -99,6 +106,10 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
    */
   public synchronized boolean nextKeyValue() throws IOException,
           InterruptedException {
+
+    if (done) {
+      return false;
+    }
 
     boolean isValid = true;
 

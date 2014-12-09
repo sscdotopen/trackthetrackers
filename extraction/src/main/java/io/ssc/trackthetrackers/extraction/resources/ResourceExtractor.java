@@ -128,7 +128,7 @@ public class ResourceExtractor {
                     }
                   } catch (MalformedURLException e) {
                       if (LOG.isWarnEnabled()) {
-                          LOG.warn("Malformed URL: \"" + uri + "\"");
+                          LOG.warn("Malformed URL: \"" + url + "\"");
                       }
                   }
                 }
