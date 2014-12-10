@@ -1,5 +1,5 @@
 /**
- * Track the trackers
+ * Flink Hands-on
  * Copyright (C) 2014  Sebastian Schelter
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-option java_package = "io.ssc.trackthetrackers.commons.proto";
-option java_outer_classname = "ParsedPageProtos";
+package io.ssc.trackthetrackers.extraction.hadoop;
 
-message ParsedPage {
 
-  required string url = 1;
-  required int64 archiveTime = 2;
+import java.io.File;
 
-  repeated string scripts = 3;
-  repeated string iframes = 4;
-  repeated string links = 5;
-  repeated string images = 6;
+public class Config {
+
+  public static String PROJECT_PATH = "/home/felix/";
+
+  private Config() {}
+
+  public static String projectPathTo(String directory) {
+    return new File(PROJECT_PATH, directory).getAbsolutePath();
+  }
 
 }

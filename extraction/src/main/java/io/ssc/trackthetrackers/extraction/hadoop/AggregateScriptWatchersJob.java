@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import parquet.proto.ProtoParquetInputFormat;
 
-import proto.ParsedPageProtos;
+import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 
 import java.io.IOException;
 import java.util.List;

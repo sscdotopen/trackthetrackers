@@ -26,6 +26,7 @@ import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
+import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -42,9 +43,6 @@ import parquet.proto.ProtoParquetOutputFormat;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Map;
-import java.util.TreeSet;
-
-import proto.ParsedPageProtos;
 
 public class ExtractionJob extends HadoopJob {
 
@@ -116,7 +114,7 @@ public class ExtractionJob extends HadoopJob {
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
           builder.setUrl(record.getURL())
-                 .setArchiveTime(record.getArchiveDate().getTime());
+                  .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
