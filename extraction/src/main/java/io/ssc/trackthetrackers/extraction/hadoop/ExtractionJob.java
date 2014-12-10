@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
+import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 
@@ -57,8 +58,8 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, CommonCrawlExtractionMapper.class,
-            null, null, true);
+    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
+                      CommonCrawlExtractionMapper.class, null, null, true);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
@@ -74,8 +75,7 @@ public class ExtractionJob extends HadoopJob {
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
     @Override
-    public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException
-    {
+    public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException {
 
       if ("text/html".equals(record.getContentType())) {
         //System.out.println(record.getURL());
@@ -87,7 +87,9 @@ public class ExtractionJob extends HadoopJob {
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
             charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
-          } catch (Exception e) {}
+          } catch (Exception e) {
+            // TODO have a counter for this
+          }
 
           // if anything goes wrong, try ISO-8859-1
           if (charset == null) {
@@ -105,16 +107,13 @@ public class ExtractionJob extends HadoopJob {
 
           Iterable<Resource> resources = resourceExtractor.extractResources(record.getURL(), html);
 
-          /*
-          reporter.incrCounter(Counters.PAGES, 1);
-          reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
-          */
+          context.getCounter(Counters.PAGES).increment(1);
+          context.getCounter(Counters.RESOURCES).increment(Iterables.size(resources));
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
-          builder
-                  .setUrl(record.getURL())
-                  .setArchiveTime(record.getArchiveDate().getTime());
+          builder.setUrl(record.getURL())
+                 .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
@@ -131,7 +130,7 @@ public class ExtractionJob extends HadoopJob {
           context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
-          // do nothing here
+          // TODO have a counter for this
         } catch (Exception e) {
           throw new IOException(e);
         }

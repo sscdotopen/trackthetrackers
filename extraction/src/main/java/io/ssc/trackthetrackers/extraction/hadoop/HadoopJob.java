@@ -49,16 +49,18 @@ public abstract class HadoopJob extends Configured implements Tool {
 
   protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
                             Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
-    Job job = map(input, output, inputFormatClass, outputFormatClass,
-            mapperClass, keyClass, valueClass, deleteOutputFolder);
+
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass,
+                  deleteOutputFolder);
 
     job.setNumReduceTasks(0);
 
     return job;
   }
 
-  private Job map (Path input, Path output, Class inputFormatClass, Class outputFormatClass,
-                   Class mapperClass, Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+  private Job map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                  Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+
     Configuration conf = new Configuration();
 
     if (deleteOutputFolder) {
@@ -85,19 +87,20 @@ public abstract class HadoopJob extends Configured implements Tool {
   }
 
 
-  protected Job mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass,
-                              Class mapperClass, Class mapperKeyClass, Class mapperValueClass,
-                              Class reducerClass, Class reducerKeyClass, Class reducerValueClass,
-                              boolean deleteOutputFolder) throws IOException {
+  protected Job mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                          Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
+                          Class reducerValueClass, boolean combinable, boolean deleteOutputFolder) throws IOException {
 
-    Job job = map(input, output, inputFormatClass, outputFormatClass,
-            mapperClass, mapperKeyClass, mapperValueClass, deleteOutputFolder);
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass,
+                  deleteOutputFolder);
 
     job.setReducerClass(reducerClass);
     job.setOutputKeyClass(reducerKeyClass);
     job.setOutputValueClass(reducerValueClass);
 
-    job.setCombinerClass(reducerClass);
+    if (combinable) {
+      job.setCombinerClass(reducerClass);
+    }
 
     FileOutputFormat.setCompressOutput(job, true);
 

@@ -43,9 +43,8 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     Job job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
-                          WatchersMapper.class, null, null,
-                          CountWatchingsReducer.class, Text.class, LongWritable.class,
-                          true);
+                        WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class,
+                        true, true);
 
     job.waitForCompletion(true);
 
@@ -58,13 +57,15 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     private final Text watcher = new Text();
     private final LongWritable one = new LongWritable(1);
 
-    public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder, Mapper<Void,ParsedPageProtos.ParsedPage.Builder,Text,LongWritable>.Context context) throws IOException, InterruptedException
-    {
+    public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder,
+        Mapper<Void,ParsedPageProtos.ParsedPage.Builder,Text,LongWritable>.Context context)
+        throws IOException, InterruptedException {
+
       if (parsedPageBuilder != null) {
         ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
         if (parsedPage != null) {
           List<String> list = parsedPage.getScriptsList(); //TODO: why only scripts?
-          if (list != null && list.size() > 0) {
+          if (list != null) {
             for (String aWatcher : list) {
               watcher.set(aWatcher);
               context.write(watcher, one);
@@ -79,7 +80,9 @@ public class AggregateScriptWatchersJob extends HadoopJob {
 
     private final LongWritable count = new LongWritable();
 
-    public void reduce(Text watcher, Iterable<LongWritable> counts, Context context) throws IOException,InterruptedException{
+    public void reduce(Text watcher, Iterable<LongWritable> counts, Context context)
+        throws IOException, InterruptedException{
+
       long sum = 0;
       while (counts.iterator().hasNext()) {
         sum += counts.iterator().next().get();
