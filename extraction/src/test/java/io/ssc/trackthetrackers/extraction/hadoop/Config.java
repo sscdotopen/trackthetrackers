@@ -1,5 +1,5 @@
 /**
- * Flink Hands-on
+ * Track the trackers
  * Copyright (C) 2014  Sebastian Schelter
  *
  * This program is free software: you can redistribute it and/or modify
