@@ -24,7 +24,6 @@ import com.google.common.io.Closeables;
 
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
-import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 
@@ -45,15 +44,13 @@ import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.TreeSet;
 
+import proto.ParsedPageProtos;
+
 public class ExtractionJob extends HadoopJob {
 
   public static enum Counters {
     PAGES, RESOURCES
   }
-
-  private static long count = 0;
-
-  private static TreeSet<String> pages = new TreeSet<String>();
 
   @Override
   public int run(String[] args) throws Exception {
@@ -115,16 +112,6 @@ public class ExtractionJob extends HadoopJob {
 
           context.getCounter(Counters.PAGES).increment(1);
           context.getCounter(Counters.RESOURCES).increment(Iterables.size(resources));
-
-          count++;
-          System.out.println("pagecount: " + count);
-
-          System.out.println(pages.add(record.getURL()));
-
-          count++;
-          System.out.println("pagecount: " + count);
-
-          System.out.println(pages.add(record.getURL()));
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 

@@ -18,7 +18,6 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -27,6 +26,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import parquet.proto.ProtoParquetInputFormat;
+
+import proto.ParsedPageProtos;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,11 +42,16 @@ public class AggregateScriptWatchersJob extends HadoopJob {
 
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
-      
+
 
     Job job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
                         WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class,
                         true, true);
+
+    //push down projection
+    String projection = "message ParsedPage {required binary url;required int64 archiveTime; repeated binary scripts;}";
+    ProtoParquetInputFormat.setRequestedProjection(job, projection);
+
 
     job.waitForCompletion(true);
 
