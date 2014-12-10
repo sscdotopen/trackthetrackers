@@ -63,7 +63,6 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-
     Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
                       CommonCrawlExtractionMapper.class, null, null, true);
 
@@ -116,6 +115,11 @@ public class ExtractionJob extends HadoopJob {
 
           context.getCounter(Counters.PAGES).increment(1);
           context.getCounter(Counters.RESOURCES).increment(Iterables.size(resources));
+
+          count++;
+          System.out.println("pagecount: " + count);
+
+          System.out.println(pages.add(record.getURL()));
 
           count++;
           System.out.println("pagecount: " + count);

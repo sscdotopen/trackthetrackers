@@ -41,7 +41,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
 
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
-
+      
 
     Job job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
                         WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class,
