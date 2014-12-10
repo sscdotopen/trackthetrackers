@@ -18,29 +18,26 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
+
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
 import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
-import org.apache.hadoop.fs.FileSystem;
+
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Job;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
+
+import parquet.hadoop.metadata.CompressionCodecName;
+import parquet.proto.ProtoParquetOutputFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,24 +57,25 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    JobConf conf = mapOnly(inputPath, outputPath, ArcInputFormat.class, SequenceFileOutputFormat.class,
-        CommonCrawlExtractionMapper.class, Text.class, Text.class);
+    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, CommonCrawlExtractionMapper.class,
+            null, null, true);
 
-    FileSystem.get(conf).delete(outputPath, true);
-    JobClient.runJob(conf);
+    ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
+    ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
+    ProtoParquetOutputFormat.setEnableDictionary(job, true);
+
+    job.waitForCompletion(true);
 
     return 0;
   }
 
-  static class CommonCrawlExtractionMapper extends MapReduceBase implements Mapper<Writable, ArcRecord, NullWritable, ParsedPageWritable> {
-
-    private final ParsedPageWritable writable = new ParsedPageWritable();
+  static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPageProtos.ParsedPage> {
 
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
     @Override
-    public void map(Writable key, ArcRecord record, OutputCollector<NullWritable, ParsedPageWritable> collector,
-        Reporter reporter) throws IOException {
+    public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException
+    {
 
       if ("text/html".equals(record.getContentType())) {
         //System.out.println(record.getURL());
@@ -107,14 +105,16 @@ public class ExtractionJob extends HadoopJob {
 
           Iterable<Resource> resources = resourceExtractor.extractResources(record.getURL(), html);
 
+          /*
           reporter.incrCounter(Counters.PAGES, 1);
           reporter.incrCounter(Counters.RESOURCES, Iterables.size(resources));
+          */
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
           builder
-              .setUrl(record.getURL())
-              .setArchiveTime(record.getArchiveDate().getTime());
+                  .setUrl(record.getURL())
+                  .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
@@ -128,9 +128,7 @@ public class ExtractionJob extends HadoopJob {
             }
           }
 
-          writable.setParsedPage(builder.build());
-
-          collector.collect(NullWritable.get(), writable);
+          context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
           // do nothing here

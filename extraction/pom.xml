@@ -11,6 +11,21 @@
 
   <artifactId>extraction</artifactId>
 
+  <repositories>
+    <repository>
+      <id>sonatype-nexus-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+
+
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -31,6 +46,33 @@
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
       <version>2.5.0</version>
+    </dependency>
+
+
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-common</artifactId>
+      <version>1.6.0rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-encoding</artifactId>
+      <version>1.6.0rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-column</artifactId>
+      <version>1.6.0rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-hadoop</artifactId>
+      <version>1.6.0rc1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>parquet-protobuf</artifactId>
+      <version>1.6.0rc1</version>
     </dependency>
 
 
