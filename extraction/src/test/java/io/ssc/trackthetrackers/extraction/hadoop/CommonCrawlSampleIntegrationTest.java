@@ -30,7 +30,7 @@ public class CommonCrawlSampleIntegrationTest {
 
 
     ToolRunner.run(extraction, new String[] {
-        "--input", "/home/ssc/Entwicklung/projects/trackthetrackers/extraction/src/test/resources/commoncrawl/",
+        "--input", Config.projectPathTo("trackthetrackers/extraction/src/test/resources/commoncrawl/"),
         "--output", "/tmp/commoncrawl-extraction/"
     });
 

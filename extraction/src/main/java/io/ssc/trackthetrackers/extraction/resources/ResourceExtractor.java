@@ -148,7 +148,7 @@ public class ResourceExtractor {
     }
 
     if (url.contains(";") || url.contains("=") || url.contains("?")) {
-        return false;
+          return false;
     }
 
     int startTopLevelDomain = url.lastIndexOf('.');

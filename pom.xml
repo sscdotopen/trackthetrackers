@@ -25,6 +25,7 @@ under the License.
   <artifactId>parent</artifactId>
   <version>1.0-SNAPSHOT</version>
   <modules>
+    <module>commons</module>
     <module>extraction</module>
     <module>analysis</module>
   </modules>

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-option java_package = "io.ssc.trackthetrackers.extraction.proto";
+option java_package = "io.ssc.trackthetrackers.commons.proto";
 option java_outer_classname = "ParsedPageProtos";
 
 message ParsedPage {

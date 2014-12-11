@@ -24,9 +24,9 @@ import com.google.common.io.Closeables;
 
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
-import io.ssc.trackthetrackers.extraction.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
+import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -60,6 +60,7 @@ public class ExtractionJob extends HadoopJob {
 
     Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
                       CommonCrawlExtractionMapper.class, null, null, true);
+
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
@@ -113,7 +114,7 @@ public class ExtractionJob extends HadoopJob {
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
           builder.setUrl(record.getURL())
-                 .setArchiveTime(record.getArchiveDate().getTime());
+                  .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
