@@ -74,19 +74,19 @@ public class ResourceExtractor {
       }
 
       if (uri.contains(".")) {
-          uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-          // normalize link
-          try {
-              uri = urlNormalizer.normalize(uri);
-              uri = urlNormalizer.extractDomain(uri);
-          } catch (MalformedURLException e) {
-              if (LOG.isWarnEnabled()) {
-                  LOG.warn("Malformed URL: \"" + uri + "\"");
-              }
+        uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
+        // normalize link
+        try {
+          uri = urlNormalizer.normalize(uri);
+          uri = urlNormalizer.extractDomain(uri);
+        } catch (MalformedURLException e) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Malformed URL: \"" + uri + "\"");
           }
-          if (isValidDomain(uri)) {
-              resources.add(new Resource(uri, type(tag.tag().toString())));
-          }
+        }
+        if (isValidDomain(uri)) {
+          resources.add(new Resource(uri, type(tag.tag().toString())));
+        }
       }
 
       /*
@@ -127,9 +127,9 @@ public class ResourceExtractor {
                       break;
                     }
                   } catch (MalformedURLException e) {
-                      if (LOG.isWarnEnabled()) {
-                          LOG.warn("Malformed URL: \"" + url + "\"");
-                      }
+                    if (LOG.isWarnEnabled()) {
+                      LOG.warn("Malformed URL: \"" + url + "\"");
+                    }
                   }
                 }
               }
@@ -148,13 +148,12 @@ public class ResourceExtractor {
     }
 
     if (url.contains(";") || url.contains("=") || url.contains("?")) {
-          return false;
+      return false;
     }
 
     int startTopLevelDomain = url.lastIndexOf('.');
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
-    DomainValidator dv = DomainValidator.getInstance();
-    return dv.isValidTld(topLevelDomain);
+    return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
 
   private Resource.Type type(String tag) {

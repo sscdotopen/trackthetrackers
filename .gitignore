@@ -1,5 +1,7 @@
 target/*
 analysis/target/*
 extraction/target/*
+commons/target/*
+extraction/src/test/resources/conf/conf.properties
 *.iml
 .idea/*

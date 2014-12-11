@@ -61,7 +61,6 @@ public class ExtractionJob extends HadoopJob {
     Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
                       CommonCrawlExtractionMapper.class, null, null, true);
 
-
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
     ProtoParquetOutputFormat.setEnableDictionary(job, true);
@@ -114,7 +113,7 @@ public class ExtractionJob extends HadoopJob {
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
           builder.setUrl(record.getURL())
-                  .setArchiveTime(record.getArchiveDate().getTime());
+                 .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
@@ -133,6 +132,7 @@ public class ExtractionJob extends HadoopJob {
         } catch (ProtocolException pe) {
           // TODO have a counter for this
         } catch (Exception e) {
+          // TODO have a counter for this
           throw new IOException(e);
         }
       }

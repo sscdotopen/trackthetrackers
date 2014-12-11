@@ -18,17 +18,20 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-
-import java.io.File;
+import java.io.IOException;
+import java.util.Properties;
 
 public class Config {
 
-  public static String PROJECT_PATH = "/home/felix/";
+  private static Properties props;
 
   private Config() {}
 
-  public static String projectPathTo(String directory) {
-    return new File(PROJECT_PATH, directory).getAbsolutePath();
+  public static String get(String key) throws IOException {
+    if (props == null) {
+      props = new Properties();
+      props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
+    }
+    return props.getProperty(key);
   }
-
 }

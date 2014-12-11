@@ -28,18 +28,15 @@ public class CommonCrawlSampleIntegrationTest {
     ExtractionJob extraction = new ExtractionJob();
     AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
 
-
     ToolRunner.run(extraction, new String[] {
-        "--input", Config.projectPathTo("trackthetrackers/extraction/src/test/resources/commoncrawl/"),
+        "--input", Config.get("commoncrawl.samples.path"),
         "--output", "/tmp/commoncrawl-extraction/"
     });
-
 
     ToolRunner.run(aggregateWatchers, new String[] {
         "--input", "/tmp/commoncrawl-extraction/",
         "--output", "/tmp/commoncrawl-watchers/"
     });
-
 
     TopWatchers.print("/tmp/commoncrawl-watchers/part-r-00000", 100);
   }
