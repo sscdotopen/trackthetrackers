@@ -127,8 +127,21 @@ class URLNormalizer {
     return prefixForInternalLinks;
   }
 
+    private String deletePHP(String url) {
+        if(url.contains("?")) {
+            return url.substring(0, url.indexOf('?'));
+        }
+        return url;
+    }
+
     public String normalize(String urlString)
             throws MalformedURLException {
+
+        urlString = urlString.trim();
+
+        urlString = deletePHP(urlString);
+
+
         if ("".equals(urlString))                     // permit empty
             return urlString;
 

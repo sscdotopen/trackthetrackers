@@ -24,8 +24,8 @@ import com.google.common.io.Closeables;
 
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
 import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
-import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
+import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 
 import org.apache.hadoop.fs.Path;
@@ -78,8 +78,6 @@ public class ExtractionJob extends HadoopJob {
     public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException {
 
       if ("text/html".equals(record.getContentType())) {
-        //System.out.println(record.getURL());
-
         String charset = null;
 
         try {

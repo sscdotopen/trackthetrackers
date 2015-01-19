@@ -27,11 +27,14 @@
 
 
   <dependencies>
+
+    <!-- you have to put the commons depedency at the very beginning -->
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>12.0</version>
+      <groupId>io.ssc.trackthetrackers</groupId>
+      <artifactId>commons</artifactId>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
+
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
@@ -43,39 +46,31 @@
       <version>4.2.1</version>
     </dependency>
 
+    <!-- google parser dependencies -->
+    <dependency>
+      <groupId>com.google.javascript</groupId>
+      <artifactId>closure-compiler</artifactId>
+      <version>v20140730</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>18.0</version>
+    </dependency>
 
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-common</artifactId>
-      <version>1.6.0rc1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-encoding</artifactId>
-      <version>1.6.0rc1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-column</artifactId>
-      <version>1.6.0rc1</version>
-    </dependency>
+
+    <!-- Parquet dependencies -->
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>parquet-hadoop</artifactId>
       <version>1.6.0rc1</version>
     </dependency>
-    <dependency>
-      <groupId>com.twitter</groupId>
-      <artifactId>parquet-protobuf</artifactId>
-      <version>1.6.0rc1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.ssc.trackthetrackers</groupId>
-      <artifactId>commons</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
 
 
     <dependency>
@@ -121,42 +116,65 @@
   </dependencies>
 
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>1.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <excludes>
-                  <exclude>junit:junit</exclude>
-                  <exclude>org.mockito:mockito-all</exclude>
-                </excludes>
-              </artifactSet>
-              <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
-              </transformers>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+  <!--
+
+
+  download here: http://phantomjs.org/download.html
+      for Ubuntu 64bit:  phantomjs-1.9.8-linux-x86_64.tar.bz2
+
+  we have to download and import "selenium-server-standalone-2.44.0.jar" into the project libraries
+        -> https://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar
+
+
+  Next step: Register GhostDriver with a Selenium Grid hub:
+
+    (1)   java -jar selenium-server-standalone-2.44.0.jar -role hub
+
+    (2)   ./phantomjs -webdriver=8080 -webdriver-selenium-grid-hub=http://127.0.0.1:4444
+
+
+  find more information here: https://github.com/detro/ghostdriver/blob/master/README.md
+
+
+  -->
+
+
+ <build>
+   <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-compiler-plugin</artifactId>
+       <version>2.3.2</version>
+       <configuration>
+         <source>1.6</source>
+         <target>1.6</target>
+       </configuration>
+     </plugin>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-shade-plugin</artifactId>
+       <version>1.4</version>
+       <executions>
+         <execution>
+           <phase>package</phase>
+           <goals>
+             <goal>shade</goal>
+           </goals>
+           <configuration>
+             <artifactSet>
+               <excludes>
+                 <exclude>junit:junit</exclude>
+                 <exclude>org.mockito:mockito-all</exclude>
+               </excludes>
+             </artifactSet>
+             <transformers>
+               <transformer implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
+             </transformers>
+           </configuration>
+         </execution>
+       </executions>
+     </plugin>
+   </plugins>
+ </build>
 
 </project>
