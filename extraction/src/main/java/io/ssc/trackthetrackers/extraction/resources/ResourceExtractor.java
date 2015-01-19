@@ -129,7 +129,7 @@ public class ResourceExtractor {
             @Override
             public void error(String message, String sourceName, int line, int lineOffset) {
                 if (LOG.isWarnEnabled()) {
-                    LOG.warn("Parser Error: \"" + message + "\"");
+                    //LOG.warn("Parser Error: \"" + message + "\"");
                 }
             }
         };
@@ -148,7 +148,7 @@ public class ResourceExtractor {
                     parseStrings(r.ast, parsedStrings);
                 } catch(Exception e) {
                     if (LOG.isWarnEnabled()) {
-                        LOG.warn("Parser Exception: \"" + e + "\"");
+                        //LOG.warn("Parser Exception: \"" + e + "\"");
                     }
                 }
         }
