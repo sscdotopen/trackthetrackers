@@ -116,30 +116,7 @@
   </dependencies>
 
 
-  <!--
-
-
-  download here: http://phantomjs.org/download.html
-      for Ubuntu 64bit:  phantomjs-1.9.8-linux-x86_64.tar.bz2
-
-  we have to download and import "selenium-server-standalone-2.44.0.jar" into the project libraries
-        -> https://selenium-release.storage.googleapis.com/2.44/selenium-server-standalone-2.44.0.jar
-
-
-  Next step: Register GhostDriver with a Selenium Grid hub:
-
-    (1)   java -jar selenium-server-standalone-2.44.0.jar -role hub
-
-    (2)   ./phantomjs -webdriver=8080 -webdriver-selenium-grid-hub=http://127.0.0.1:4444
-
-
-  find more information here: https://github.com/detro/ghostdriver/blob/master/README.md
-
-
-  -->
-
-
- <build>
+  <build>
    <plugins>
      <plugin>
        <groupId>org.apache.maven.plugins</groupId>
