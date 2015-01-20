@@ -27,108 +27,109 @@ import org.apache.oro.text.regex.Perl5Pattern;
 import org.apache.oro.text.regex.Perl5Substitution;
 import org.apache.oro.text.regex.Util;
 
-/** Converts URLs to a normal form . */
+/**
+ * Converts URLs to a normal form .
+ */
 class URLNormalizer {
 
     private Perl5Compiler compiler = new Perl5Compiler();
     private ThreadLocal<Perl5Matcher> matchers = new ThreadLocal<Perl5Matcher>() {
         protected Perl5Matcher initialValue() {
-          return new Perl5Matcher();
+            return new Perl5Matcher();
         }
-      };
+    };
     private final Rule relativePathRule;
     private final Rule leadingRelativePathRule;
     private final Rule currentPathRule;
     private final Rule adjacentSlashRule;
 
     public URLNormalizer() {
-      try {
-        // this pattern tries to find spots like "/xx/../" in the url, which
-        // could be replaced by "/" xx consists of chars, different then "/"
-        // (slash) and needs to have at least one char different from "."
-        relativePathRule = new Rule();
-        relativePathRule.pattern = (Perl5Pattern)
-          compiler.compile("(/[^/]*[^/.]{1}[^/]*/\\.\\./)",
-                           Perl5Compiler.READ_ONLY_MASK);
-        relativePathRule.substitution = new Perl5Substitution("/");
+        try {
+            // this pattern tries to find spots like "/xx/../" in the url, which
+            // could be replaced by "/" xx consists of chars, different then "/"
+            // (slash) and needs to have at least one char different from "."
+            relativePathRule = new Rule();
+            relativePathRule.pattern = (Perl5Pattern)
+                    compiler.compile("(/[^/]*[^/.]{1}[^/]*/\\.\\./)",
+                            Perl5Compiler.READ_ONLY_MASK);
+            relativePathRule.substitution = new Perl5Substitution("/");
 
-        // this pattern tries to find spots like leading "/../" in the url,
-        // which could be replaced by "/"
-        leadingRelativePathRule = new Rule();
-        leadingRelativePathRule.pattern = (Perl5Pattern)
-          compiler.compile("^(/\\.\\./)+", Perl5Compiler.READ_ONLY_MASK);
-        leadingRelativePathRule.substitution = new Perl5Substitution("/");
+            // this pattern tries to find spots like leading "/../" in the url,
+            // which could be replaced by "/"
+            leadingRelativePathRule = new Rule();
+            leadingRelativePathRule.pattern = (Perl5Pattern)
+                    compiler.compile("^(/\\.\\./)+", Perl5Compiler.READ_ONLY_MASK);
+            leadingRelativePathRule.substitution = new Perl5Substitution("/");
 
-        // this pattern tries to find spots like "/./" in the url,
-        // which could be replaced by "/"
-        currentPathRule = new Rule();
-        currentPathRule.pattern = (Perl5Pattern)
-          compiler.compile("(/\\./)", Perl5Compiler.READ_ONLY_MASK);
-        currentPathRule.substitution = new Perl5Substitution("/");
+            // this pattern tries to find spots like "/./" in the url,
+            // which could be replaced by "/"
+            currentPathRule = new Rule();
+            currentPathRule.pattern = (Perl5Pattern)
+                    compiler.compile("(/\\./)", Perl5Compiler.READ_ONLY_MASK);
+            currentPathRule.substitution = new Perl5Substitution("/");
 
-        // this pattern tries to find spots like "xx//yy" in the url,
-        // which could be replaced by a "/"
-        adjacentSlashRule = new Rule();
-        adjacentSlashRule.pattern = (Perl5Pattern)      
-          compiler.compile("/{2,}", Perl5Compiler.READ_ONLY_MASK);     
-        adjacentSlashRule.substitution = new Perl5Substitution("/");
-        
-      } catch (MalformedPatternException e) {
-        throw new RuntimeException(e);
-      }
+            // this pattern tries to find spots like "xx//yy" in the url,
+            // which could be replaced by a "/"
+            adjacentSlashRule = new Rule();
+            adjacentSlashRule.pattern = (Perl5Pattern)
+                    compiler.compile("/{2,}", Perl5Compiler.READ_ONLY_MASK);
+            adjacentSlashRule.substitution = new Perl5Substitution("/");
+
+        } catch (MalformedPatternException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-  public String expandIfInternalLink(String prefixForInternalLinks, String link) {
-   if (!link.startsWith("http") && !link.startsWith("ftp") && !link.startsWith("https")) {
-     if (!link.startsWith("//")) {
-         return prefixForInternalLinks + link;
-     } else {
-         return "http:" + link;
-     }
+    public String expandIfInternalLink(String prefixForInternalLinks, String link) {
+        if (!link.startsWith("http") && !link.startsWith("ftp") && !link.startsWith("https")) {
+            if (!link.startsWith("//")) {
+                return prefixForInternalLinks + link;
+            } else {
+                return "http:" + link;
+            }
 
-   }
-   return link;
-  }
-
-  public String removeQuestionMark(String url){
-
-      int startQuestionMark = url.indexOf('?');
-      if (startQuestionMark == -1) {
-          return url;
-      }
-      return url.substring(0,startQuestionMark);
-  }
-
-
-  
-  public String extractDomain(String url) {
-      // extract domain from url
-
-      //remove question mark operator in the case of e.g. php
-      url = removeQuestionMark(url);
-
-      if(url.matches("((ht|f)tp(s?))://((www.)?)((\\w|\\W){1,})/(.*)")) {
-          url = url.substring(url.indexOf("://") + 3);
-    	  url = url.substring(0, url.indexOf("/"));
-      }
-
-      return url;
-  }
-
-  public String createPrefixForInternalLinks(String sourceUrl) {
-    String prefixForInternalLinks = sourceUrl;
-
-    int pos = sourceUrl.lastIndexOf('/');
-    if (pos == -1) {
-      prefixForInternalLinks += '/';
-    } else if (pos != prefixForInternalLinks.length() - 1) {
-      prefixForInternalLinks = prefixForInternalLinks.substring(0, pos + 1);
+        }
+        return link;
     }
-    return prefixForInternalLinks;
-  }
+
+    public String removeQuestionMark(String url) {
+
+        int startQuestionMark = url.indexOf('?');
+        if (startQuestionMark == -1) {
+            return url;
+        }
+        return url.substring(0, startQuestionMark);
+    }
+
+
+    public String extractDomain(String url) {
+        // extract domain from url
+
+        //remove question mark operator in the case of e.g. php
+        url = removeQuestionMark(url);
+
+        if (url.matches("((ht|f)tp(s?))://((www.)?)((\\w|\\W){1,})/(.*)")) {
+            url = url.substring(url.indexOf("://") + 3);
+            url = url.substring(0, url.indexOf("/"));
+        }
+
+        return url;
+    }
+
+    public String createPrefixForInternalLinks(String sourceUrl) {
+        String prefixForInternalLinks = sourceUrl;
+
+        int pos = sourceUrl.lastIndexOf('/');
+        if (pos == -1) {
+            prefixForInternalLinks += '/';
+        } else if (pos != prefixForInternalLinks.length() - 1) {
+            prefixForInternalLinks = prefixForInternalLinks.substring(0, pos + 1);
+        }
+        return prefixForInternalLinks;
+    }
 
     private String deletePHP(String url) {
-        if(url.contains("?")) {
+        if (url.contains("?")) {
             return url.substring(0, url.indexOf('?'));
         }
         return url;
@@ -142,8 +143,9 @@ class URLNormalizer {
         urlString = deletePHP(urlString);
 
 
-        if ("".equals(urlString))                     // permit empty
+        if ("".equals(urlString)) {                     // permit empty
             return urlString;
+        }
 
         urlString = urlString.trim();                 // remove extra spaces
 
@@ -241,25 +243,25 @@ class URLNormalizer {
             // substitue first occurence of "/xx/../" by "/"
             oldLen = fileWorkCopy.length();
             fileWorkCopy = Util.substitute
-              (matcher, relativePathRule.pattern,
-               relativePathRule.substitution, fileWorkCopy, 1);
+                    (matcher, relativePathRule.pattern,
+                            relativePathRule.substitution, fileWorkCopy, 1);
 
             // remove leading "/../"
             fileWorkCopy = Util.substitute
-              (matcher, leadingRelativePathRule.pattern,
-               leadingRelativePathRule.substitution, fileWorkCopy, 1);
+                    (matcher, leadingRelativePathRule.pattern,
+                            leadingRelativePathRule.substitution, fileWorkCopy, 1);
 
             // remove unnecessary "/./"
             fileWorkCopy = Util.substitute
-            (matcher, currentPathRule.pattern,
-            		currentPathRule.substitution, fileWorkCopy, 1);
-            
-            
+                    (matcher, currentPathRule.pattern,
+                            currentPathRule.substitution, fileWorkCopy, 1);
+
+
             // collapse adjacent slashes with "/"
             fileWorkCopy = Util.substitute
-            (matcher, adjacentSlashRule.pattern,
-              adjacentSlashRule.substitution, fileWorkCopy, 1);
-            
+                    (matcher, adjacentSlashRule.pattern,
+                            adjacentSlashRule.substitution, fileWorkCopy, 1);
+
             newLen = fileWorkCopy.length();
         }
 

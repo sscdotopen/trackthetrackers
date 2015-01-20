@@ -41,10 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,15 +54,32 @@ public class ResourceExtractor {
 
     private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
-    private static Set<String> EXTRA_ANNOTATIONS = new HashSet<String>(Arrays.asList(
+    private final static Set<String> EXTRA_ANNOTATIONS = new HashSet<String>(Arrays.asList(
             "suppressReceiverCheck",
             "suppressGlobalPropertiesCheck"
     ));
 
+    private final Config config = ParserRunner.createConfig(true, LanguageMode.ECMASCRIPT5_STRICT, true, EXTRA_ANNOTATIONS);
+    private final StaticSourceFile f = new SimpleSourceFile("input", false);
+
+    private final ErrorReporter errorReporter = new ErrorReporter() {
+        @Override
+        public void warning(String message, String sourceName, int line, int lineOffset) {
+            // Ignore.
+        }
+
+        @Override
+        public void error(String message, String sourceName, int line, int lineOffset) {
+            if (LOG.isWarnEnabled()) {
+                //LOG.warn("Parser Error: \"" + message + "\"");
+            }
+        }
+    };
+
 
     public synchronized Iterable<Resource> extractResources(String sourceUrl, String html) {
 
-        ArrayList<String> scriptHtml = new ArrayList<String>();
+        List<String> scriptHtml = new ArrayList<String>();
 
         Set<Resource> resources = Sets.newHashSet();
         String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
@@ -76,14 +90,14 @@ public class ResourceExtractor {
         Elements imgs = doc.select("img[src]");
         Elements scripts = doc.select("script");
 
-        Elements all = iframes.clone();
-        all.addAll(scripts);
-        all.addAll(links);
-        all.addAll(imgs);
+        Elements allElements = iframes.clone();
+        allElements.addAll(scripts);
+        allElements.addAll(links);
+        allElements.addAll(imgs);
 
         String uri;
 
-        for (Element tag: all) {
+        for (Element tag : allElements) {
             uri = tag.attr("src");
 
             if (!uri.contains(".")) {
@@ -100,7 +114,7 @@ public class ResourceExtractor {
                     if (LOG.isWarnEnabled()) {
                         LOG.warn("Malformed URL: \"" + uri + "\"");
                     }
-                } catch(StackOverflowError err){
+                } catch (StackOverflowError err) {
                     if (LOG.isWarnEnabled()) {
                         LOG.warn("Stack Overflow Error: \"" + uri + "\"");
                     }
@@ -110,47 +124,27 @@ public class ResourceExtractor {
                 }
             }
 
-
             if (tag.tag().toString().equals("script")) { //filter functions
-                if(tag.data().length() > 1) {
+                if (tag.data().length() > 1) {
                     scriptHtml.add(tag.data());
                 }
             }
         }
 
-        Config config = ParserRunner.createConfig(
-                true, LanguageMode.ECMASCRIPT5_STRICT, true, EXTRA_ANNOTATIONS);
 
-        ErrorReporter errorReporter = new ErrorReporter() {
-            @Override
-            public void warning(String message, String sourceName, int line, int lineOffset) {
-                // Ignore.
-            }
-            @Override
-            public void error(String message, String sourceName, int line, int lineOffset) {
+        List<String> parsedStrings = new ArrayList<String>();
+
+        for (String script : scriptHtml) {
+            try {
+                ParserRunner.ParseResult r = ParserRunner.parse(f, script, config, errorReporter);
+                //printTree(r.ast, 0);
+
+                parseStrings(r.ast, parsedStrings);
+            } catch (Exception e) {
                 if (LOG.isWarnEnabled()) {
-                    //LOG.warn("Parser Error: \"" + message + "\"");
+                    //LOG.warn("Parser Exception: \"" + e + "\"");
                 }
             }
-        };
-
-        StaticSourceFile f = new SimpleSourceFile("input", false);
-
-        ArrayList<String> parsedStrings = new ArrayList<String>();
-
-        for(String script:scriptHtml) {
-                ArrayList<String> variables = new ArrayList<String>();
-                ArrayList<String> docVariables = new ArrayList<String>();
-                try {
-                    ParserRunner.ParseResult r = ParserRunner.parse(f, script, config, errorReporter);
-                    //printTree(r.ast, 0);
-
-                    parseStrings(r.ast, parsedStrings);
-                } catch(Exception e) {
-                    if (LOG.isWarnEnabled()) {
-                        //LOG.warn("Parser Exception: \"" + e + "\"");
-                    }
-                }
         }
 
         tokenizeStrings(parsedStrings); //get strings within strings
@@ -161,16 +155,16 @@ public class ResourceExtractor {
     }
 
     //parse url when it is within the string
-    private void tokenizeStrings(ArrayList<String> parsedStrings) {
+    private void tokenizeStrings(List<String> parsedStrings) {
 
         ArrayList<Integer> toBeReplaced = new ArrayList<Integer>();
 
         ArrayList<String> tokenizedStrings = new ArrayList<String>();
 
-        for(int o=0;o<parsedStrings.size();o++) {
+        for (int o = 0; o < parsedStrings.size(); o++) {
             String currentString = parsedStrings.get(o);
 
-            if( currentString.contains("\"") || currentString.contains("'")) {
+            if (currentString.contains("\"") || currentString.contains("'")) {
                 Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
                 boolean found = false;
                 while (matcher.find()) {
@@ -179,7 +173,7 @@ public class ResourceExtractor {
                         toBeReplaced.add(o);
                     }
 
-                    for(int i = 0; i < matcher.groupCount(); i++) {
+                    for (int i = 0; i < matcher.groupCount(); i++) {
                         String token = matcher.group(i);
 
                         if (token != null && !token.contains("\"") && !token.contains("'") && isUrl(token)) {
@@ -190,15 +184,15 @@ public class ResourceExtractor {
             }
         }
 
-        for(int o=toBeReplaced.size()-1;o>=0;o--) {
-            parsedStrings.remove((int)toBeReplaced.get(o));
+        for (int o = toBeReplaced.size() - 1; o >= 0; o--) {
+            parsedStrings.remove((int) toBeReplaced.get(o));
         }
 
         parsedStrings.addAll(tokenizedStrings);
     }
 
 
-    private Set<Resource> filterResourcesFromStrings(ArrayList<String> parsedStrings) {
+    private Set<Resource> filterResourcesFromStrings(List<String> parsedStrings) {
         Set<Resource> resources = Sets.newHashSet();
         for (String url : parsedStrings) {
             if (isUrl(url)) {
@@ -210,7 +204,7 @@ public class ResourceExtractor {
                     if (LOG.isWarnEnabled()) {
                         LOG.warn("Malformed URL: \"" + url + "\"");
                     }
-                } catch(StackOverflowError err){
+                } catch (StackOverflowError err) {
                     if (LOG.isWarnEnabled()) {
                         LOG.warn("Stack Overflow Error: \"" + url + "\"");
                     }
@@ -225,20 +219,20 @@ public class ResourceExtractor {
 
     private boolean isUrl(String url) {
 
-        if(!url.contains(".")) {
+        if (!url.contains(".")) {
             return false;
         }
 
         //remove and check white space
         url = url.trim();
-        if(url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
+        if (url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
             return false;
         }
 
         //TODO: check this condition
         //this doesnt work for something like localhost:80/...
-        if(url.contains(":")) {
-            if(url.indexOf(':') < url.length() - 1 && url.charAt(url.indexOf(':')+1) != '/') {
+        if (url.contains(":")) {
+            if (url.indexOf(':') < url.length() - 1 && url.charAt(url.indexOf(':') + 1) != '/') {
                 return false;
             }
         }
@@ -247,24 +241,24 @@ public class ResourceExtractor {
     }
 
     private void printTree(Node root, int level) {
-        for(int i = 0; i < level; i++) {
+        for (int i = 0; i < level; i++) {
             System.out.print("\t");
         }
         System.out.println(root);
 
-        for(Node child : root.children()){
-            printTree(child,level+1);
+        for (Node child : root.children()) {
+            printTree(child, level + 1);
         }
     }
 
-    private void parseStrings(Node root, ArrayList<String> parsedStrings) {
-        if(root.isString()) {
-            if(root.getString().contains(".")) {
+    private void parseStrings(Node root, List<String> parsedStrings) {
+        if (root.isString()) {
+            if (root.getString().contains(".")) {
                 parsedStrings.add(root.getString());
             }
         }
 
-        for(Node child : root.children()){
+        for (Node child : root.children()) {
             parseStrings(child, parsedStrings);
         }
     }

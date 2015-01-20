@@ -11,7 +11,6 @@
 
   <artifactId>commons</artifactId>
 
-
   <dependencies>
     <!--
     <dependency>
@@ -25,13 +24,8 @@
       <artifactId>parquet-protobuf</artifactId>
       <version>1.6.0rc1</version>
     </dependency>
-
-
   </dependencies>
-
-
-
-
+  
   <build>
     <plugins>
       <plugin>
