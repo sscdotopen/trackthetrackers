@@ -23,6 +23,12 @@
       <groupId>com.twitter</groupId>
       <artifactId>parquet-protobuf</artifactId>
       <version>1.6.0rc1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.httpcomponents</groupId>
+          <artifactId>httpclient</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
   
