@@ -48,250 +48,250 @@ import java.util.regex.Pattern;
 
 public class ResourceExtractor {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
 
-    private final URLNormalizer urlNormalizer = new URLNormalizer();
+  private final URLNormalizer urlNormalizer = new URLNormalizer();
 
-    private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
+  private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
-    private final static Set<String> EXTRA_ANNOTATIONS = new HashSet<String>(Arrays.asList(
-            "suppressReceiverCheck",
-            "suppressGlobalPropertiesCheck"
-    ));
+  private final static Set<String> EXTRA_ANNOTATIONS = new HashSet<String>(Arrays.asList(
+      "suppressReceiverCheck",
+      "suppressGlobalPropertiesCheck"
+  ));
 
-    private final Config config = ParserRunner.createConfig(true, LanguageMode.ECMASCRIPT5_STRICT, true, EXTRA_ANNOTATIONS);
-    private final StaticSourceFile f = new SimpleSourceFile("input", false);
+  private final Config config = ParserRunner.createConfig(true, LanguageMode.ECMASCRIPT5_STRICT, true, EXTRA_ANNOTATIONS);
+  private final StaticSourceFile f = new SimpleSourceFile("input", false);
 
-    private final ErrorReporter errorReporter = new ErrorReporter() {
-        @Override
-        public void warning(String message, String sourceName, int line, int lineOffset) {
-            // Ignore.
-        }
-
-        @Override
-        public void error(String message, String sourceName, int line, int lineOffset) {
-            if (LOG.isWarnEnabled()) {
-                //LOG.warn("Parser Error: \"" + message + "\"");
-            }
-        }
-    };
-
-
-    public synchronized Iterable<Resource> extractResources(String sourceUrl, String html) {
-
-        List<String> scriptHtml = new ArrayList<String>();
-
-        Set<Resource> resources = Sets.newHashSet();
-        String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
-
-        Document doc = Jsoup.parse(html);
-        Elements iframes = doc.select("iframe[src]");
-        Elements links = doc.select("link[href]");
-        Elements imgs = doc.select("img[src]");
-        Elements scripts = doc.select("script");
-
-        Elements allElements = iframes.clone();
-        allElements.addAll(scripts);
-        allElements.addAll(links);
-        allElements.addAll(imgs);
-
-        String uri;
-
-        for (Element tag : allElements) {
-            uri = tag.attr("src");
-
-            if (!uri.contains(".")) {
-                uri = tag.attr("href");
-            }
-
-            if (uri.contains(".")) {
-                uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-                // normalize link
-                try {
-                    uri = urlNormalizer.normalize(uri);
-                    uri = urlNormalizer.extractDomain(uri);
-                } catch (MalformedURLException e) {
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Malformed URL: \"" + uri + "\"");
-                    }
-                } catch (StackOverflowError err) {
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Stack Overflow Error: \"" + uri + "\"");
-                    }
-                }
-                if (isValidDomain(uri)) {
-                    resources.add(new Resource(uri, type(tag.tag().toString())));
-                }
-            }
-
-            if (tag.tag().toString().equals("script")) { //filter functions
-                if (tag.data().length() > 1) {
-                    scriptHtml.add(tag.data());
-                }
-            }
-        }
-
-
-        List<String> parsedStrings = new ArrayList<String>();
-
-        for (String script : scriptHtml) {
-            try {
-                ParserRunner.ParseResult r = ParserRunner.parse(f, script, config, errorReporter);
-                //printTree(r.ast, 0);
-
-                parseStrings(r.ast, parsedStrings);
-            } catch (Exception e) {
-                if (LOG.isWarnEnabled()) {
-                    //LOG.warn("Parser Exception: \"" + e + "\"");
-                }
-            }
-        }
-
-        tokenizeStrings(parsedStrings); //get strings within strings
-
-        resources.addAll(filterResourcesFromStrings(parsedStrings)); // check whether strings are actual urls
-
-        return resources;
+  private final ErrorReporter errorReporter = new ErrorReporter() {
+    @Override
+    public void warning(String message, String sourceName, int line, int lineOffset) {
+      // Ignore.
     }
 
-    //parse url when it is within the string
-    private void tokenizeStrings(List<String> parsedStrings) {
+    @Override
+    public void error(String message, String sourceName, int line, int lineOffset) {
+      if (LOG.isWarnEnabled()) {
+        //LOG.warn("Parser Error: \"" + message + "\"");
+      }
+    }
+  };
 
-        ArrayList<Integer> toBeReplaced = new ArrayList<Integer>();
 
-        ArrayList<String> tokenizedStrings = new ArrayList<String>();
+  public synchronized Iterable<Resource> extractResources(String sourceUrl, String html) {
 
-        for (int o = 0; o < parsedStrings.size(); o++) {
-            String currentString = parsedStrings.get(o);
+    List<String> scriptHtml = new ArrayList<String>();
 
-            if (currentString.contains("\"") || currentString.contains("'")) {
-                Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
-                boolean found = false;
-                while (matcher.find()) {
-                    if (found == false) {
-                        found = true;
-                        toBeReplaced.add(o);
-                    }
+    Set<Resource> resources = Sets.newHashSet();
+    String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
 
-                    for (int i = 0; i < matcher.groupCount(); i++) {
-                        String token = matcher.group(i);
+    Document doc = Jsoup.parse(html);
+    Elements iframes = doc.select("iframe[src]");
+    Elements links = doc.select("link[href]");
+    Elements imgs = doc.select("img[src]");
+    Elements scripts = doc.select("script");
 
-                        if (token != null && !token.contains("\"") && !token.contains("'") && isUrl(token)) {
-                            tokenizedStrings.add(token);
-                        }
-                    }
-                }
-            }
+    Elements allElements = iframes.clone();
+    allElements.addAll(scripts);
+    allElements.addAll(links);
+    allElements.addAll(imgs);
+
+    String uri;
+
+    for (Element tag : allElements) {
+      uri = tag.attr("src");
+
+      if (!uri.contains(".")) {
+        uri = tag.attr("href");
+      }
+
+      if (uri.contains(".")) {
+        uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
+        // normalize link
+        try {
+          uri = urlNormalizer.normalize(uri);
+          uri = urlNormalizer.extractDomain(uri);
+        } catch (MalformedURLException e) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Malformed URL: \"" + uri + "\"");
+          }
+        } catch (StackOverflowError err) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Stack Overflow Error: \"" + uri + "\"");
+          }
         }
-
-        for (int o = toBeReplaced.size() - 1; o >= 0; o--) {
-            parsedStrings.remove((int) toBeReplaced.get(o));
+        if (isValidDomain(uri)) {
+          resources.add(new Resource(uri, type(tag.tag().toString())));
         }
+      }
 
-        parsedStrings.addAll(tokenizedStrings);
+      if (tag.tag().toString().equals("script")) { //filter functions
+        if (tag.data().length() > 1) {
+          scriptHtml.add(tag.data());
+        }
+      }
     }
 
 
-    private Set<Resource> filterResourcesFromStrings(List<String> parsedStrings) {
-        Set<Resource> resources = Sets.newHashSet();
-        for (String url : parsedStrings) {
-            if (isUrl(url)) {
-                // normalize link
-                try {
-                    url = urlNormalizer.normalize(url);
-                    url = urlNormalizer.extractDomain(url);
-                } catch (MalformedURLException e) {
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Malformed URL: \"" + url + "\"");
-                    }
-                } catch (StackOverflowError err) {
-                    if (LOG.isWarnEnabled()) {
-                        LOG.warn("Stack Overflow Error: \"" + url + "\"");
-                    }
-                }
-                if (isValidDomain(url)) {
-                    resources.add(new Resource(url, Resource.Type.SCRIPT));
-                }
+    List<String> parsedStrings = new ArrayList<String>();
+
+    for (String script : scriptHtml) {
+      try {
+        ParserRunner.ParseResult r = ParserRunner.parse(f, script, config, errorReporter);
+        //printTree(r.ast, 0);
+
+        parseStrings(r.ast, parsedStrings);
+      } catch (Exception e) {
+        if (LOG.isWarnEnabled()) {
+          //LOG.warn("Parser Exception: \"" + e + "\"");
+        }
+      }
+    }
+
+    tokenizeStrings(parsedStrings); //get strings within strings
+
+    resources.addAll(filterResourcesFromStrings(parsedStrings)); // check whether strings are actual urls
+
+    return resources;
+  }
+
+  //parse url when it is within the string
+  private void tokenizeStrings(List<String> parsedStrings) {
+
+    ArrayList<Integer> toBeReplaced = new ArrayList<Integer>();
+
+    ArrayList<String> tokenizedStrings = new ArrayList<String>();
+
+    for (int o = 0; o < parsedStrings.size(); o++) {
+      String currentString = parsedStrings.get(o);
+
+      if (currentString.contains("\"") || currentString.contains("'")) {
+        Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
+        boolean found = false;
+        while (matcher.find()) {
+          if (found == false) {
+            found = true;
+            toBeReplaced.add(o);
+          }
+
+          for (int i = 0; i < matcher.groupCount(); i++) {
+            String token = matcher.group(i);
+
+            if (token != null && !token.contains("\"") && !token.contains("'") && isUrl(token)) {
+              tokenizedStrings.add(token);
             }
+          }
         }
-        return resources;
+      }
     }
 
-    private boolean isUrl(String url) {
-
-        if (!url.contains(".")) {
-            return false;
-        }
-
-        //remove and check white space
-        url = url.trim();
-        if (url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
-            return false;
-        }
-
-        //TODO: check this condition
-        //this doesnt work for something like localhost:80/...
-        if (url.contains(":")) {
-            if (url.indexOf(':') < url.length() - 1 && url.charAt(url.indexOf(':') + 1) != '/') {
-                return false;
-            }
-        }
-
-        return true;
+    for (int o = toBeReplaced.size() - 1; o >= 0; o--) {
+      parsedStrings.remove((int) toBeReplaced.get(o));
     }
 
-    private void printTree(Node root, int level) {
-        for (int i = 0; i < level; i++) {
-            System.out.print("\t");
-        }
-        System.out.println(root);
+    parsedStrings.addAll(tokenizedStrings);
+  }
 
-        for (Node child : root.children()) {
-            printTree(child, level + 1);
+
+  private Set<Resource> filterResourcesFromStrings(List<String> parsedStrings) {
+    Set<Resource> resources = Sets.newHashSet();
+    for (String url : parsedStrings) {
+      if (isUrl(url)) {
+        // normalize link
+        try {
+          url = urlNormalizer.normalize(url);
+          url = urlNormalizer.extractDomain(url);
+        } catch (MalformedURLException e) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Malformed URL: \"" + url + "\"");
+          }
+        } catch (StackOverflowError err) {
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Stack Overflow Error: \"" + url + "\"");
+          }
         }
+        if (isValidDomain(url)) {
+          resources.add(new Resource(url, Resource.Type.SCRIPT));
+        }
+      }
+    }
+    return resources;
+  }
+
+  private boolean isUrl(String url) {
+
+    if (!url.contains(".")) {
+      return false;
     }
 
-    private void parseStrings(Node root, List<String> parsedStrings) {
-        if (root.isString()) {
-            if (root.getString().contains(".")) {
-                parsedStrings.add(root.getString());
-            }
-        }
-
-        for (Node child : root.children()) {
-            parseStrings(child, parsedStrings);
-        }
+    //remove and check white space
+    url = url.trim();
+    if (url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
+      return false;
     }
 
-    private boolean isValidDomain(String url) {
-        if (!url.contains(".") || url.contains("///")) {
-            return false;
-        }
-
-        if (url.contains(";") || url.contains("=") || url.contains("?")) {
-            return false;
-        }
-
-        int startTopLevelDomain = url.lastIndexOf('.');
-        String topLevelDomain = url.substring(startTopLevelDomain + 1);
-        return DomainValidator.getInstance().isValidTld(topLevelDomain);
+    //TODO: check this condition
+    //this doesnt work for something like localhost:80/...
+    if (url.contains(":")) {
+      if (url.indexOf(':') < url.length() - 1 && url.charAt(url.indexOf(':') + 1) != '/') {
+        return false;
+      }
     }
 
+    return true;
+  }
 
-    private Resource.Type type(String tag) {
-        if ("script".equals(tag)) {
-            return Resource.Type.SCRIPT;
-        }
-        if ("link".equals(tag)) {
-            return Resource.Type.LINK;
-        }
-        if ("img".equals(tag)) {
-            return Resource.Type.IMAGE;
-        }
-        if ("iframe".equals(tag)) {
-            return Resource.Type.IFRAME;
-        }
-
-        return Resource.Type.OTHER;
+  private void printTree(Node root, int level) {
+    for (int i = 0; i < level; i++) {
+      System.out.print("\t");
     }
+    System.out.println(root);
+
+    for (Node child : root.children()) {
+      printTree(child, level + 1);
+    }
+  }
+
+  private void parseStrings(Node root, List<String> parsedStrings) {
+    if (root.isString()) {
+      if (root.getString().contains(".")) {
+        parsedStrings.add(root.getString());
+      }
+    }
+
+    for (Node child : root.children()) {
+      parseStrings(child, parsedStrings);
+    }
+  }
+
+  private boolean isValidDomain(String url) {
+    if (!url.contains(".") || url.contains("///")) {
+      return false;
+    }
+
+    if (url.contains(";") || url.contains("=") || url.contains("?")) {
+      return false;
+    }
+
+    int startTopLevelDomain = url.lastIndexOf('.');
+    String topLevelDomain = url.substring(startTopLevelDomain + 1);
+    return DomainValidator.getInstance().isValidTld(topLevelDomain);
+  }
+
+
+  private Resource.Type type(String tag) {
+    if ("script".equals(tag)) {
+      return Resource.Type.SCRIPT;
+    }
+    if ("link".equals(tag)) {
+      return Resource.Type.LINK;
+    }
+    if ("img".equals(tag)) {
+      return Resource.Type.IMAGE;
+    }
+    if ("iframe".equals(tag)) {
+      return Resource.Type.IFRAME;
+    }
+
+    return Resource.Type.OTHER;
+  }
 }
