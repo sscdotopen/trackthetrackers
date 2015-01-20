@@ -19,6 +19,7 @@
 
 package io.ssc.trackthetrackers.extraction.resources;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import com.google.javascript.jscomp.parsing.Config;
@@ -157,9 +158,9 @@ public class ResourceExtractor {
   //parse url when it is within the string
   private void tokenizeStrings(List<String> parsedStrings) {
 
-    ArrayList<Integer> toBeReplaced = new ArrayList<Integer>();
+    List<Integer> toBeReplaced = new ArrayList<Integer>();
 
-    ArrayList<String> tokenizedStrings = new ArrayList<String>();
+    List<String> tokenizedStrings = new ArrayList<String>();
 
     for (int o = 0; o < parsedStrings.size(); o++) {
       String currentString = parsedStrings.get(o);
@@ -168,7 +169,7 @@ public class ResourceExtractor {
         Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
         boolean found = false;
         while (matcher.find()) {
-          if (found == false) {
+          if (!found) {
             found = true;
             toBeReplaced.add(o);
           }
