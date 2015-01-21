@@ -41,7 +41,7 @@ public class ArcInputFormatMapred extends FileInputFormat<Text, ArcRecordMapred>
    * @param reporter The progress reporter.
    */
   public RecordReader<Text, ArcRecordMapred> getRecordReader(InputSplit split, JobConf job, Reporter reporter)
-          throws IOException {
+      throws IOException {
     reporter.setStatus(split.toString());
     return new ArcRecordReaderMapred(job, (FileSplit)split);
   }

@@ -22,8 +22,6 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce;
 
-import io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce.CompressorInputStream;
-
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.InputStream;
@@ -97,8 +95,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
    *
    * @throws java.io.IOException if the stream could not be created
    */
-  public GzipCompressorInputStream(InputStream inputStream)
-      throws IOException {
+  public GzipCompressorInputStream(InputStream inputStream) throws IOException {
     this(inputStream, false);
   }
 
@@ -122,9 +119,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
    *
    * @throws java.io.IOException if the stream could not be created
    */
-  public GzipCompressorInputStream(InputStream inputStream,
-                   boolean decompressConcatenated)
-      throws IOException {
+  public GzipCompressorInputStream(InputStream inputStream, boolean decompressConcatenated) throws IOException {
     // Mark support is strictly needed for concatenated files only,
     // but it's simpler if it is always available.
     if (inputStream.markSupported()) {
@@ -138,7 +133,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
   }
 
   private boolean init(boolean isFirstMember) throws IOException {
-    //assert isFirstMember || decompressConcatenated; //throws an error!!!
+    //assert isFirstMember || decompressConcatenated; //TODO: check why this throws an error!!!
 
     // Check the magic bytes without a possibility of EOFException.
     int magic0 = in.read();
@@ -152,23 +147,19 @@ public class GzipCompressorInputStream extends CompressorInputStream {
     }
 
     if (magic0 != 31 || magic1 != 139) {
-      throw new IOException(isFirstMember
-                  ? "Input is not in the .gz format"
-                  : "Garbage after a valid .gz stream");
+      throw new IOException(isFirstMember ? "Input is not in the .gz format" : "Garbage after a valid .gz stream");
     }
 
     // Parsing the rest of the header may throw EOFException.
     DataInputStream inData = new DataInputStream(in);
     int method = inData.readUnsignedByte();
     if (method != 8) {
-      throw new IOException("Unsupported compression method "
-                  + method + " in the .gz header");
+      throw new IOException("Unsupported compression method " + method + " in the .gz header");
     }
 
     int flg = inData.readUnsignedByte();
     if ((flg & FRESERVED) != 0) {
-      throw new IOException(
-          "Reserved flags are set in the .gz header");
+      throw new IOException("Reserved flags are set in the .gz header");
     }
 
     inData.readInt(); // mtime, ignored
@@ -219,18 +210,12 @@ public class GzipCompressorInputStream extends CompressorInputStream {
     while (inData.readUnsignedByte() != 0x00) {}
   }
 
-  /** {@inheritDoc} */
   @Override
   public int read() throws IOException {
     byte[] buf = new byte[1];
     return read(buf, 0, 1) == -1 ? -1 : (buf[0] & 0xFF);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * @since 1.1
-   */
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
 
@@ -292,8 +277,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
         }
 
         if (crcStored != crc.getValue()) {
-          throw new IOException("Gzip-compressed data is corrupt "
-                      + "(CRC32 error)");
+          throw new IOException("Gzip-compressed data is corrupt (CRC32 error)");
         }
 
         // Uncompressed size modulo 2^32 (ISIZE in the spec)
@@ -303,8 +287,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
         }
 
         if (isize != memberSize) {
-          throw new IOException("Gzip-compressed data is corrupt"
-                      + "(uncompressed size mismatch)");
+          throw new IOException("Gzip-compressed data is corrupt (uncompressed size mismatch)");
         }
 
 
@@ -330,8 +313,6 @@ public class GzipCompressorInputStream extends CompressorInputStream {
    * @param signature the bytes to check
    * @param length  the number of bytes to check
    * @return      true if this is a .gz stream, false otherwise
-   *
-   * @since 1.1
    */
   public static boolean matches(byte[] signature, int length) {
 
@@ -352,8 +333,6 @@ public class GzipCompressorInputStream extends CompressorInputStream {
 
   /**
    * Closes the input stream (unless it is System.in).
-   *
-   * @since 1.2
    */
   @Override
   public void close() throws IOException {
@@ -362,16 +341,14 @@ public class GzipCompressorInputStream extends CompressorInputStream {
       inf = null;
     }
 
-    if (this.in != System.in) {
-      this.in.close();
+    if (in != System.in) {
+      in.close();
     }
   }
 
   /**
    * Explicitly instructs the stream to allow an additional concatenated
    * member to be read.
-   *
-   * @since 1.x.x
    */
   public boolean nextMember() {
 

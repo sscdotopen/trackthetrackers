@@ -31,9 +31,6 @@ import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.Counters;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
@@ -60,8 +57,8 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
-                      CommonCrawlExtractionMapper.class, null, null, true);
+    mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, 
+        CommonCrawlExtractionMapper.class, null, null, true);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);

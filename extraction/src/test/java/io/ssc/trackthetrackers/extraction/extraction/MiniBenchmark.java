@@ -1,9 +1,6 @@
 package io.ssc.trackthetrackers.extraction.extraction;
 
 /**
- * Created by felix on 20.01.15.
- */
-/**
  * Track the trackers
  * Copyright (C) 2014  Sebastian Schelter
  *

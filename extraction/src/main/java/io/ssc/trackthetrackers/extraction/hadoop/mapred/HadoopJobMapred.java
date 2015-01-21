@@ -67,7 +67,7 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
   }
 
   private JobConf map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                  Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+                      Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
 
     JobConf conf = new JobConf(getClass());
     conf.setJobName(mapperClass.getSimpleName());
@@ -91,19 +91,32 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
     return conf;
   }
 
-  protected JobConf mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                            Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException{
-    JobConf conf = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass, deleteOutputFolder);
+  protected void mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass, 
+                         Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException{
+    JobConf conf = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass, 
+        deleteOutputFolder);
 
     conf.setNumReduceTasks(0);
 
-    return conf;
+    runJob(conf);   
+  }
+  
+  protected void runJob (JobConf conf) {
+    try {
+      job = JobClient.runJob(conf);
+      job.waitForCompletion();
+    } catch (IOException e) {
+      
+    }
   }
 
-  protected JobConf mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass,
-                              Class mapperClass, Class mapperKeyClass, Class mapperValueClass,
-                              Class reducerClass, Class reducerKeyClass, Class reducerValueClass, boolean combinable, boolean deleteOutputFolder) throws IOException{
-    JobConf conf =  map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass, deleteOutputFolder);
+  protected void mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass, 
+                           Class mapperClass, Class mapperKeyClass, Class mapperValueClass,
+                           Class reducerClass, Class reducerKeyClass, Class reducerValueClass, boolean combinable, 
+                           boolean deleteOutputFolder) throws IOException{
+    
+    JobConf conf =  map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, 
+        mapperValueClass, deleteOutputFolder);
 
     conf.setReducerClass(reducerClass);
     conf.setOutputKeyClass(reducerKeyClass);
@@ -113,7 +126,7 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
       conf.setCombinerClass(reducerClass);
     }
 
-    return conf;
+    runJob(conf);
   }
 
 }

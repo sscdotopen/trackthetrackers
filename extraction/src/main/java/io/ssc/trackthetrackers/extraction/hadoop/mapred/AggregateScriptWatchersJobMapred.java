@@ -50,15 +50,10 @@ public class AggregateScriptWatchersJobMapred extends HadoopJobMapred {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    JobConf conf = mapReduce(inputPath, outputPath, SequenceFileInputFormat.class, SequenceFileOutputFormat.class,
-            WatchersMapper.class, Text.class, LongWritable.class,
-            CountWatchingsReducer.class, Text.class, LongWritable.class, true, true);
-    conf.setCombinerClass(CountWatchingsReducer.class);
-
-    job = JobClient.runJob(conf);
-
-    job.waitForCompletion();
-
+    mapReduce(inputPath, outputPath, SequenceFileInputFormat.class, SequenceFileOutputFormat.class,
+        WatchersMapper.class, Text.class, LongWritable.class, 
+        CountWatchingsReducer.class, Text.class, LongWritable.class, true, true);
+    
     return 0;
   }
 
@@ -71,7 +66,7 @@ public class AggregateScriptWatchersJobMapred extends HadoopJobMapred {
 
     @Override
     public void map(Text url, Text watchers, OutputCollector<Text, LongWritable> collector, Reporter reporter)
-            throws IOException {
+        throws IOException {
 
       String[] allWatchers = SEP.split(watchers.toString());
       for (String aWatcher : allWatchers) {

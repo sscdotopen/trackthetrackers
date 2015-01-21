@@ -35,7 +35,8 @@ public class ArcInputFormat extends FileInputFormat<Text, ArcRecord> {
    * Returns the <code>RecordReader</code> for reading the arc file.
    *
    */
-  public RecordReader<Text,ArcRecord> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+  public RecordReader<Text,ArcRecord> createRecordReader(InputSplit split, TaskAttemptContext context) 
+        throws IOException, InterruptedException {
     return new ArcRecordReader();
   }
 

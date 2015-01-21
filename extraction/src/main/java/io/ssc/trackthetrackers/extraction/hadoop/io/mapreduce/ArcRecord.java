@@ -69,13 +69,13 @@ public class ArcRecord implements Writable {
   public ArcRecord() { }
 
   private void clear() {
-    this.url = null;
-    this.ipAddress = null;
-    this.archiveDate = null;
-    this.contentType = null;
-    this.contentLength = 0;
-    this.payload = null;
-    this.httpResponse = null;
+    url = null;
+    ipAddress = null;
+    archiveDate = null;
+    contentType = null;
+    contentLength = 0;
+    payload = null;
+    httpResponse = null;
   }
 
   private String readLine(InputStream in) throws IOException {
@@ -187,15 +187,15 @@ public class ArcRecord implements Writable {
       throw new IllegalArgumentException("ArcRecord cannot be created from NULL/missing input stream.");
     }
 
-    int bufferSize = this.contentLength;
+    int bufferSize = contentLength;
 
-    this.payload = new byte[bufferSize];
+    payload = new byte[bufferSize];
 
-    int n = in.read(this.payload, 0, this.payload.length);
+    int n = in.read(payload, 0, payload.length);
 
-    if (n < this.payload.length) {
+    if (n < payload.length) {
       LOG.warn("Expecting "+bufferSize+" bytes in ARC record payload, found "+n+" bytes.  Performing array copy.");
-      this.payload = Arrays.copyOf(this.payload, n);
+      payload = Arrays.copyOf(payload, n);
     }
 
     // After this, we should be at the end of this GZIP member.  Let the
@@ -208,25 +208,23 @@ public class ArcRecord implements Writable {
 
     if (payload == null) {
       payload = Arrays.copyOf(data, length);
-    }
-    else {
+    } else {
       int i = payload.length;
       int n = payload.length + length;
 
       // resize the payload buffer
-      this.payload = Arrays.copyOf(this.payload, n);
+      payload = Arrays.copyOf(payload, n);
 
       // copy in the additional data
-      System.arraycopy(data, 0, this.payload, i, length);
+      System.arraycopy(data, 0, payload, i, length);
     }
   }
 
   public String toString() {
-    return this.url + " - " + this.archiveDate.toString() + " - " + this.contentType;
+    return url + " - " + archiveDate.toString() + " - " + contentType;
   }
 
-  public void write(DataOutput out)
-      throws IOException {
+  public void write(DataOutput out) throws IOException {
 
     // write out ARC header info
     out.writeUTF(url);
@@ -401,24 +399,33 @@ public class ArcRecord implements Writable {
 
     for (i = 0; i < data.length; i++) {
 
-      if      (data[i] == CR) {
-        if      (s == 0) s = 1;
-        else if (s == 1) s = 0;
-        else if (s == 2) s = 3;
-        else if (s == 3) s = 0;
-      }
-      else if (data[i] == LF) {
-        if      (s == 0) s = 0;
-        else if (s == 1) s = 2;
-        else if (s == 2) s = 0;
-        else if (s == 3) s = 4;
-      }
-      else {
+      if (data[i] == CR) {
+        if (s == 0) {
+          s = 1;
+        } else if (s == 1) {
+          s = 0;
+        } else if (s == 2) {
+          s = 3;
+        } else if (s == 3) {
+          s = 0;
+        }
+      } else if (data[i] == LF) {
+        if (s == 0) {
+          s = 0;
+        } else if (s == 1) {
+          s = 2;
+        } else if (s == 2) {
+          s = 0;
+        } else if (s == 3) {
+          s = 4;
+        }
+      } else {
         s = 0;
       }
 
-      if (s == 4)
+      if (s == 4) {
         return i + 1;
+      }
     }
 
     return -1;

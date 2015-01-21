@@ -21,17 +21,17 @@ package io.ssc.trackthetrackers.extraction.hadoop.mapred;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
+
 import io.ssc.trackthetrackers.extraction.hadoop.io.mapred.ArcInputFormatMapred;
 import io.ssc.trackthetrackers.extraction.hadoop.io.mapred.ArcRecordMapred;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
-import org.apache.hadoop.fs.FileSystem;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.Counters;
-import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapred.*;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
@@ -54,12 +54,8 @@ public class ExtractionJobMapred extends HadoopJobMapred {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    JobConf conf = mapOnly(inputPath, outputPath, ArcInputFormatMapred.class, SequenceFileOutputFormat.class,
-            CommonCrawlExtractionMapper.class, Text.class, Text.class, true);
-
-    job = JobClient.runJob(conf);
-    
-    job.waitForCompletion();
+    mapOnly(inputPath, outputPath, ArcInputFormatMapred.class, SequenceFileOutputFormat.class,
+        CommonCrawlExtractionMapper.class, Text.class, Text.class, true);
 
     return 0;
   }
@@ -76,8 +72,6 @@ public class ExtractionJobMapred extends HadoopJobMapred {
                     Reporter reporter) throws IOException {
 
       if ("text/html".equals(record.getContentType())) {
-        //System.out.println(record.getURL());
-
         String charset = null;
 
         try {
@@ -108,7 +102,6 @@ public class ExtractionJobMapred extends HadoopJobMapred {
 
           StringBuilder concatenatedResources = new StringBuilder();
           for (Resource resource : resources) {
-            //System.out.println("\t" + resource.url() + " " +  resource.type());
             concatenatedResources.append(resource.url());
             concatenatedResources.append(',');
           }

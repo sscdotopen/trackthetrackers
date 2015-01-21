@@ -74,16 +74,16 @@ public class CheckMapreduceImplementationTest {
                 "--output", "/tmp/commoncrawl-watchers/mapred/"
         });
     
-        long numberPagesAggregationShould = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.PAGES);
-        long numberResourcesAggregation = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.RESOURCES);
+        long numberPagesAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.PAGES);
+        long numberResAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.RESOURCES);
             
         System.out.println("MapReduce Pages: " + numberPagesAggregation);
-        System.out.println("MapRed Pages: " + numberPagesAggregationShould);
+        System.out.println("MapRed Pages: " + numberPagesAggr);
 
         System.out.println("MapReduce Scripts: " + numberScriptsAggregation);
-        System.out.println("MapRed Resources: " + numberResourcesAggregation);
+        System.out.println("MapRed Resources: " + numberResAggr);
         
-        assertEquals(numberPagesAggregation, numberPagesAggregationShould);
+        assertEquals(numberPagesAggregation, numberPagesAggr);
 
     }
 }

@@ -46,15 +46,12 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-
-    job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
-                        WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class,
-                        true, true);
+    mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class, 
+        WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class, true, true);
 
     //push down projection
     String projection = "message ParsedPage {required binary url;required int64 archiveTime; repeated binary scripts;}";
     ProtoParquetInputFormat.setRequestedProjection(job, projection);
-
 
     job.waitForCompletion(true);
 
@@ -68,7 +65,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     private final LongWritable one = new LongWritable(1);
 
     public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder,
-        Mapper<Void,ParsedPageProtos.ParsedPage.Builder,Text,LongWritable>.Context context)
+        Mapper<Void,ParsedPageProtos.ParsedPage.Builder,Text,LongWritable>.Context context) 
         throws IOException, InterruptedException {
 
       if (parsedPageBuilder != null) {

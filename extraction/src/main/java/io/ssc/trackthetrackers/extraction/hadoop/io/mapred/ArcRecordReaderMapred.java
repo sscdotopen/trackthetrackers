@@ -48,14 +48,11 @@ public class ArcRecordReaderMapred implements RecordReader<Text, ArcRecordMapred
   private GzipCompressorInputStreamMapred gzipIn;
   private long fileLength;
 
-  /**
-   *
-   */
   public ArcRecordReaderMapred(Configuration job, FileSplit split) throws IOException {
 
     if (split.getStart() != 0) {
-      IOException ex = new IOException("Invalid ARC file split start " + split.getStart()
-              + ": ARC files are not splittable");
+      IOException ex = new IOException("Invalid ARC file split start " + split.getStart() 
+          + ": ARC files are not splittable");
       log.error(ex.getMessage(), ex);
       throw ex;
     }
@@ -68,7 +65,7 @@ public class ArcRecordReaderMapred implements RecordReader<Text, ArcRecordMapred
     fsIn = fs.open(file);
 
     // create a GZIP stream that *does not* automatically read through members
-    gzipIn = new GzipCompressorInputStreamMapred(this.fsIn, false);
+    gzipIn = new GzipCompressorInputStreamMapred(fsIn, false);
 
     fileLength = fs.getFileStatus(file).getLen();
 
@@ -113,7 +110,7 @@ public class ArcRecordReaderMapred implements RecordReader<Text, ArcRecordMapred
 
     // if the record is not valid, skip it
     if (!isValid) {
-      log.error("Invalid ARC record found at GZIP position " + this.gzipIn.getBytesRead() + ".  Skipping ...");
+      log.error("Invalid ARC record found at GZIP position " + gzipIn.getBytesRead() + ".  Skipping ...");
       skipRecord();
       return true;
     }
@@ -128,8 +125,7 @@ public class ArcRecordReaderMapred implements RecordReader<Text, ArcRecordMapred
     if (n != -1) {
       log.error(n + "  bytes of unexpected content found at end of ARC record.  Skipping ...");
       skipRecord();
-    }
-    else {
+    } else {
       gzipIn.nextMember();
     }
 
