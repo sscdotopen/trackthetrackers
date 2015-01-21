@@ -42,14 +42,11 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
     job = null;
   }
 
-  public long getCount (Enum<?> counterType) {
-    if (job != null) {
-      try {
-        Counters counters = job.getCounters();
-        Counters.Counter c = counters.findCounter(counterType);
-        return c.getValue();
-      } catch (IOException e) {
-      }
+  public long getCount (Enum<?> counterType) throws IOException{
+    if (job != null) {     
+      Counters counters = job.getCounters();
+      Counters.Counter c = counters.findCounter(counterType);
+      return c.getValue();
     }
     return 0L;
   }

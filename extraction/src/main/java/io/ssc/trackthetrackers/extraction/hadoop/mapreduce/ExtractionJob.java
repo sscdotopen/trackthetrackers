@@ -33,6 +33,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpException;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
 
@@ -46,7 +47,7 @@ import java.util.Map;
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS
   }
   
   @Override
@@ -128,9 +129,9 @@ public class ExtractionJob extends HadoopJob {
           context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
-          // TODO have a counter for this
-        } catch (Exception e) {
-          // TODO have a counter for this
+          context.getCounter(JobCounters.PROTOKOLEXCEPTIONS).increment(1);
+        } catch (HttpException e) {
+          context.getCounter(JobCounters.HTTPEXCEPTIONS).increment(1);
           throw new IOException(e);
         }
       }

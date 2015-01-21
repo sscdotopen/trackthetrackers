@@ -42,14 +42,11 @@ public abstract class HadoopJob extends Configured implements Tool {
     job = null;
   }
   
-  public long getCount (Enum<?> counterType) {
+  public long getCount (Enum<?> counterType) throws IOException {
     if (job != null) {
-      try {
-        Counters counters = job.getCounters();
-        Counter c = counters.findCounter(counterType);
-        return c.getValue();
-      } catch (IOException e) {
-      }
+      Counters counters = job.getCounters();
+      Counter c = counters.findCounter(counterType);
+      return c.getValue();
     }
     return 0L;
   }

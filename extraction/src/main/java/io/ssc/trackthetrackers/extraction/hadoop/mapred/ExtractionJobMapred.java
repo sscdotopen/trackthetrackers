@@ -32,6 +32,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.*;
 
+import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
@@ -43,7 +44,7 @@ import java.util.Map;
 public class ExtractionJobMapred extends HadoopJobMapred {
 
   public static enum JobCounters {
-    PAGES, RESOURCES
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS
   }
   
   @Override
@@ -55,7 +56,7 @@ public class ExtractionJobMapred extends HadoopJobMapred {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     mapOnly(inputPath, outputPath, ArcInputFormatMapred.class, SequenceFileOutputFormat.class,
-        CommonCrawlExtractionMapper.class, Text.class, Text.class, true);
+            CommonCrawlExtractionMapper.class, Text.class, Text.class, true);
 
     return 0;
   }
@@ -111,8 +112,9 @@ public class ExtractionJobMapred extends HadoopJobMapred {
           collector.collect(url, watchers);
 
         } catch (ProtocolException pe) {
-          // do nothing here
-        } catch (Exception e) {
+          reporter.incrCounter(JobCounters.PROTOKOLEXCEPTIONS, 1);
+        } catch (HttpException e) {
+          reporter.incrCounter(JobCounters.HTTPEXCEPTIONS, 1);
           throw new IOException(e);
         }
       }

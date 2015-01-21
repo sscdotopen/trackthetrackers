@@ -35,13 +35,8 @@ import java.net.URL;
 
 public class MiniBenchmark {
 
-  private static long getScriptSize(URL res) {
-    Document doc = null;
-    try {
-      doc = Jsoup.parse(Resources.toString(res, Charsets.UTF_8));
-    } catch (IOException e) {
-      
-    }
+  private static long getScriptSize(URL res) throws IOException {
+    Document doc = Jsoup.parse(Resources.toString(res, Charsets.UTF_8));
     Elements scripts = doc.select("script");
     
     long sum = 0L;
