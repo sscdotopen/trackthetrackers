@@ -1,9 +1,8 @@
-package io.ssc.trackthetrackers.extraction.hadoop.io;
+package io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce;
 
 import java.io.EOFException;
 import java.io.IOException;
 
-import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -14,7 +13,6 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.util.ReflectionUtils;
-import io.ssc.trackthetrackers.extraction.hadoop.io.GzipCompressorInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

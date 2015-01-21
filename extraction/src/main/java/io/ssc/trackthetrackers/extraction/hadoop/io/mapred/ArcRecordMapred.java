@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.io;
+package io.ssc.trackthetrackers.extraction.hadoop.io.mapred;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
@@ -51,9 +51,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Chris Stephens
  */
-public class ArcRecord implements Writable {
+public class ArcRecordMapred implements Writable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ArcRecord.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ArcRecordMapred.class);
 
   // ARC v1 metadata
   private String url;
@@ -66,7 +66,7 @@ public class ArcRecord implements Writable {
 
   private HttpResponse httpResponse;
 
-  public ArcRecord() { }
+  public ArcRecordMapred() { }
 
   private void clear() {
     this.url = null;
@@ -80,7 +80,7 @@ public class ArcRecord implements Writable {
 
   private String readLine(InputStream in) throws IOException {
 
-    StringBuilder line = new StringBuilder(128);
+    StringBuffer line = new StringBuffer(128);
 
     // read a line of content
     int b = in.read();
@@ -132,7 +132,7 @@ public class ArcRecord implements Writable {
       LOG.error("Exception thrown while parsing ARC record", ex);
       return false;
     }
-     
+
     return true;
   }
 
@@ -173,7 +173,7 @@ public class ArcRecord implements Writable {
     ipAddress =  metadata[1];
     archiveDate =  format.parse(metadata[2]);
     contentType =  metadata[3];
-    contentLength = new Integer(metadata[4]);
+    contentLength = (new Integer(metadata[4])).intValue();
   }
 
   /**
@@ -226,7 +226,7 @@ public class ArcRecord implements Writable {
   }
 
   public void write(DataOutput out)
-      throws IOException {
+          throws IOException {
 
     // write out ARC header info
     out.writeUTF(url);
@@ -460,24 +460,24 @@ public class ArcRecord implements Writable {
 
     // Parse the HTTP status line and headers
     DefaultHttpResponseParser parser =
-      new DefaultHttpResponseParser(
-        new ByteArraySessionInputBuffer(payload, 0, end),
-        new BasicLineParser(),
-        new DefaultHttpResponseFactory(),
-        new BasicHttpParams()
-      );
+            new DefaultHttpResponseParser(
+                    new ByteArraySessionInputBuffer(payload, 0, end),
+                    new BasicLineParser(),
+                    new DefaultHttpResponseFactory(),
+                    new BasicHttpParams()
+            );
 
     httpResponse = parser.parse();
 
     if (httpResponse == null) {
       LOG.error("Unable to parse HTTP response");
       return null;
-    }      
+    }
 
     // Set the reset of the payload as the HTTP entity.  Use an InputStreamEntity
     // to avoid a memory copy.
     InputStreamEntity entity = new InputStreamEntity(new ByteArrayInputStream(payload, end, payload.length - end),
-        payload.length - end);
+            payload.length - end);
     entity.setContentType(httpResponse.getFirstHeader("Content-Type"));
     entity.setContentEncoding(httpResponse.getFirstHeader("Content-Encoding"));
     httpResponse.setEntity(entity);

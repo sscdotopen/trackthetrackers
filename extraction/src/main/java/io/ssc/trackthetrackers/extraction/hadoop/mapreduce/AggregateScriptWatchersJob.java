@@ -16,14 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop;
+package io.ssc.trackthetrackers.extraction.hadoop.mapreduce;
 
+import com.google.common.collect.Iterables;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import parquet.proto.ProtoParquetInputFormat;
 
@@ -35,6 +34,10 @@ import java.util.Map;
 
 public class AggregateScriptWatchersJob extends HadoopJob {
 
+  public static enum JobCounters {
+    PAGES, SCRIPTS
+  }
+
   @Override
   public int run(String[] args) throws Exception {
 
@@ -44,7 +47,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
 
-    Job job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
+    job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
                         WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class,
                         true, true);
 
@@ -71,7 +74,11 @@ public class AggregateScriptWatchersJob extends HadoopJob {
       if (parsedPageBuilder != null) {
         ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
         if (parsedPage != null) {
-          List<String> list = parsedPage.getScriptsList(); //TODO: why only scripts?
+          List<String> list = parsedPage.getScriptsList();
+
+          context.getCounter(JobCounters.PAGES).increment(1);
+          context.getCounter(JobCounters.SCRIPTS).increment(Iterables.size(list));
+          
           if (list != null) {
             for (String aWatcher : list) {
               watcher.set(aWatcher);

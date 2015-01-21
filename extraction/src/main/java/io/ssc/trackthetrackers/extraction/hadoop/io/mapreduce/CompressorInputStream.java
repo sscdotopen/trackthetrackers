@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.io;
+package io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce;
 
 import java.io.InputStream;
 
