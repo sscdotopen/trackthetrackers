@@ -312,7 +312,7 @@ public class GzipCompressorInputStream extends CompressorInputStream {
    *
    * @param signature the bytes to check
    * @param length  the number of bytes to check
-   * @return      true if this is a .gz stream, false otherwise
+   * @return true if this is a .gz stream, false otherwise
    */
   public static boolean matches(byte[] signature, int length) {
 

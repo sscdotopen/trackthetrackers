@@ -72,7 +72,7 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
     JobConf conf = new JobConf(getClass());
     conf.setJobName(mapperClass.getSimpleName());
 
-    if(deleteOutputFolder) {
+    if (deleteOutputFolder) {
       FileSystem.getLocal(conf).delete(output, true);
     }
 
@@ -122,7 +122,7 @@ public abstract class HadoopJobMapred extends Configured implements Tool {
     conf.setOutputKeyClass(reducerKeyClass);
     conf.setOutputValueClass(reducerValueClass);
     
-    if(combinable) {
+    if (combinable) {
       conf.setCombinerClass(reducerClass);
     }
 

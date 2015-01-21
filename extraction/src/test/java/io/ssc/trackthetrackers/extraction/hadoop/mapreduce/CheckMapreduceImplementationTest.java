@@ -28,62 +28,62 @@ import static org.junit.Assert.assertEquals;
 
 public class CheckMapreduceImplementationTest {
 
-    @Test
-    public void testCheckMapreduceImplementation() throws Exception {
-        
-        ExtractionJob extractionMapreduce = new ExtractionJob();
+  @Test
+  public void testCheckMapreduceImplementation() throws Exception {
     
-        ToolRunner.run(extractionMapreduce, new String[] {
-            "--input", Config.get("commoncrawl.samples.path"),
-            "--output", "/tmp/commoncrawl-extraction/mapreduce/"
-        });
-        
-        long numberPages = extractionMapreduce.getCount(ExtractionJob.JobCounters.PAGES);
-        long numberResources = extractionMapreduce.getCount(ExtractionJob.JobCounters.RESOURCES);  
-        
-        
-        ExtractionJobMapred extractionMapred = new ExtractionJobMapred();
+    ExtractionJob extractionMapreduce = new ExtractionJob();
+  
+    ToolRunner.run(extractionMapreduce, new String[] {
+      "--input", Config.get("commoncrawl.samples.path"),
+      "--output", "/tmp/commoncrawl-extraction/mapreduce/"
+    });
     
-        ToolRunner.run(extractionMapred, new String[] {
-              "--input", Config.get("commoncrawl.samples.path"),
-              "--output", "/tmp/commoncrawl-extraction/mapred/"
-        });
-    
-        long numberPagesShould = extractionMapred.getCount(ExtractionJobMapred.JobCounters.PAGES);
-        long numberResourcesShould = extractionMapred.getCount(ExtractionJobMapred.JobCounters.RESOURCES);
-    
-        
-        assertEquals(numberPages, numberPagesShould);
-        assertEquals(numberResources,numberResourcesShould);
+    long numberPages = extractionMapreduce.getCount(ExtractionJob.JobCounters.PAGES);
+    long numberResources = extractionMapreduce.getCount(ExtractionJob.JobCounters.RESOURCES);  
     
     
-        AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
-        ToolRunner.run(aggregateWatchers, new String[] {
-                "--input", "/tmp/commoncrawl-extraction/mapreduce/",
-                "--output", "/tmp/commoncrawl-watchers/mapreduce/"
-        });
+    ExtractionJobMapred extractionMapred = new ExtractionJobMapred();
+  
+    ToolRunner.run(extractionMapred, new String[] {
+        "--input", Config.get("commoncrawl.samples.path"),
+        "--output", "/tmp/commoncrawl-extraction/mapred/"
+    });
+  
+    long numberPagesShould = extractionMapred.getCount(ExtractionJobMapred.JobCounters.PAGES);
+    long numberResourcesShould = extractionMapred.getCount(ExtractionJobMapred.JobCounters.RESOURCES);
+  
     
-        long numberPagesAggregation = aggregateWatchers.getCount(AggregateScriptWatchersJob.JobCounters.PAGES);
-        long numberScriptsAggregation = aggregateWatchers.getCount(AggregateScriptWatchersJob.JobCounters.SCRIPTS);
-    
-        assertEquals(numberPages, numberPagesAggregation);    
-    
-        AggregateScriptWatchersJobMapred aggregateWatchersMapred = new AggregateScriptWatchersJobMapred();
-        ToolRunner.run(aggregateWatchersMapred, new String[] {
-                "--input", "/tmp/commoncrawl-extraction/mapred/",
-                "--output", "/tmp/commoncrawl-watchers/mapred/"
-        });
-    
-        long numberPagesAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.PAGES);
-        long numberResAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.RESOURCES);
-            
-        System.out.println("MapReduce Pages: " + numberPagesAggregation);
-        System.out.println("MapRed Pages: " + numberPagesAggr);
+    assertEquals(numberPages, numberPagesShould);
+    assertEquals(numberResources,numberResourcesShould);
+  
+  
+    AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
+    ToolRunner.run(aggregateWatchers, new String[] {
+        "--input", "/tmp/commoncrawl-extraction/mapreduce/",
+        "--output", "/tmp/commoncrawl-watchers/mapreduce/"
+    });
+  
+    long numberPagesAggregation = aggregateWatchers.getCount(AggregateScriptWatchersJob.JobCounters.PAGES);
+    long numberScriptsAggregation = aggregateWatchers.getCount(AggregateScriptWatchersJob.JobCounters.SCRIPTS);
+  
+    assertEquals(numberPages, numberPagesAggregation);  
+  
+    AggregateScriptWatchersJobMapred aggregateWatchersMapred = new AggregateScriptWatchersJobMapred();
+    ToolRunner.run(aggregateWatchersMapred, new String[] {
+        "--input", "/tmp/commoncrawl-extraction/mapred/",
+        "--output", "/tmp/commoncrawl-watchers/mapred/"
+    });
+  
+    long numberPagesAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.PAGES);
+    long numberResAggr = aggregateWatchersMapred.getCount(AggregateScriptWatchersJobMapred.JobCounters.RESOURCES);
+      
+    System.out.println("MapReduce Pages: " + numberPagesAggregation);
+    System.out.println("MapRed Pages: " + numberPagesAggr);
 
-        System.out.println("MapReduce Scripts: " + numberScriptsAggregation);
-        System.out.println("MapRed Resources: " + numberResAggr);
-        
-        assertEquals(numberPagesAggregation, numberPagesAggr);
+    System.out.println("MapReduce Scripts: " + numberScriptsAggregation);
+    System.out.println("MapRed Resources: " + numberResAggr);
+    
+    assertEquals(numberPagesAggregation, numberPagesAggr);
 
-    }
+  }
 }

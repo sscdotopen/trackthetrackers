@@ -90,8 +90,7 @@ public class ExtractionJobMapred extends HadoopJobMapred {
           InputStreamReader reader = new InputStreamReader(httpResponse.getEntity().getContent(), charset);
           try {
             html = CharStreams.toString(reader);
-          }
-          finally {
+          } finally {
             Closeables.close(reader, true);
           }
 
