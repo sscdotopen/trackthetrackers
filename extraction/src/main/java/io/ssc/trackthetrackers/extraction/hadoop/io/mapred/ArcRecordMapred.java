@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.io;
+package io.ssc.trackthetrackers.extraction.hadoop.io.mapred;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
@@ -51,9 +51,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Chris Stephens
  */
-public class ArcRecord implements Writable {
+public class ArcRecordMapred implements Writable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ArcRecord.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ArcRecordMapred.class);
 
   // ARC v1 metadata
   private String url;
@@ -66,21 +66,21 @@ public class ArcRecord implements Writable {
 
   private HttpResponse httpResponse;
 
-  public ArcRecord() { }
+  public ArcRecordMapred() { }
 
   private void clear() {
-    this.url = null;
-    this.ipAddress = null;
-    this.archiveDate = null;
-    this.contentType = null;
-    this.contentLength = 0;
-    this.payload = null;
-    this.httpResponse = null;
+    url = null;
+    ipAddress = null;
+    archiveDate = null;
+    contentType = null;
+    contentLength = 0;
+    payload = null;
+    httpResponse = null;
   }
 
   private String readLine(InputStream in) throws IOException {
 
-    StringBuilder line = new StringBuilder(128);
+    StringBuffer line = new StringBuffer(128);
 
     // read a line of content
     int b = in.read();
@@ -127,12 +127,12 @@ public class ArcRecord implements Writable {
       setArcRecordHeader(arcRecordHeader);
       setPayload(in);
     } catch (IOException ex) {
-      throw ex;
+      throw ex; //TODO: check whether we catch this
     } catch (Exception ex) {
       LOG.error("Exception thrown while parsing ARC record", ex);
       return false;
     }
-     
+
     return true;
   }
 
@@ -163,7 +163,7 @@ public class ArcRecord implements Writable {
     String[] metadata = arcRecordHeader.split(" ");
 
     if (metadata.length != 5) {
-      LOG.info(" [ "+arcRecordHeader+" ] ");
+      LOG.info(" [ " + arcRecordHeader + " ] ");
       throw new IllegalArgumentException("ARC v1 record header must be 5 fields.");
     }
 
@@ -173,7 +173,7 @@ public class ArcRecord implements Writable {
     ipAddress =  metadata[1];
     archiveDate =  format.parse(metadata[2]);
     contentType =  metadata[3];
-    contentLength = new Integer(metadata[4]);
+    contentLength = (new Integer(metadata[4])).intValue();
   }
 
   /**
@@ -187,15 +187,15 @@ public class ArcRecord implements Writable {
       throw new IllegalArgumentException("ArcRecord cannot be created from NULL/missing input stream.");
     }
 
-    int bufferSize = this.contentLength;
+    int bufferSize = contentLength;
 
-    this.payload = new byte[bufferSize];
+    payload = new byte[bufferSize];
 
-    int n = in.read(this.payload, 0, this.payload.length);
+    int n = in.read(payload, 0, payload.length);
 
-    if (n < this.payload.length) {
-      LOG.warn("Expecting "+bufferSize+" bytes in ARC record payload, found "+n+" bytes.  Performing array copy.");
-      this.payload = Arrays.copyOf(this.payload, n);
+    if (n < payload.length) {
+      LOG.warn("Expecting " + bufferSize + " bytes in ARC record payload, found " + n + " bytes.  Performing array copy.");
+      payload = Arrays.copyOf(payload, n);
     }
 
     // After this, we should be at the end of this GZIP member.  Let the
@@ -208,25 +208,23 @@ public class ArcRecord implements Writable {
 
     if (payload == null) {
       payload = Arrays.copyOf(data, length);
-    }
-    else {
+    } else {
       int i = payload.length;
       int n = payload.length + length;
 
       // resize the payload buffer
-      this.payload = Arrays.copyOf(this.payload, n);
+      payload = Arrays.copyOf(payload, n);
 
       // copy in the additional data
-      System.arraycopy(data, 0, this.payload, i, length);
+      System.arraycopy(data, 0, payload, i, length);
     }
   }
 
   public String toString() {
-    return this.url + " - " + this.archiveDate.toString() + " - " + this.contentType;
+    return url + " - " + archiveDate.toString() + " - " + contentType;
   }
 
-  public void write(DataOutput out)
-      throws IOException {
+  public void write(DataOutput out) throws IOException {
 
     // write out ARC header info
     out.writeUTF(url);
@@ -401,24 +399,33 @@ public class ArcRecord implements Writable {
 
     for (i = 0; i < data.length; i++) {
 
-      if      (data[i] == CR) {
-        if      (s == 0) s = 1;
-        else if (s == 1) s = 0;
-        else if (s == 2) s = 3;
-        else if (s == 3) s = 0;
-      }
-      else if (data[i] == LF) {
-        if      (s == 0) s = 0;
-        else if (s == 1) s = 2;
-        else if (s == 2) s = 0;
-        else if (s == 3) s = 4;
-      }
-      else {
+      if (data[i] == CR) {
+        if (s == 0) {
+          s = 1;
+        } else if (s == 1) {
+          s = 0;
+        } else if (s == 2) {
+          s = 3;
+        } else if (s == 3) {
+          s = 0;
+        }
+      } else if (data[i] == LF) {
+        if (s == 0) {
+          s = 0;
+        } else if (s == 1) {
+          s = 2;
+        } else if (s == 2) {
+          s = 0;
+        } else if (s == 3) {
+          s = 4;
+        }
+      } else {
         s = 0;
       }
 
-      if (s == 4)
+      if (s == 4) {
         return i + 1;
+      }
     }
 
     return -1;
@@ -460,19 +467,19 @@ public class ArcRecord implements Writable {
 
     // Parse the HTTP status line and headers
     DefaultHttpResponseParser parser =
-      new DefaultHttpResponseParser(
-        new ByteArraySessionInputBuffer(payload, 0, end),
-        new BasicLineParser(),
-        new DefaultHttpResponseFactory(),
-        new BasicHttpParams()
-      );
+        new DefaultHttpResponseParser(
+            new ByteArraySessionInputBuffer(payload, 0, end),
+            new BasicLineParser(),
+            new DefaultHttpResponseFactory(),
+            new BasicHttpParams()
+        );
 
     httpResponse = parser.parse();
 
     if (httpResponse == null) {
       LOG.error("Unable to parse HTTP response");
       return null;
-    }      
+    }
 
     // Set the reset of the payload as the HTTP entity.  Use an InputStreamEntity
     // to avoid a memory copy.

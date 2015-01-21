@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop;
+package io.ssc.trackthetrackers.extraction.hadoop.mapreduce;
 
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 
-import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
-import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
+import io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce.ArcInputFormat;
+import io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce.ArcRecord;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
@@ -31,9 +31,10 @@ import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Job;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpException;
+import org.apache.http.ParseException;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
 
@@ -46,10 +47,10 @@ import java.util.Map;
 
 public class ExtractionJob extends HadoopJob {
 
-  public static enum Counters {
-    PAGES, RESOURCES
+  public static enum JobCounters {
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
   }
-
+  
   @Override
   public int run(String[] args) throws Exception {
 
@@ -58,8 +59,8 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
-                      CommonCrawlExtractionMapper.class, null, null, true);
+    mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, 
+        CommonCrawlExtractionMapper.class, null, null, true);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
@@ -68,7 +69,7 @@ public class ExtractionJob extends HadoopJob {
     job.waitForCompletion(true);
 
     return 0;
-  }
+  }  
 
   static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPageProtos.ParsedPage> {
 
@@ -85,8 +86,8 @@ public class ExtractionJob extends HadoopJob {
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
             charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
-          } catch (Exception e) {
-            // TODO have a counter for this
+          } catch (ParseException e) {
+            context.getCounter(JobCounters.PARSEEXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
@@ -98,15 +99,14 @@ public class ExtractionJob extends HadoopJob {
           InputStreamReader reader = new InputStreamReader(httpResponse.getEntity().getContent(), charset);
           try {
             html = CharStreams.toString(reader);
-          }
-          finally {
+          } finally {
             Closeables.close(reader, true);
           }
 
           Iterable<Resource> resources = resourceExtractor.extractResources(record.getURL(), html);
 
-          context.getCounter(Counters.PAGES).increment(1);
-          context.getCounter(Counters.RESOURCES).increment(Iterables.size(resources));
+          context.getCounter(JobCounters.PAGES).increment(1);
+          context.getCounter(JobCounters.RESOURCES).increment(Iterables.size(resources));
 
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
@@ -128,9 +128,9 @@ public class ExtractionJob extends HadoopJob {
           context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
-          // TODO have a counter for this
-        } catch (Exception e) {
-          // TODO have a counter for this
+          context.getCounter(JobCounters.PROTOKOLEXCEPTIONS).increment(1);
+        } catch (HttpException e) {
+          context.getCounter(JobCounters.HTTPEXCEPTIONS).increment(1);
           throw new IOException(e);
         }
       }

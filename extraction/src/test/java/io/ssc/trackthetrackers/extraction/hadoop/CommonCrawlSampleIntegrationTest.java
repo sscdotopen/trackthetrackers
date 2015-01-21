@@ -18,6 +18,8 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
+import io.ssc.trackthetrackers.extraction.hadoop.mapreduce.AggregateScriptWatchersJob;
+import io.ssc.trackthetrackers.extraction.hadoop.mapreduce.ExtractionJob;
 import io.ssc.trackthetrackers.extraction.hadoop.util.TopWatchers;
 import org.apache.hadoop.util.ToolRunner;
 

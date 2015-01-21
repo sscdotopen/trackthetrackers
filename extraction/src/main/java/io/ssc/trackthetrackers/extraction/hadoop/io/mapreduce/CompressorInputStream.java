@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.io;
+package io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce;
 
 import java.io.InputStream;
 
@@ -30,8 +30,6 @@ public abstract class CompressorInputStream extends InputStream {
    * Doesn't increment if the EOF has been hit (read == -1)
    *
    * @param read the number of bytes read
-   *
-   * @since 1.1
    */
   protected void count(int read) {
     count((long) read);
@@ -63,8 +61,6 @@ public abstract class CompressorInputStream extends InputStream {
   /**
    * Returns the current number of bytes read from this stream.
    * @return the number of read bytes
-   *
-   * @since 1.1
    */
   public long getBytesRead() {
     return bytesRead;
