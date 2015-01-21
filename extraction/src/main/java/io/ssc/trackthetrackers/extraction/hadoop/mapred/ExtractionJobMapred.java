@@ -40,12 +40,13 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 
 public class ExtractionJobMapred extends HadoopJobMapred {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS, CHARSETEXCEPTIONS
   }
   
   @Override
@@ -80,9 +81,13 @@ public class ExtractionJobMapred extends HadoopJobMapred {
           HttpResponse httpResponse = record.getHttpResponse();
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
-            charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            if (ContentType.getOrDefault(httpResponse.getEntity()).getCharset() != null) { 
+              charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            }
           } catch (ParseException e) {
             reporter.incrCounter(JobCounters.PARSEEXCEPTIONS, 1);
+          } catch (UnsupportedCharsetException uce) {
+            reporter.incrCounter(JobCounters.CHARSETEXCEPTIONS, 1);
           }
 
           // if anything goes wrong, try ISO-8859-1

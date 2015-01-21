@@ -43,12 +43,13 @@ import parquet.proto.ProtoParquetOutputFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS, CHARSETEXCEPTIONS
   }
   
   @Override
@@ -85,9 +86,13 @@ public class ExtractionJob extends HadoopJob {
           HttpResponse httpResponse = record.getHttpResponse();
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
-            charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            if (ContentType.getOrDefault(httpResponse.getEntity()).getCharset() != null) {
+              charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            }
           } catch (ParseException e) {
             context.getCounter(JobCounters.PARSEEXCEPTIONS).increment(1);
+          } catch (UnsupportedCharsetException uce) {
+            context.getCounter(JobCounters.CHARSETEXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
