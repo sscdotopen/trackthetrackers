@@ -20,12 +20,12 @@ package io.ssc.trackthetrackers.input.mapred;
 
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.RichGroupReduceFunction;
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.aggregation.Aggregations;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.hadoopcompatibility.mapred.HadoopInputFormat;
 
 import org.apache.flink.util.Collector;
@@ -50,21 +50,22 @@ public class AggregateFlinkJobSequenceFileInput {
 
     DataSet<Tuple2<Text, Text>> data = env.createInput(hadoopInputFormat);
 
-    DataSet<Tuple2<String, Long>> reduced = data.flatMap(new Tokenizer()).groupBy(0).aggregate(Aggregations.SUM,1);
+    DataSet<Tuple3<Integer, String, Long>> red = data.flatMap(new Tokenizer()).groupBy(1).aggregate(Aggregations.SUM,2);
     
-    reduced.groupBy(0).sortGroup(1,Order.ASCENDING).first(10).print(); //something is wrong here
+    //print top 100 tracker
+    red.groupBy(0).sortGroup(2,Order.DESCENDING).first(100).project(1,2).types(String.class, Long.class).print();
     
     env.execute("Tracker Count");
   }
 
-  public static class Tokenizer implements FlatMapFunction<Tuple2<Text,Text>, Tuple2<String,Long>> {
+  public static class Tokenizer implements FlatMapFunction<Tuple2<Text,Text>, Tuple3<Integer,String,Long>> {
     private final Pattern SEP = Pattern.compile(",");
     
     @Override
-    public void flatMap(Tuple2<Text,Text> value, Collector<Tuple2<String,Long>> out) {
+    public void flatMap(Tuple2<Text,Text> value, Collector<Tuple3<Integer,String,Long>> out) {
       String[] allWatchers = SEP.split(value.f1.toString());
       for (String aWatcher : allWatchers) {
-        out.collect(new Tuple2<String, Long>(aWatcher,1L));
+        out.collect(new Tuple3<Integer,String,Long>(0,aWatcher,1L));
       }
     }
   }
