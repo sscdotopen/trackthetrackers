@@ -38,35 +38,34 @@ import java.util.regex.Pattern;
 
 
 public class AggregateFlinkJobMapred {
-
    
-    public static void run(String input) throws Exception {
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+  public static void run(String input) throws Exception {
+    final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-        // Set up the Hadoop Input Format
-        HadoopInputFormat<Text, Text> hadoopInputFormat = 
-            new HadoopInputFormat<Text, Text>(new SequenceFileInputFormat(), Text.class, Text.class, new JobConf());
-        SequenceFileInputFormat.addInputPath(hadoopInputFormat.getJobConf(), new Path(input));
+    // Set up the Hadoop Input Format
+    HadoopInputFormat<Text, Text> hadoopInputFormat = 
+      new HadoopInputFormat<Text, Text>(new SequenceFileInputFormat(), Text.class, Text.class, new JobConf());
+    SequenceFileInputFormat.addInputPath(hadoopInputFormat.getJobConf(), new Path(input));
 
 
-        DataSet<Tuple2<Text, Text>> data = env.createInput(hadoopInputFormat);
+    DataSet<Tuple2<Text, Text>> data = env.createInput(hadoopInputFormat);
 
-        DataSet<Tuple2<String, Long>> reduced = data.flatMap(new Tokenizer()).groupBy(0).aggregate(Aggregations.SUM,1);
-        
-        reduced.groupBy(0).sortGroup(1,Order.ASCENDING).first(10).print(); //something is wrong here
-        
-        env.execute("Word Count");
+    DataSet<Tuple2<String, Long>> reduced = data.flatMap(new Tokenizer()).groupBy(0).aggregate(Aggregations.SUM,1);
+    
+    reduced.groupBy(0).sortGroup(1,Order.ASCENDING).first(10).print(); //something is wrong here
+    
+    env.execute("Tracker Count");
+  }
+
+  public static class Tokenizer implements FlatMapFunction<Tuple2<Text,Text>, Tuple2<String,Long>> {
+    private final Pattern SEP = Pattern.compile(",");
+    
+    @Override
+    public void flatMap(Tuple2<Text,Text> value, Collector<Tuple2<String,Long>> out) {
+      String[] allWatchers = SEP.split(value.f1.toString());
+      for (String aWatcher : allWatchers) {
+        out.collect(new Tuple2<String, Long>(aWatcher,1L));
+      }
     }
-
-    public static class Tokenizer implements FlatMapFunction<Tuple2<Text,Text>, Tuple2<String,Long>> {
-        private final Pattern SEP = Pattern.compile(",");
-        
-        @Override
-        public void flatMap(Tuple2<Text,Text> value, Collector<Tuple2<String,Long>> out) {
-            String[] allWatchers = SEP.split(value.f1.toString());
-            for (String aWatcher : allWatchers) {
-                out.collect(new Tuple2<String, Long>(aWatcher,1L));
-            }
-        }
-    }
+  }
 }
