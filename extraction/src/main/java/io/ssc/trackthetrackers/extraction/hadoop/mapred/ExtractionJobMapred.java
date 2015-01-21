@@ -34,6 +34,7 @@ import org.apache.hadoop.mapred.*;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
 
@@ -44,7 +45,7 @@ import java.util.Map;
 public class ExtractionJobMapred extends HadoopJobMapred {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
   }
   
   @Override
@@ -80,7 +81,9 @@ public class ExtractionJobMapred extends HadoopJobMapred {
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
             charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
-          } catch (Exception e) {}
+          } catch (ParseException e) {
+            reporter.incrCounter(JobCounters.PARSEEXCEPTIONS, 1);
+          }
 
           // if anything goes wrong, try ISO-8859-1
           if (charset == null) {

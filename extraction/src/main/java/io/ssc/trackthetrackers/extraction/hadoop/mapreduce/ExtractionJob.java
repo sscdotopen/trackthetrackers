@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpException;
+import org.apache.http.ParseException;
 import org.apache.http.ProtocolException;
 import org.apache.http.entity.ContentType;
 
@@ -47,7 +48,7 @@ import java.util.Map;
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS
+    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
   }
   
   @Override
@@ -68,9 +69,7 @@ public class ExtractionJob extends HadoopJob {
     job.waitForCompletion(true);
 
     return 0;
-  }
-  
-  
+  }  
 
   static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPageProtos.ParsedPage> {
 
@@ -87,8 +86,8 @@ public class ExtractionJob extends HadoopJob {
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
             charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
-          } catch (Exception e) {
-            // TODO have a counter for this
+          } catch (ParseException e) {
+            context.getCounter(JobCounters.PARSEEXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
