@@ -46,7 +46,7 @@ import java.util.Map;
 public class ExtractionJobMapred extends HadoopJobMapred {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS, CHARSETEXCEPTIONS
+    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS
   }
   
   @Override
@@ -85,9 +85,9 @@ public class ExtractionJobMapred extends HadoopJobMapred {
               charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
             }
           } catch (ParseException e) {
-            reporter.incrCounter(JobCounters.PARSEEXCEPTIONS, 1);
+            reporter.incrCounter(JobCounters.PARSE_EXCEPTIONS, 1);
           } catch (UnsupportedCharsetException uce) {
-            reporter.incrCounter(JobCounters.CHARSETEXCEPTIONS, 1);
+            reporter.incrCounter(JobCounters.CHARSET_EXCEPTIONS, 1);
           }
 
           // if anything goes wrong, try ISO-8859-1
@@ -120,9 +120,9 @@ public class ExtractionJobMapred extends HadoopJobMapred {
           collector.collect(url, watchers);
 
         } catch (ProtocolException pe) {
-          reporter.incrCounter(JobCounters.PROTOKOLEXCEPTIONS, 1);
+          reporter.incrCounter(JobCounters.PROTOCOL_EXCEPTIONS, 1);
         } catch (HttpException e) {
-          reporter.incrCounter(JobCounters.HTTPEXCEPTIONS, 1);
+          reporter.incrCounter(JobCounters.HTTP_EXCEPTIONS, 1);
           throw new IOException(e);
         }
       }

@@ -24,6 +24,21 @@
       <artifactId>flink-clients</artifactId>
       <version>0.7.0-incubating</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-hadoop-compatibility</artifactId>
+      <version>0.7.0-incubating</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-java</artifactId>
+      <version>0.7.0-incubating</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-runtime</artifactId>
+      <version>0.7.0-incubating</version>
+    </dependency>
   </dependencies>
 
   <!-- We use the maven-assembly plugin to create a fat jar that contains all dependencies

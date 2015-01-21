@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.flink.sequencefileinput;
+package io.ssc.trackthetrackers.input.mapred;
 
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -37,14 +37,14 @@ import org.apache.hadoop.mapred.JobConf;
 import java.util.regex.Pattern;
 
 
-public class AggregateFlinkJobMapred {
+public class AggregateFlinkJobSequenceFileInput {
    
   public static void run(String input) throws Exception {
     final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
     // Set up the Hadoop Input Format
     HadoopInputFormat<Text, Text> hadoopInputFormat = 
-      new HadoopInputFormat<Text, Text>(new SequenceFileInputFormat(), Text.class, Text.class, new JobConf());
+        new HadoopInputFormat<Text, Text>(new SequenceFileInputFormat(), Text.class, Text.class, new JobConf());
     SequenceFileInputFormat.addInputPath(hadoopInputFormat.getJobConf(), new Path(input));
 
 

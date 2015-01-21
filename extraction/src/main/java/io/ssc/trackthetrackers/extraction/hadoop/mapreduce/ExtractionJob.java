@@ -49,7 +49,7 @@ import java.util.Map;
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS, CHARSETEXCEPTIONS
+    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS
   }
   
   @Override
@@ -90,9 +90,9 @@ public class ExtractionJob extends HadoopJob {
               charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
             }
           } catch (ParseException e) {
-            context.getCounter(JobCounters.PARSEEXCEPTIONS).increment(1);
+            context.getCounter(JobCounters.PARSE_EXCEPTIONS).increment(1);
           } catch (UnsupportedCharsetException uce) {
-            context.getCounter(JobCounters.CHARSETEXCEPTIONS).increment(1);
+            context.getCounter(JobCounters.CHARSET_EXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
@@ -133,9 +133,9 @@ public class ExtractionJob extends HadoopJob {
           context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
-          context.getCounter(JobCounters.PROTOKOLEXCEPTIONS).increment(1);
+          context.getCounter(JobCounters.PROTOCOL_EXCEPTIONS).increment(1);
         } catch (HttpException e) {
-          context.getCounter(JobCounters.HTTPEXCEPTIONS).increment(1);
+          context.getCounter(JobCounters.HTTP_EXCEPTIONS).increment(1);
           throw new IOException(e);
         }
       }
