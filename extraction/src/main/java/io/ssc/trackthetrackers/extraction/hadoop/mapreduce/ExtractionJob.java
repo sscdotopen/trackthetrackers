@@ -43,12 +43,13 @@ import parquet.proto.ProtoParquetOutputFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOKOLEXCEPTIONS, HTTPEXCEPTIONS, PARSEEXCEPTIONS
+    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS
   }
   
   @Override
@@ -85,9 +86,13 @@ public class ExtractionJob extends HadoopJob {
           HttpResponse httpResponse = record.getHttpResponse();
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
-            charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            if (ContentType.getOrDefault(httpResponse.getEntity()).getCharset() != null) {
+              charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
+            }
           } catch (ParseException e) {
-            context.getCounter(JobCounters.PARSEEXCEPTIONS).increment(1);
+            context.getCounter(JobCounters.PARSE_EXCEPTIONS).increment(1);
+          } catch (UnsupportedCharsetException uce) {
+            context.getCounter(JobCounters.CHARSET_EXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
@@ -128,9 +133,9 @@ public class ExtractionJob extends HadoopJob {
           context.write(null, builder.build());
 
         } catch (ProtocolException pe) {
-          context.getCounter(JobCounters.PROTOKOLEXCEPTIONS).increment(1);
+          context.getCounter(JobCounters.PROTOCOL_EXCEPTIONS).increment(1);
         } catch (HttpException e) {
-          context.getCounter(JobCounters.HTTPEXCEPTIONS).increment(1);
+          context.getCounter(JobCounters.HTTP_EXCEPTIONS).increment(1);
           throw new IOException(e);
         }
       }
