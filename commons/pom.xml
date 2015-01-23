@@ -83,8 +83,8 @@
         <artifactId>maven-protoc-plugin</artifactId>
         <version>0.3.2</version>
         <configuration>
-          <!-- configure here the path of your protoc executable -->
-          <protocExecutable>/usr/bin/protoc</protocExecutable>
+          <!-- configure here if the plugin doesn't find the protoc executable
+          <protocExecutable>/usr/bin/protoc</protocExecutable> -->
         </configuration>
         <executions>
           <execution>
