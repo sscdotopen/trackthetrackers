@@ -48,6 +48,11 @@ public class ExtractionJobMapred extends HadoopJobMapred {
   public static enum JobCounters {
     PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS
   }
+
+  public static void main(String[] args) throws Exception {
+    ExtractionJobMapred current = new ExtractionJobMapred();
+    current.run(args);
+  }    
   
   @Override
   public int run(String[] args) throws Exception {
