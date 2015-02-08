@@ -64,22 +64,23 @@ public class MiniBenchmark {
 
     long startTime = System.nanoTime();
     for (long i = 0; i < runs; i++) {
-      Iterable<Resource> resources = extractResources("http://buzzfeed.com", res);
+      extractResources("http://buzzfeed.com", res);
     }
     long endTime = System.nanoTime();
-    long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
+    long duration = endTime - startTime;  //divide by 1000000 to get milliseconds.
     
-    long durationInMS = (duration / 1000000L);
+    long durationInMS = duration / 1000000L;
     System.out.println("Runs: " + runs + " - execution time: " + durationInMS + "ms\n");
       
-    System.out.println("ms per Run: " + (durationInMS/runs));
-    System.out.println("File size(in kB) / ms: " + (((fileSize/1024) * runs) / durationInMS));
-    System.out.println("File size(in character) / ms: " + ((Resources.toString(res, Charsets.UTF_8).length() * runs) / durationInMS));  
+    System.out.println("ms per Run: " + (durationInMS / runs));
+    System.out.println("File size(in kB) / ms: " + (((fileSize / 1024) * runs) / durationInMS));
+    System.out.println("File size(in character) / ms: " +
+        ((Resources.toString(res, Charsets.UTF_8).length() * runs) / durationInMS));
     System.out.println("Script size(in character) / ms: " + ((scriptSize * runs) / durationInMS));
   }  
 
-  Iterable<Resource> extractResources(String sourceUrl, URL page) throws IOException {
-    return new ResourceExtractor().extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
+  void extractResources(String sourceUrl, URL page) throws IOException {
+    new ResourceExtractor().extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
   }
 
 }

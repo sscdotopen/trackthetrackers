@@ -26,6 +26,7 @@ import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
 import org.apache.flink.api.scala._
 
+@deprecated
 object DanglingPageRank extends App {
 
   pageRank(

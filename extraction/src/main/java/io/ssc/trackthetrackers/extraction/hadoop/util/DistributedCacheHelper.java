@@ -27,8 +27,13 @@ import org.apache.hadoop.fs.Path;
 import java.io.IOException;
 import java.net.URI;
 
-//taken from Apache Mahout
-public class HadoopUtil {
+//taken from Apache Mahout's HadoopUtil
+public class DistributedCacheHelper {
+
+  public static void cacheFile(Path path, Configuration conf) {
+    //DistributedCache.setCacheFiles(new URI[] { path.toUri() }, conf);
+    DistributedCache.addCacheFile(path.toUri(), conf);
+  }
 
   public static Path[] getCachedFiles(Configuration conf) throws IOException {
     LocalFileSystem localFs = FileSystem.getLocal(conf);

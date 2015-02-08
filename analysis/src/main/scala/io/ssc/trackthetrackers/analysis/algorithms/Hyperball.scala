@@ -23,6 +23,7 @@ import org.apache.flink.api.scala._
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
 
+@deprecated
 object Hyperball extends App {
 
   estimateNeighbourhoodFunction(

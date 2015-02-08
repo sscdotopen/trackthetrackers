@@ -58,6 +58,7 @@ public class DomainIndex {
   //TODO replace sysout's with log statements
   private Long2IntMap hashIndexFile(FileSystem fs, Path indexFile) throws IOException {
 
+    // hardcoded to handle 2012 payleveldomain index
     Long2IntMap hashesToIndices = new Long2IntOpenHashMap(42889800);
 
     Pattern SEP = Pattern.compile("\t");

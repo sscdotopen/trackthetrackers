@@ -29,6 +29,7 @@ import org.apache.flink.core.fs.FileSystem.WriteMode
  * Be aware that this code only considers the outdegree distribution currently
  *
  */
+@deprecated
 object PowerLawExponentEstimation extends App {
 
   estimatePowerLawExponent("/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/cfindergoogle/links.tsv",

@@ -22,7 +22,7 @@ import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
-import io.ssc.trackthetrackers.extraction.hadoop.util.HadoopUtil;
+import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -52,7 +52,8 @@ public class TrackingGraphJob extends HadoopJob {
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
 
-    DistributedCache.setCacheFiles(new URI[] { domainIndex.toUri() }, toEdgeList.getConfiguration());
+    DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
+    //DistributedCache.setCacheFiles(new URI[] { domainIndex.toUri() }, toEdgeList.getConfiguration());
 
     toEdgeList.waitForCompletion(true);
 
@@ -65,7 +66,7 @@ public class TrackingGraphJob extends HadoopJob {
 
     @Override
     protected void setup(Context ctx) throws IOException, InterruptedException {
-      Path domainIndexFile = HadoopUtil.getCachedFiles(ctx.getConfiguration())[0];
+      Path domainIndexFile = DistributedCacheHelper.getCachedFiles(ctx.getConfiguration())[0];
       FileSystem fs = FileSystem.get(domainIndexFile.toUri(), ctx.getConfiguration());
       // potentially exploit VM re-use
       if (domainIndex == null) {

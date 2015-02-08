@@ -25,16 +25,15 @@ import org.apache.flink.api.scala._
 
 object DegreeDistribution extends App {
 
-  fromEdges("/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/cfindergoogle/links.tsv",
-            "/tmp/flink-scala/", 15763)
+  fromEdges("/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv",
+            "/tmp/flink-scala/", 59661)
 
-  def fromEdges(linksFile: String, outputPath: String, numVertices: Long) = {
+  def fromEdges(edgeFile: String, outputPath: String, numVertices: Long) = {
 
     implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edges = GraphUtils.readEdges(linksFile)
-    
-    //TODO add overall deg dist
+    val edges = GraphUtils.readEdges(edgeFile)
+
     val outDegreeDist = degreeDist({ _.src }, edges, numVertices)
     val inDegreeDist = degreeDist({ _.target }, edges, numVertices)
 

@@ -26,22 +26,22 @@ import org.apache.flink.util.Collector
 object ComponentSizeDistribution extends App {
 
   componentSizeDist(
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/advogato/uris.tsv",
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/advogato/links.tsv", 100,
+    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv", 500,
     "/tmp/flink-scala/componentSizes/")
 
   case class Assignment(vertex: Long, component: Long)
 
-  def componentSizeDist(urisFile: String, linksFile: String, maxIterations: Int, outputDir: String) = {
+  def componentSizeDist(edgeFile: String, maxIterations: Int, outputDir: String) = {
 
     val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val initialAssignments =
-      env.readCsvFile[(String, Long)](urisFile, "\n", '\t')
-         .map { uriWithId => Assignment(uriWithId._2, uriWithId._2) }
+    val edgeList = env.readCsvFile[Edge](edgeFile, fieldDelimiter = '\t')
 
-    val edges = env.readCsvFile[Edge](linksFile, fieldDelimiter = '\t')
-                   .flatMap { edge => Array(edge, Edge(edge.target, edge.src)) }
+    val initialAssignments = edgeList.flatMap { edge => Array(Tuple1(edge.src), Tuple1(edge.target)) }
+                                     .distinct
+                                     .map { id => Assignment(id._1, id._1) }
+
+    val edges = edgeList.flatMap { edge => Array(edge, Edge(edge.target, edge.src)) }
 
     val assignments = initialAssignments.iterateDelta(initialAssignments, maxIterations, Array("vertex")) {
       (solutionSet, workSet) =>
