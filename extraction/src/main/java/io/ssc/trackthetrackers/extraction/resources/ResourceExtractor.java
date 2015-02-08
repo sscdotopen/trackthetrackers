@@ -19,9 +19,7 @@
 
 package io.ssc.trackthetrackers.extraction.resources;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
 import com.google.javascript.jscomp.parsing.Config;
 import com.google.javascript.jscomp.parsing.Config.LanguageMode;
 import com.google.javascript.jscomp.parsing.ParserRunner;
@@ -42,7 +40,11 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

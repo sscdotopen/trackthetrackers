@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.io.mapred;
+package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInput;
@@ -51,9 +51,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Chris Stephens
  */
-public class ArcRecordMapred implements Writable {
+public class ArcRecord implements Writable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ArcRecordMapred.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ArcRecord.class);
 
   // ARC v1 metadata
   private String url;
@@ -66,7 +66,7 @@ public class ArcRecordMapred implements Writable {
 
   private HttpResponse httpResponse;
 
-  public ArcRecordMapred() { }
+  public ArcRecord() { }
 
   private void clear() {
     url = null;
@@ -80,7 +80,7 @@ public class ArcRecordMapred implements Writable {
 
   private String readLine(InputStream in) throws IOException {
 
-    StringBuffer line = new StringBuffer(128);
+    StringBuilder line = new StringBuilder(128);
 
     // read a line of content
     int b = in.read();
@@ -127,12 +127,12 @@ public class ArcRecordMapred implements Writable {
       setArcRecordHeader(arcRecordHeader);
       setPayload(in);
     } catch (IOException ex) {
-      throw ex; //TODO: check whether we catch this
+      throw ex;
     } catch (Exception ex) {
       LOG.error("Exception thrown while parsing ARC record", ex);
       return false;
     }
-
+     
     return true;
   }
 
@@ -163,7 +163,7 @@ public class ArcRecordMapred implements Writable {
     String[] metadata = arcRecordHeader.split(" ");
 
     if (metadata.length != 5) {
-      LOG.info(" [ " + arcRecordHeader + " ] ");
+      LOG.info(" [ "+arcRecordHeader+" ] ");
       throw new IllegalArgumentException("ARC v1 record header must be 5 fields.");
     }
 
@@ -173,7 +173,7 @@ public class ArcRecordMapred implements Writable {
     ipAddress =  metadata[1];
     archiveDate =  format.parse(metadata[2]);
     contentType =  metadata[3];
-    contentLength = (new Integer(metadata[4])).intValue();
+    contentLength = new Integer(metadata[4]);
   }
 
   /**
@@ -194,7 +194,7 @@ public class ArcRecordMapred implements Writable {
     int n = in.read(payload, 0, payload.length);
 
     if (n < payload.length) {
-      LOG.warn("Expecting " + bufferSize + " bytes in ARC record payload, found " + n + " bytes.  Performing array copy.");
+      LOG.warn("Expecting "+bufferSize+" bytes in ARC record payload, found "+n+" bytes.  Performing array copy.");
       payload = Arrays.copyOf(payload, n);
     }
 
@@ -467,19 +467,19 @@ public class ArcRecordMapred implements Writable {
 
     // Parse the HTTP status line and headers
     DefaultHttpResponseParser parser =
-        new DefaultHttpResponseParser(
-            new ByteArraySessionInputBuffer(payload, 0, end),
-            new BasicLineParser(),
-            new DefaultHttpResponseFactory(),
-            new BasicHttpParams()
-        );
+      new DefaultHttpResponseParser(
+        new ByteArraySessionInputBuffer(payload, 0, end),
+        new BasicLineParser(),
+        new DefaultHttpResponseFactory(),
+        new BasicHttpParams()
+      );
 
     httpResponse = parser.parse();
 
     if (httpResponse == null) {
       LOG.error("Unable to parse HTTP response");
       return null;
-    }
+    }      
 
     // Set the reset of the payload as the HTTP entity.  Use an InputStreamEntity
     // to avoid a memory copy.

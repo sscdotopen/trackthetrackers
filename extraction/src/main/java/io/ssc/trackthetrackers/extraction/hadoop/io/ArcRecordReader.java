@@ -1,4 +1,4 @@
-package io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce;
+package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.EOFException;
 import java.io.IOException;

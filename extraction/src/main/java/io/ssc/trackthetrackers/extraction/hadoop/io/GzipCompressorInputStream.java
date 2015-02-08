@@ -20,7 +20,7 @@
 // Source code taken from Apache Commons Compress 1.4.1.  Feature is being
 // submitted to Apache project - patch will be applied if approved.
 
-package io.ssc.trackthetrackers.extraction.hadoop.io.mapred;
+package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.IOException;
 import java.io.EOFException;
@@ -46,7 +46,7 @@ import java.util.zip.CRC32;
  * container format decoder. The actual decompression is done with
  * {@link java.util.zip.Inflater}.
  */
-public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred {
+public class GzipCompressorInputStream extends CompressorInputStream {
   // Header flags
   // private static final int FTEXT = 0x01; // Uninteresting for us
   private static final int FHCRC = 0x02;
@@ -95,7 +95,7 @@ public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred
    *
    * @throws java.io.IOException if the stream could not be created
    */
-  public GzipCompressorInputStreamMapred(InputStream inputStream) throws IOException {
+  public GzipCompressorInputStream(InputStream inputStream) throws IOException {
     this(inputStream, false);
   }
 
@@ -119,7 +119,7 @@ public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred
    *
    * @throws java.io.IOException if the stream could not be created
    */
-  public GzipCompressorInputStreamMapred(InputStream inputStream, boolean decompressConcatenated) throws IOException {
+  public GzipCompressorInputStream(InputStream inputStream, boolean decompressConcatenated) throws IOException {
     // Mark support is strictly needed for concatenated files only,
     // but it's simpler if it is always available.
     if (inputStream.markSupported()) {
@@ -133,7 +133,7 @@ public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred
   }
 
   private boolean init(boolean isFirstMember) throws IOException {
-    //assert isFirstMember || decompressConcatenated; //TODO: check why this throws error !!!
+    //assert isFirstMember || decompressConcatenated; //TODO: check why this throws an error!!!
 
     // Check the magic bytes without a possibility of EOFException.
     int magic0 = in.read();
@@ -294,7 +294,7 @@ public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred
         if (!decompressConcatenated) {
           stoppedForEndOfMember = true;
         }
-
+        
         // See if this is the end of the file.
         endOfStream = !init(false);
 
@@ -352,9 +352,8 @@ public class GzipCompressorInputStreamMapred extends CompressorInputStreamMapred
    */
   public boolean nextMember() {
 
-    if (endOfStream) {
+    if (endOfStream)
       return false;
-    }
 
     stoppedForEndOfMember = false;
 

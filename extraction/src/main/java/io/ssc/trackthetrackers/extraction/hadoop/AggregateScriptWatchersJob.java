@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.mapreduce;
+package io.ssc.trackthetrackers.extraction.hadoop;
 
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.fs.Path;
@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public class AggregateScriptWatchersJob extends HadoopJob {
 
   public static enum JobCounters {
@@ -46,7 +47,7 @@ public class AggregateScriptWatchersJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class, 
+    Job job = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, SequenceFileOutputFormat.class,
         WatchersMapper.class, null, null, CountWatchingsReducer.class, Text.class, LongWritable.class, true, true);
 
     //push down projection

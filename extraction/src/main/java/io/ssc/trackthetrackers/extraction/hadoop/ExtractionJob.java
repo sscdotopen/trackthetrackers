@@ -16,20 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.mapreduce;
+package io.ssc.trackthetrackers.extraction.hadoop;
 
 import com.google.common.collect.Iterables;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 
-import io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce.ArcInputFormat;
-import io.ssc.trackthetrackers.extraction.hadoop.io.mapreduce.ArcRecord;
+import io.ssc.trackthetrackers.extraction.hadoop.io.ArcInputFormat;
+import io.ssc.trackthetrackers.extraction.hadoop.io.ArcRecord;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import org.apache.http.HttpResponse;
@@ -65,8 +66,8 @@ public class ExtractionJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class, 
-        CommonCrawlExtractionMapper.class, null, null, true);
+    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
+                      CommonCrawlExtractionMapper.class, null, null, true);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
@@ -106,8 +107,9 @@ public class ExtractionJob extends HadoopJob {
           }
 
           String html;
-          InputStreamReader reader = new InputStreamReader(httpResponse.getEntity().getContent(), charset);
+          InputStreamReader reader = null;
           try {
+            reader = new InputStreamReader(httpResponse.getEntity().getContent(), charset);
             html = CharStreams.toString(reader);
           } finally {
             Closeables.close(reader, true);

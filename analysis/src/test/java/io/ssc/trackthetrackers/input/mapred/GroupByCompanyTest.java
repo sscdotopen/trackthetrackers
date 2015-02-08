@@ -27,7 +27,7 @@ public class GroupByCompanyTest {
     File f = new File(inputPath);
     
     if (!f.exists()) {
-        throw new Exception("You have to run CheckMapreduceImplementationTest.java of package extraction first!");
+      throw new Exception("You have to run CheckMapreduceImplementationTest.java of package extraction first!");
     }
       
     AggregateFlinkJobSequenceFileInput.run("/tmp/commoncrawl-extraction/mapred/");

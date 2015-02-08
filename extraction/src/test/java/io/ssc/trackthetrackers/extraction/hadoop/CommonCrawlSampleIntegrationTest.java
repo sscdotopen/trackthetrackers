@@ -18,9 +18,7 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import io.ssc.trackthetrackers.extraction.hadoop.mapreduce.AggregateScriptWatchersJob;
-import io.ssc.trackthetrackers.extraction.hadoop.mapreduce.ExtractionJob;
-import io.ssc.trackthetrackers.extraction.hadoop.util.TopWatchers;
+//import io.ssc.trackthetrackers.extraction.hadoop.util.TopWatchers;
 import org.apache.hadoop.util.ToolRunner;
 
 public class CommonCrawlSampleIntegrationTest {
@@ -28,18 +26,26 @@ public class CommonCrawlSampleIntegrationTest {
   public static void main(String[] args) throws Exception {
 
     ExtractionJob extraction = new ExtractionJob();
-    AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
+    //AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
+    TrackingGraphJob trackingGraph = new TrackingGraphJob();
 
     ToolRunner.run(extraction, new String[] {
         "--input", Config.get("commoncrawl.samples.path"),
         "--output", "/tmp/commoncrawl-extraction/"
     });
 
-    ToolRunner.run(aggregateWatchers, new String[] {
+    //ToolRunner.run(aggregateWatchers, new String[] {
+    //    "--input", "/tmp/commoncrawl-extraction/",
+    //    "--output", "/tmp/commoncrawl-watchers/"
+    //});
+
+    //TopWatchers.print("/tmp/commoncrawl-watchers/part-r-00000", 100);
+
+    ToolRunner.run(trackingGraph, new String[] {
         "--input", "/tmp/commoncrawl-extraction/",
-        "--output", "/tmp/commoncrawl-watchers/"
+        "--output", "/tmp/commoncrawl-trackingraph/",
+        "--domainIndex", Config.get("webdatacommons.pldfile")
     });
 
-    TopWatchers.print("/tmp/commoncrawl-watchers/part-r-00000", 100);
   }
 }

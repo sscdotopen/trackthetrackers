@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.mapreduce;
+package io.ssc.trackthetrackers.extraction.hadoop;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
@@ -35,14 +35,8 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class HadoopJob extends Configured implements Tool {
-
-  protected Job job;
-
-  public HadoopJob() {
-    job = null;
-  }
   
-  public long getCount (Enum<?> counterType) throws IOException {
+  public long getCount(Job job, Enum<?> counterType) throws IOException {
     if (job != null) {
       Counters counters = job.getCounters();
       Counter c = counters.findCounter(counterType);
@@ -64,16 +58,18 @@ public abstract class HadoopJob extends Configured implements Tool {
   }
 
 
-  protected void mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                         Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+  protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                        Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
 
-    map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass, deleteOutputFolder);
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass,
+                  deleteOutputFolder);
 
     job.setNumReduceTasks(0);
+    return job;
   }
 
-  private void map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                   Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+  private Job map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                  Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
 
     Configuration conf = new Configuration();
 
@@ -81,7 +77,7 @@ public abstract class HadoopJob extends Configured implements Tool {
       FileSystem.get(conf).delete(output, true);
     }
 
-    job = new Job(conf, mapperClass.getSimpleName());
+    Job job = new Job(conf, mapperClass.getSimpleName());
 
     job.setJarByClass(getClass());
 
@@ -96,15 +92,17 @@ public abstract class HadoopJob extends Configured implements Tool {
 
     job.setOutputFormatClass(outputFormatClass);
     FileOutputFormat.setOutputPath(job, output);
+
+    return job;
   }
 
 
-  protected void mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                           Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
-                           Class reducerValueClass, boolean combinable, boolean deleteOutputFolder) throws IOException {
+  protected Job mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                          Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
+                          Class reducerValueClass, boolean combinable, boolean deleteOutputFolder) throws IOException {
 
-    map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass, 
-        deleteOutputFolder);
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass,
+                  deleteOutputFolder);
 
     job.setReducerClass(reducerClass);
     job.setOutputKeyClass(reducerKeyClass);
@@ -115,6 +113,8 @@ public abstract class HadoopJob extends Configured implements Tool {
     }
 
     FileOutputFormat.setCompressOutput(job, true);
+
+    return job;
   }
 
 }
