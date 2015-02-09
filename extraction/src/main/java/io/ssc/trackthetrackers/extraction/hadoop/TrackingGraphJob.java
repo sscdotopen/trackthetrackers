@@ -23,13 +23,13 @@ import com.google.common.net.InternetDomainName;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.ToolRunner;
 import parquet.proto.ProtoParquetInputFormat;
 
 import java.io.IOException;
@@ -38,6 +38,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class TrackingGraphJob extends HadoopJob {
+
+  public static void main(String[] args) throws Exception {
+    ToolRunner.run(new TrackingGraphJob(), args);
+  }
 
   @Override
   public int run(String[] args) throws Exception {
@@ -51,9 +55,7 @@ public class TrackingGraphJob extends HadoopJob {
                              EdgeListMapper.class, IntWritable.class, IntWritable.class, true);
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
-
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
-    //DistributedCache.setCacheFiles(new URI[] { domainIndex.toUri() }, toEdgeList.getConfiguration());
 
     toEdgeList.waitForCompletion(true);
 

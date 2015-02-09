@@ -33,6 +33,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpException;
 import org.apache.http.ParseException;
@@ -44,6 +45,8 @@ import parquet.proto.ProtoParquetOutputFormat;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Map;
 
@@ -54,8 +57,7 @@ public class ExtractionJob extends HadoopJob {
   }
 
   public static void main(String[] args) throws Exception {
-    ExtractionJob current = new ExtractionJob();
-    current.run(args);
+    ToolRunner.run(new ExtractionJob(), args);
   }
   
   @Override
@@ -86,24 +88,24 @@ public class ExtractionJob extends HadoopJob {
     public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException {
 
       if ("text/html".equals(record.getContentType())) {
-        String charset = null;
+        Charset charset = null;
 
         try {
           HttpResponse httpResponse = record.getHttpResponse();
           // Default value returned is "html/plain" with charset of ISO-8859-1.
           try {
-            if (ContentType.getOrDefault(httpResponse.getEntity()).getCharset() != null) {
-              charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset().name();
-            }
+            charset = ContentType.getOrDefault(httpResponse.getEntity()).getCharset();
           } catch (ParseException e) {
             context.getCounter(JobCounters.PARSE_EXCEPTIONS).increment(1);
           } catch (UnsupportedCharsetException uce) {
+            context.getCounter(JobCounters.CHARSET_EXCEPTIONS).increment(1);
+          } catch (IllegalCharsetNameException cne) {
             context.getCounter(JobCounters.CHARSET_EXCEPTIONS).increment(1);
           }
 
           // if anything goes wrong, try ISO-8859-1
           if (charset == null) {
-            charset = "ISO-8859-1";
+            charset = Charset.forName("ISO-8859-1");
           }
 
           String html;
