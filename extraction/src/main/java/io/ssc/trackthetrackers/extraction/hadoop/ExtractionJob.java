@@ -53,7 +53,7 @@ import java.util.Map;
 public class ExtractionJob extends HadoopJob {
 
   public static enum JobCounters {
-    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS
+    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS, STACKOVERFLOW_ERRORS
   }
 
   public static void main(String[] args) throws Exception {
@@ -146,6 +146,8 @@ public class ExtractionJob extends HadoopJob {
         } catch (HttpException e) {
           context.getCounter(JobCounters.HTTP_EXCEPTIONS).increment(1);
           throw new IOException(e);
+        } catch (StackOverflowError soe) {
+          context.getCounter(JobCounters.STACKOVERFLOW_ERRORS).increment(1);
         }
       }
     }
