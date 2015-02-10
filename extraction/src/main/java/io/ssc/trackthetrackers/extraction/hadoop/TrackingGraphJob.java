@@ -28,12 +28,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
 import parquet.proto.ProtoParquetInputFormat;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,8 +53,9 @@ public class TrackingGraphJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    Job toEdgeList = mapOnly(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
-                             EdgeListMapper.class, IntWritable.class, IntWritable.class, true);
+    Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
+        EdgeListMapper.class, IntWritable.class, IntArrayWritable.class,
+        DistinctifyReducer.class, IntWritable.class, IntWritable.class, false, true);
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
@@ -62,7 +65,30 @@ public class TrackingGraphJob extends HadoopJob {
     return 0;
   }
 
-  static class EdgeListMapper extends Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, IntWritable> {
+  static class DistinctifyReducer extends Reducer<IntWritable, IntArrayWritable, IntWritable, IntWritable> {
+
+    @Override
+    protected void reduce(IntWritable trackedHost, Iterable<IntArrayWritable> values, Context ctx)
+        throws IOException, InterruptedException {
+
+      Set<Integer> trackingHosts = new HashSet<Integer>();
+      for (IntArrayWritable indices : values) {
+        for (int index : indices.values()) {
+          trackingHosts.add(index);
+        }
+      }
+
+      int trackedHostIndex = trackedHost.get();
+      trackingHosts.remove(trackedHostIndex);
+
+      for (int trackingHostIndex : trackingHosts) {
+        ctx.write(new IntWritable(trackingHostIndex), new IntWritable(trackedHostIndex));
+      }
+    }
+  }
+
+
+  static class EdgeListMapper extends Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, IntArrayWritable> {
 
     private static DomainIndex domainIndex;
 
@@ -95,13 +121,20 @@ public class TrackingGraphJob extends HadoopJob {
             allTrackingDomains.addAll(parsedPage.getImagesList());
             allTrackingDomains.addAll(parsedPage.getLinksList());
 
+            int[] trackingHosts = new int[allTrackingDomains.size()];
+
+            int n = 0;
             for (String trackingDomain : allTrackingDomains) {
               String trackingHost = InternetDomainName.from(trackingDomain).topPrivateDomain().toString();
-              if (!trackingHost.equals(trackedHost)) {
+              int trackingHostIndex = domainIndex.indexFor(trackingHost);
+              trackingHosts[n++] = trackingHostIndex;
+              /*if (!trackingHost.equals(trackedHost)) {
                 int trackingHostIndex = domainIndex.indexFor(trackingHost);
                 ctx.write(new IntWritable(trackingHostIndex), new IntWritable(trackedHostIndex));
-              }
+              }*/
             }
+
+            ctx.write(new IntWritable(trackedHostIndex), new IntArrayWritable(trackingHosts));
 
           } catch (Exception e) {
             //TODO counter

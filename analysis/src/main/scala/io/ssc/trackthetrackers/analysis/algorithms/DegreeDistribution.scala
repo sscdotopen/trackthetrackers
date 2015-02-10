@@ -23,6 +23,7 @@ import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.api.scala._
 
+@deprecated
 object DegreeDistribution extends App {
 
   fromEdges("/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv",

@@ -80,7 +80,7 @@ public class ResourceExtractor {
   };
 
 
-  public synchronized Iterable<Resource> extractResources(String sourceUrl, String html) {
+  public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
     List<String> scriptHtml = new ArrayList<String>();
 

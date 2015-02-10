@@ -31,7 +31,6 @@ import java.net.URI;
 public class DistributedCacheHelper {
 
   public static void cacheFile(Path path, Configuration conf) {
-    //DistributedCache.setCacheFiles(new URI[] { path.toUri() }, conf);
     DistributedCache.addCacheFile(path.toUri(), conf);
   }
 

@@ -112,7 +112,7 @@ public abstract class HadoopJob extends Configured implements Tool {
       job.setCombinerClass(reducerClass);
     }
 
-    FileOutputFormat.setCompressOutput(job, true);
+//    FileOutputFormat.setCompressOutput(job, true);
 
     return job;
   }
