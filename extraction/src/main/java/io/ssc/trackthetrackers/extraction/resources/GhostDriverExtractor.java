@@ -1,3 +1,21 @@
+/**
+ * Track the trackers
+ * Copyright (C) 2014  Sebastian Schelter
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package io.ssc.trackthetrackers.extraction.resources;
 
 import com.google.common.collect.Sets;
@@ -31,19 +49,16 @@ public class GhostDriverExtractor {
 
   public static PhantomJSDriver setup(){
     Capabilities capabilities = new DesiredCapabilities().phantomjs();
-    // Set PhantomJS Path
-    ((DesiredCapabilities) capabilities).setCapability("phantomjs.binary.path", "/home/felix/Software/phantomjs/bin/phantomjs");
     ((DesiredCapabilities) capabilities).setCapability("phantomjs.settings.loadImages", false);
-    //((DesiredCapabilities) capabilities).setCapability("phantomjs.settings.localToRemoteUrlAccessEnabled", false);
-
+   
     return new PhantomJSDriver(capabilities);
   }
 
-  public synchronized Iterable<Resource> extractResources(String sourceUrl, String html) {
+  public Iterable<Resource> extractResources(String sourceUrl, String html) {
     return extractResources(sourceUrl, html, null);
   }
 
-  public synchronized Iterable<Resource> extractResources(String sourceUrl, String html, PhantomJSDriver phantom) {
+  public Iterable<Resource> extractResources(String sourceUrl, String html, PhantomJSDriver phantom) {
 
     Set<Resource> resources = Sets.newHashSet();
     String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
@@ -86,19 +101,12 @@ public class GhostDriverExtractor {
           resources.add(new Resource(uri, type(tag.tag().toString())));
         }
       }
-
-      /*
-      if (tag.tag().toString().equals("script")) { //filter functions
-        if(tag.data().length() > 1 && tag.data().contains("function")) {
-          scriptHtml.add(tag.data());
-        }
-      }*/
     }
 
     scriptHtml.add(html);
 
 
-    for(String shtml : scriptHtml) {
+    for (String shtml : scriptHtml) {
 
       File temp = null;
       try {
@@ -125,35 +133,30 @@ public class GhostDriverExtractor {
         } catch (Exception e) {
           e.printStackTrace();
         }
-      }while(!tempLog.exists());
+      } while (!tempLog.exists());
 
-      if(phantom == null) {
+      if (phantom == null) {
         phantom = setup();
       }
 
       Object result = phantom.executePhantomJS(
-          "var page      = this;\n" +
-
-              "var filename = '" + tempLog.getAbsolutePath() + "';\n" +
-              "var fs = require('fs');\n" +
-
-              "page.onResourceRequested = function (requestData, networkRequest) {\n" +
-              //"    console.log(requestData.url);\n" +
-              "    var content = fs.read(filename);\n" +
-              "    fs.write(filename, content + requestData.url + ' ', 'w');\n" +
-              // "    networkRequest.abort();\n" + //nothing works anymore with this !!
-              "};\n" +
-
-              /*
-
-              "page.open('file://" + temp.getAbsolutePath() + "', function() {\n" +
-              "    console.log('page opened');\n" +
-              "\n" +
-              "    phantom.exit();\n" +
-              "});" + */
-
-
-              "");
+          "var page      = this;\n" +                  
+          "var filename = '" + tempLog.getAbsolutePath() + "';\n" +
+          "var fs = require('fs');\n" +
+          "page.onResourceRequested = function (requestData, networkRequest) {\n" +
+          "    var content;" +
+          "    var isLoaded;" +
+          "    do {\n" +
+          "      isLoaded = true;\n" +        
+          "      try {" +
+          "        content = fs.read(filename);\n" +
+          "      } catch (e) {\n" +
+          "        isLoaded = false\n" + 
+          "     }" +
+          "    } while(!isLoaded);"+
+          "    fs.write(filename, content + requestData.url + ' ', 'w');\n" +
+          "};\n" +
+          "");        
 
       phantom.get("file://" + temp.getAbsolutePath());
 
@@ -187,38 +190,36 @@ public class GhostDriverExtractor {
         scanner.close();
       } catch (IOException e) {
         System.out.println(e.getStackTrace());
-      }
-
-      temp.delete(); //delete temporary html source file
-      tempLog.delete();//delete temporary request log file
+      } finally {
+        temp.delete(); //delete temporary html source file
+        tempLog.delete();//delete temporary request log file
+      }      
     }
     
     return resources;
   }
 
-
-
   private boolean isValidDomain(String url) {
     if (!url.contains(".") || url.contains("///")) {
       return false;
     }
-
+  
     if (url.contains(";") || url.contains("=") || url.contains("?")) {
       return false;
     }
-
+  
     int startTopLevelDomain = url.lastIndexOf('.');
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
     return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
-
-
+  
+  
   private Resource.Type type(String tag) {
     if ("script".equals(tag)) {
       return Resource.Type.SCRIPT;
     }
     if ("link".equals(tag)) {
-      return Resource.Type.LINK;
+       return Resource.Type.LINK;
     }
     if ("img".equals(tag)) {
       return Resource.Type.IMAGE;
@@ -226,7 +227,7 @@ public class GhostDriverExtractor {
     if ("iframe".equals(tag)) {
       return Resource.Type.IFRAME;
     }
-
+    
     return Resource.Type.OTHER;
   }
 }
