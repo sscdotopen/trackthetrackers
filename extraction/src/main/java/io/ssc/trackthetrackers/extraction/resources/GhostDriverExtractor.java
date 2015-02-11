@@ -46,19 +46,7 @@ public class GhostDriverExtractor {
 
   private final URLNormalizer urlNormalizer = new URLNormalizer();
 
-
-  public static PhantomJSDriver setup(){
-    Capabilities capabilities = new DesiredCapabilities().phantomjs();
-    ((DesiredCapabilities) capabilities).setCapability("phantomjs.settings.loadImages", false);
-   
-    return new PhantomJSDriver(capabilities);
-  }
-
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
-    return extractResources(sourceUrl, html, null);
-  }
-
-  public Iterable<Resource> extractResources(String sourceUrl, String html, PhantomJSDriver phantom) {
 
     Set<Resource> resources = Sets.newHashSet();
     String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
@@ -138,9 +126,10 @@ public class GhostDriverExtractor {
         }
       } while (!tempLog.exists());
 
-      if (phantom == null) {
-        phantom = setup();
-      }
+      Capabilities capabilities = new DesiredCapabilities().phantomjs();
+      ((DesiredCapabilities) capabilities).setCapability("phantomjs.settings.loadImages", false);
+
+      PhantomJSDriver phantom = new PhantomJSDriver(capabilities);  
 
       Object result = phantom.executePhantomJS(
           "var page      = this;\n" +                  
@@ -200,8 +189,9 @@ public class GhostDriverExtractor {
       } finally {
         temp.delete(); //delete temporary html source file
         tempLog.delete();//delete temporary request log file
-      }      
-    }
+      }
+      phantom.close();
+    } 
     
     return resources;
   }
