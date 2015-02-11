@@ -46,135 +46,127 @@ public class PhantomJSvsGoogleTest {
     compareResults(resourcesGoogle, resourcesPhantom);
   }
 
-    @Test
-    public void zalandoDe() throws IOException {
+  @Test
+  public void zalandoDe() throws IOException {
 
-        Iterable<Resource> resourcesGoogle = extractResources("http://zalando.de", Resources.getResource("zalando.de.html"));
+    Iterable<Resource> resourcesGoogle = extractResources("http://zalando.de", Resources.getResource("zalando.de.html"));
 
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://zalando.de", Resources.getResource("zalando.de.html"));
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://zalando.de", Resources.getResource("zalando.de.html"));
 
-        compareResults(resourcesGoogle, resourcesPhantom);
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+  @Test
+  public void rtlDe() throws IOException {
+    Iterable<Resource> resourcesGoogle = extractResources("http://rtl.de", Resources.getResource("rtl.de.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://rtl.de", Resources.getResource("rtl.de.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+  @Test
+  public void mediamarktDe() throws IOException {
+    Iterable<Resource> resourcesGoogle = extractResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+  @Test
+  public void techcrunchCom() throws IOException {
+
+    Iterable<Resource> resourcesGoogle = extractResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom); 
+  }
+
+  @Test
+  public void theguardianCom() throws IOException {
+
+    Iterable<Resource> resourcesGoogle = extractResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+  @Test
+  public void buzzfeedCom() throws IOException {
+
+    Iterable<Resource> resourcesGoogle = extractResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+
+  @Test
+  public void prosiebenDe() throws IOException {
+
+    Iterable<Resource> resourcesGoogle = extractResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
+
+    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
+
+    compareResults(resourcesGoogle, resourcesPhantom);
+  }
+
+
+
+  private void compareResults(Iterable<Resource> googleResources, Iterable<Resource> phantomJSResources) {
+
+    Set<String> viewersExtractedGoogle = Sets.newHashSet();
+    for (Resource resource : googleResources) {
+      viewersExtractedGoogle.add(resource.url());
     }
 
-    @Test
-    public void rtlDe() throws IOException {
-        Iterable<Resource> resourcesGoogle =
-                extractResources("http://rtl.de", Resources.getResource("rtl.de.html"));
-
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://rtl.de", Resources.getResource("rtl.de.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom);
+    Set<String> viewersExtractedPhantomJS = Sets.newHashSet();
+    for (Resource resource : phantomJSResources) {
+      viewersExtractedPhantomJS.add(resource.url());
     }
 
-    @Test
-    public void mediamarktDe() throws IOException {
-        Iterable<Resource> resourcesGoogle =
-                extractResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
+    SortedSet<String> matches = Sets.newTreeSet();
+    SortedSet<String> onlyGoogle = Sets.newTreeSet();
+    SortedSet<String> onlyPhantomJS = Sets.newTreeSet();
 
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom);
+    for (String googleUrl : viewersExtractedGoogle) {
+      if(viewersExtractedPhantomJS.contains(googleUrl)) {
+        matches.add(googleUrl);
+      } else {
+        onlyGoogle.add(googleUrl);
+      }
+    }
+    for (String phantomJSUrl : viewersExtractedPhantomJS) {
+      if(!viewersExtractedGoogle.contains(phantomJSUrl)) {
+        onlyPhantomJS.add(phantomJSUrl);
+      }
     }
 
-    @Test
-    public void techcrunchCom() throws IOException {
-
-        Iterable<Resource> resourcesGoogle =
-                extractResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
-
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom); 
+    System.out.println("--- FOUND BY BOTH ----");
+    for (String url : matches) {
+      System.out.println("\t" + url);
     }
-
-    @Test
-    public void theguardianCom() throws IOException {
-
-        Iterable<Resource> resourcesGoogle =
-                extractResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
-
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom);
+    System.out.println("--- ONLY FOUND BY GOOGLE JS PARSER ----");
+    for (String url : onlyGoogle) {
+      System.out.println("\t" + url);
     }
-
-    @Test
-    public void buzzfeedCom() throws IOException {
-
-        Iterable<Resource> resourcesGoogle =
-                extractResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
-
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom);
+    System.out.println("--- ONLY FOUND BY PHANTOMJS ----");
+    for (String url : onlyPhantomJS) {
+      System.out.println("\t" + url);
     }
+  }
 
-
-    @Test
-    public void prosiebenDe() throws IOException {
-
-        Iterable<Resource> resourcesGoogle = extractResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
-
-        Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
-
-        compareResults(resourcesGoogle, resourcesPhantom);
-    }
-
-
-
-    private void compareResults(Iterable<Resource> googleResources, Iterable<Resource> phantomJSResources) {
-
-        Set<String> viewersExtractedGoogle = Sets.newHashSet();
-        for (Resource resource : googleResources) {
-            viewersExtractedGoogle.add(resource.url());
-        }
-
-        Set<String> viewersExtractedPhantomJS = Sets.newHashSet();
-        for (Resource resource : phantomJSResources) {
-            viewersExtractedPhantomJS.add(resource.url());
-        }
-
-        SortedSet<String> matches = Sets.newTreeSet();
-        SortedSet<String> onlyGoogle = Sets.newTreeSet();
-        SortedSet<String> onlyPhantomJS = Sets.newTreeSet();
-
-        for (String googleUrl : viewersExtractedGoogle) {
-            if(viewersExtractedPhantomJS.contains(googleUrl)) {
-                matches.add(googleUrl);
-            } else {
-                onlyGoogle.add(googleUrl);
-            }
-        }
-        for (String phantomJSUrl : viewersExtractedPhantomJS) {
-            if(!viewersExtractedGoogle.contains(phantomJSUrl)) {
-               onlyPhantomJS.add(phantomJSUrl);
-            }
-        }
-
-        System.out.println("--- FOUND BY BOTH ----");
-        for (String url : matches) {
-            System.out.println("\t" + url);
-        }
-        System.out.println("--- ONLY FOUND BY GOOGLE JS PARSER ----");
-        for (String url : onlyGoogle) {
-            System.out.println("\t" + url);
-        }
-        System.out.println("--- ONLY FOUND BY PHANTOMJS ----");
-        for (String url : onlyPhantomJS) {
-            System.out.println("\t" + url);
-        }
-    }
-
-
-
-
-   Iterable<Resource> extractResources(String sourceUrl, URL page) throws IOException {
+  Iterable<Resource> extractResources(String sourceUrl, URL page) throws IOException {
     return new ResourceExtractor().extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
   }
 
-    Iterable<Resource> extractPhantomJSResources(String sourceUrl, URL page) throws IOException {
-        GhostDriverExtractor gex = new GhostDriverExtractor();
-        return gex.extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
-    }
+  Iterable<Resource> extractPhantomJSResources(String sourceUrl, URL page) throws IOException {
+    GhostDriverExtractor gex = new GhostDriverExtractor();
+    return gex.extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
+  }
 
 }
