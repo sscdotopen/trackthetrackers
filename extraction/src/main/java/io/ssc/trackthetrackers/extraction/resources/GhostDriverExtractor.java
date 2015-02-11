@@ -98,7 +98,7 @@ public class GhostDriverExtractor {
           }
         } catch (StackOverflowError err) {
             if (LOG.isWarnEnabled()) {
-                LOG.warn("Stack Overflow Error: \"" + uri + "\"");
+              LOG.warn("Stack Overflow Error: \"" + uri + "\"");
             }
         }
         if (isValidDomain(uri)) {
@@ -185,7 +185,7 @@ public class GhostDriverExtractor {
                 }
               } catch (StackOverflowError err) {
                   if (LOG.isWarnEnabled()) {
-                      LOG.warn("Stack Overflow Error: \"" + url + "\"");
+                    LOG.warn("Stack Overflow Error: \"" + url + "\"");
                   }
               }
               if (isValidDomain(url)) {
