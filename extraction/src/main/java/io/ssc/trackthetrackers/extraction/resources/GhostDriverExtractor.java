@@ -85,9 +85,9 @@ public class GhostDriverExtractor {
             LOG.warn("Malformed URL: \"" + uri + "\"");
           }
         } catch (StackOverflowError err) {
-            if (LOG.isWarnEnabled()) {
-              LOG.warn("Stack Overflow Error: \"" + uri + "\"");
-            }
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Stack Overflow Error: \"" + uri + "\"");
+          }
         }
         if (isValidDomain(uri)) {
           resources.add(new Resource(uri, type(tag.tag().toString())));
@@ -173,9 +173,9 @@ public class GhostDriverExtractor {
                   LOG.warn("Malformed URL: \"" + url + "\"");
                 }
               } catch (StackOverflowError err) {
-                  if (LOG.isWarnEnabled()) {
-                    LOG.warn("Stack Overflow Error: \"" + url + "\"");
-                  }
+                if (LOG.isWarnEnabled()) {
+                  LOG.warn("Stack Overflow Error: \"" + url + "\"");
+                }
               }
               if (isValidDomain(url)) {
                 resources.add(new Resource(url, Resource.Type.SCRIPT));
@@ -191,6 +191,7 @@ public class GhostDriverExtractor {
         tempLog.delete();//delete temporary request log file
       }
       phantom.close();
+      phantom.quit();  
     } 
     
     return resources;
