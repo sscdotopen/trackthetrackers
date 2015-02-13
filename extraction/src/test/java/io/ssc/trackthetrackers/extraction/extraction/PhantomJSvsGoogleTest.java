@@ -121,12 +121,12 @@ public class PhantomJSvsGoogleTest {
 
     Set<String> viewersExtractedGoogle = Sets.newHashSet();
     for (Resource resource : googleResources) {
-      viewersExtractedGoogle.add(resource.url());
+      viewersExtractedGoogle.add(normalize(resource.url()));
     }
 
     Set<String> viewersExtractedPhantomJS = Sets.newHashSet();
     for (Resource resource : phantomJSResources) {
-      viewersExtractedPhantomJS.add(resource.url());
+      viewersExtractedPhantomJS.add(normalize(resource.url()));
     }
 
     SortedSet<String> matches = Sets.newTreeSet();
@@ -159,6 +159,16 @@ public class PhantomJSvsGoogleTest {
       System.out.println("\t" + url);
     }
   }
+    
+  String normalize(String url) {
+    String [] parts = url.split("\\.");
+
+    if (parts.length > 2) {
+      String normUrl = parts[parts.length - 2] + "." + parts[parts.length - 1];
+      return normUrl;
+    }
+    return url;
+  }   
 
   Iterable<Resource> extractResources(String sourceUrl, URL page) throws IOException {
     return new ResourceExtractor().extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
