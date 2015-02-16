@@ -27,26 +27,20 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
   private Text key;
   private ArcRecord value;
   private Configuration conf;
-  private boolean done;
 
   public void initialize(InputSplit insplit, TaskAttemptContext context) throws IOException {
-
-    done = false;
 
     conf = context.getConfiguration();
 
     FileSplit split = (FileSplit) insplit;
 
 
-    if (split.getStart() != 0) {
-      done = true;
-      /*
-      IOException ex = new IOException("Invalid ARC file split start "
-          + split.getStart() + ": ARC files are not splittable");
-      LOG.error(ex.getMessage());
-      throw ex;
-      */
-    }
+      if (split.getStart() != 0) {
+        IOException ex = new IOException("Invalid ARC file split start " 
+            + split.getStart() + ": ARC files are not splittable");
+        LOG.error(ex.getMessage());
+        throw ex;
+      }
 
     // open the file and seek to the start of the split
     final Path file = split.getPath();
@@ -94,10 +88,6 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
    */
   public synchronized boolean nextKeyValue() throws IOException, InterruptedException {
 
-    if (done) {
-      return false;
-    }
-
     boolean isValid = true;
 
     key = (Text) ReflectionUtils.newInstance(Text.class, conf);
@@ -138,7 +128,7 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
     return Math.min(1.0f, gzip.getBytesRead() / (float) fileLength);
   }
 
-  public synchronized long getPos() throws IOException {
+    public synchronized long getPos() throws IOException {
     return gzip.getBytesRead();
   }
 
