@@ -128,7 +128,7 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
     return Math.min(1.0f, gzip.getBytesRead() / (float) fileLength);
   }
 
-    public synchronized long getPos() throws IOException {
+  public synchronized long getPos() throws IOException {
     return gzip.getBytesRead();
   }
 
