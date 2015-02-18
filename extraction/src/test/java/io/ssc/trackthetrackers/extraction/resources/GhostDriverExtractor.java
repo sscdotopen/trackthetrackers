@@ -19,16 +19,17 @@
 package io.ssc.trackthetrackers.extraction.resources;
 
 import com.google.common.collect.Sets;
+import io.ssc.trackthetrackers.extraction.hadoop.Config;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import parquet.Closeables;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,7 +43,7 @@ import java.util.Scanner;
 
 public class GhostDriverExtractor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(GhostDriverExtractor.class);
+  private static final Logger log = LoggerFactory.getLogger(GhostDriverExtractor.class);
 
   private final URLNormalizer urlNormalizer = new URLNormalizer();
 
@@ -62,10 +63,9 @@ public class GhostDriverExtractor {
     all.addAll(links);
     all.addAll(imgs);
 
-    String uri = null;
+    String uri;
 
     List<String> scriptHtml =  new ArrayList<String>();
-    //scriptHtml.add(html);
 
     for (Element tag : all) {
       uri = tag.attr("src");
@@ -81,12 +81,12 @@ public class GhostDriverExtractor {
           uri = urlNormalizer.normalize(uri);
           uri = urlNormalizer.extractDomain(uri);
         } catch (MalformedURLException e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Malformed URL: \"" + uri + "\"");
+          if (log.isWarnEnabled()) {
+            log.warn("Malformed URL: \"" + uri + "\"");
           }
         } catch (StackOverflowError err) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Stack Overflow Error: \"" + uri + "\"");
+          if (log.isWarnEnabled()) {
+            log.warn("Stack Overflow Error: \"" + uri + "\"");
           }
         }
         if (isValidDomain(uri)) {
@@ -100,19 +100,20 @@ public class GhostDriverExtractor {
 
     for (String shtml : scriptHtml) {
 
+      BufferedWriter writer = null;
       File temp = null;
       try {
 
         //create a temporary html source file
         temp = File.createTempFile(sourceUrl, ".html");
 
-        //write it
-        BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
-        bw.write(html);
-        bw.close();
+        writer = new BufferedWriter(new FileWriter(temp));
+        writer.write(shtml);
 
       } catch (IOException e) {
         e.printStackTrace();
+      } finally {
+        Closeables.closeAndSwallowIOExceptions(writer);
       }
 
 
@@ -126,12 +127,13 @@ public class GhostDriverExtractor {
         }
       } while (!tempLog.exists());
 
-      Capabilities capabilities = new DesiredCapabilities().phantomjs();
-      ((DesiredCapabilities) capabilities).setCapability("phantomjs.settings.loadImages", false);
+      DesiredCapabilities capabilities = new DesiredCapabilities().phantomjs();
+      capabilities.setCapability("phantomjs.binary.path", Config.get("phantomjs.path"));
+      capabilities.setCapability("phantomjs.settings.loadImages", false);
 
       PhantomJSDriver phantom = new PhantomJSDriver(capabilities);  
 
-      Object result = phantom.executePhantomJS(
+      phantom.executePhantomJS(
           "var page      = this;\n" +                  
           "var filename = '" + tempLog.getAbsolutePath() + "';\n" +
           "var fs = require('fs');\n" +
@@ -152,11 +154,11 @@ public class GhostDriverExtractor {
 
       phantom.get("file://" + temp.getAbsolutePath());
 
+      Scanner scanner = null;
       try {
-        Scanner scanner = new Scanner(tempLog);
+        scanner = new Scanner(tempLog);
         while (scanner.hasNextLine()) {
           String[] tokens = scanner.nextLine().split(" ");
-          //do what you want to do with the tokens
 
           for (String url : tokens) {
             if (url.contains(".")) {
@@ -169,12 +171,12 @@ public class GhostDriverExtractor {
                 url = urlNormalizer.normalize(url);
                 url = urlNormalizer.extractDomain(url);
               } catch (MalformedURLException e) {
-                if (LOG.isWarnEnabled()) {
-                  LOG.warn("Malformed URL: \"" + url + "\"");
+                if (log.isWarnEnabled()) {
+                  log.warn("Malformed URL: \"" + url + "\"");
                 }
               } catch (StackOverflowError err) {
-                if (LOG.isWarnEnabled()) {
-                  LOG.warn("Stack Overflow Error: \"" + url + "\"");
+                if (log.isWarnEnabled()) {
+                  log.warn("Stack Overflow Error: \"" + url + "\"");
                 }
               }
               if (isValidDomain(url)) {
@@ -183,12 +185,12 @@ public class GhostDriverExtractor {
             }
           }
         }
-        scanner.close();
       } catch (IOException e) {
         System.out.println(e.getStackTrace());
       } finally {
         temp.delete(); //delete temporary html source file
         tempLog.delete();//delete temporary request log file
+        Closeables.closeAndSwallowIOExceptions(scanner);
       }
       phantom.close();
       phantom.quit();  

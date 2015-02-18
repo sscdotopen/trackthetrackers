@@ -18,7 +18,6 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-//import io.ssc.trackthetrackers.extraction.hadoop.util.TopWatchers;
 import org.apache.hadoop.util.ToolRunner;
 
 public class CommonCrawlSampleIntegrationTest {
@@ -26,7 +25,6 @@ public class CommonCrawlSampleIntegrationTest {
   public static void main(String[] args) throws Exception {
 
     ExtractionJob extraction = new ExtractionJob();
-    //AggregateScriptWatchersJob aggregateWatchers = new AggregateScriptWatchersJob();
     TrackingGraphJob trackingGraph = new TrackingGraphJob();
 
     ToolRunner.run(extraction, new String[] {
@@ -34,18 +32,10 @@ public class CommonCrawlSampleIntegrationTest {
         "--output", "/tmp/commoncrawl-extraction/"
     });
 
-    //ToolRunner.run(aggregateWatchers, new String[] {
-    //    "--input", "/tmp/commoncrawl-extraction/",
-    //    "--output", "/tmp/commoncrawl-watchers/"
-    //});
-
-    //TopWatchers.print("/tmp/commoncrawl-watchers/part-r-00000", 100);
-
     ToolRunner.run(trackingGraph, new String[] {
         "--input", "/tmp/commoncrawl-extraction/",
         "--output", "/tmp/commoncrawl-trackingraph/",
         "--domainIndex", Config.get("webdatacommons.pldfile")
     });
-
   }
 }

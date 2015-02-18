@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ArcRecordReader.class);
+  private static final Logger log = LoggerFactory.getLogger(ArcRecordReader.class);
 
   private FSDataInputStream fsin;
   private GzipCompressorInputStream gzip;
@@ -34,13 +34,11 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
 
     FileSplit split = (FileSplit) insplit;
 
-
-      if (split.getStart() != 0) {
-        IOException ex = new IOException("Invalid ARC file split start " 
-            + split.getStart() + ": ARC files are not splittable");
-        LOG.error(ex.getMessage());
-        throw ex;
-      }
+    if (split.getStart() != 0) {
+      String errorMessage = "Invalid ARC file split start " + split.getStart() + ": ARC files are not splittable";
+      log.error(errorMessage);
+      throw new IOException(errorMessage);
+    }
 
     // open the file and seek to the start of the split
     final Path file = split.getPath();
@@ -102,7 +100,7 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
 
     // if the record is not valid, skip it
     if (isValid == false) {
-      LOG.error("Invalid ARC record found at GZIP position " + gzip.getBytesRead() + ".  Skipping ...");
+      log.error("Invalid ARC record found at GZIP position " + gzip.getBytesRead() + ".  Skipping ...");
       skipRecord();
       return true;
     }
@@ -115,7 +113,7 @@ public class ArcRecordReader extends RecordReader<Text, ArcRecord> {
     int n = gzip.read(checkBuffer, 0, 64);
 
     if (n != -1) {
-      LOG.error(n + "  bytes of unexpected content found at end of ARC record.  Skipping ...");
+      log.error(n + "  bytes of unexpected content found at end of ARC record.  Skipping ...");
       skipRecord();
     } else {
       gzip.nextMember();

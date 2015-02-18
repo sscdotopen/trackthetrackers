@@ -38,86 +38,50 @@ public class PhantomJSvsGoogleTest {
 
   @Test
   public void spiegelDe() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://spiegel.de", Resources.getResource("spiegel.de.html"));
-      
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://spiegel.de", Resources.getResource("spiegel.de.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://spiegel.de", "spiegel.de.html");
   }
 
   @Test
   public void zalandoDe() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://zalando.de", Resources.getResource("zalando.de.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://zalando.de", Resources.getResource("zalando.de.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://zalando.de", "zalando.de.html");
   }
 
   @Test
   public void rtlDe() throws IOException {
-    Iterable<Resource> resourcesGoogle = extractResources("http://rtl.de", Resources.getResource("rtl.de.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://rtl.de", Resources.getResource("rtl.de.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://rtl.de", "rtl.de.html");
   }
 
   @Test
   public void mediamarktDe() throws IOException {
-    Iterable<Resource> resourcesGoogle = extractResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://www.mediamarkt.de", Resources.getResource("mediamarkt.de.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://www.mediamarkt.de", "mediamarkt.de.html");
   }
 
   @Test
   public void techcrunchCom() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://techcrunch.com", Resources.getResource("techcrunch.com.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom); 
+    evaluate("http://techcrunch.com", "techcrunch.com.html");
   }
 
   @Test
   public void theguardianCom() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://theguardian.com", Resources.getResource("theguardian.com.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://theguardian.com", "theguardian.com.html");
   }
 
   @Test
   public void buzzfeedCom() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://buzzfeed.com", Resources.getResource("buzzfeed.com.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://buzzfeed.com", "buzzfeed.com.html");
   }
-
 
   @Test
   public void prosiebenDe() throws IOException {
-
-    Iterable<Resource> resourcesGoogle = extractResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
-
-    Iterable<Resource> resourcesPhantom = extractPhantomJSResources("http://prosieben.de", Resources.getResource("prosieben.de.html"));
-
-    compareResults(resourcesGoogle, resourcesPhantom);
+    evaluate("http://prosieben.de", "prosieben.de.html");
   }
 
 
+  private void evaluate(String uri, String htmlFile) throws IOException {
 
-  private void compareResults(Iterable<Resource> googleResources, Iterable<Resource> phantomJSResources) {
+    Iterable<Resource> googleResources = extractResources(uri, Resources.getResource(htmlFile));
+    Iterable<Resource> phantomJSResources = extractPhantomJSResources(uri, Resources.getResource(htmlFile));
+
 
     Set<String> viewersExtractedGoogle = Sets.newHashSet();
     for (Resource resource : googleResources) {
@@ -134,12 +98,13 @@ public class PhantomJSvsGoogleTest {
     SortedSet<String> onlyPhantomJS = Sets.newTreeSet();
 
     for (String googleUrl : viewersExtractedGoogle) {
-      if(viewersExtractedPhantomJS.contains(googleUrl)) {
+      if (viewersExtractedPhantomJS.contains(googleUrl)) {
         matches.add(googleUrl);
       } else {
         onlyGoogle.add(googleUrl);
       }
     }
+
     for (String phantomJSUrl : viewersExtractedPhantomJS) {
       if(!viewersExtractedGoogle.contains(phantomJSUrl)) {
         onlyPhantomJS.add(phantomJSUrl);
@@ -158,14 +123,15 @@ public class PhantomJSvsGoogleTest {
     for (String url : onlyPhantomJS) {
       System.out.println("\t" + url);
     }
+
+    assertTrue("False positives detected!", onlyGoogle.isEmpty());
   }
     
   String normalize(String url) {
     String [] parts = url.split("\\.");
 
     if (parts.length > 2) {
-      String normUrl = parts[parts.length - 2] + "." + parts[parts.length - 1];
-      return normUrl;
+      return parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
     return url;
   }   
@@ -175,8 +141,7 @@ public class PhantomJSvsGoogleTest {
   }
 
   Iterable<Resource> extractPhantomJSResources(String sourceUrl, URL page) throws IOException {
-    GhostDriverExtractor gex = new GhostDriverExtractor();
-    return gex.extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
+    return new GhostDriverExtractor().extractResources(sourceUrl, Resources.toString(page, Charsets.UTF_8));
   }
 
 }

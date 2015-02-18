@@ -18,7 +18,6 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import java.io.IOException;
 import java.util.Properties;
 
 public class Config {
@@ -27,11 +26,15 @@ public class Config {
 
   private Config() {}
 
-  public static String get(String key) throws IOException {
-    if (props == null) {
-      props = new Properties();
-      props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
+  public static String get(String key) {
+    try {
+      if (props == null) {
+        props = new Properties();
+        props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
+      }
+      return props.getProperty(key);
+    } catch (Exception e) {
+      throw new IllegalStateException("Unable to load config file!", e);
     }
-    return props.getProperty(key);
   }
 }
