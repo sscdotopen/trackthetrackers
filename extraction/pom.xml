@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>parent</artifactId>
     <groupId>io.ssc.trackthetrackers</groupId>
@@ -22,7 +22,13 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+    <repository>
+      <id>jenkins-releases</id>
+      <url>http://repo.jenkins-ci.org/releases/</url>
+    </repository>
   </repositories>
+
+
 
   <dependencies>
 
@@ -42,11 +48,36 @@
       <artifactId>lucene-core</artifactId>
       <version>4.2.1</version>
     </dependency>
+
     <dependency>
       <groupId>it.unimi.dsi</groupId>
       <artifactId>fastutil</artifactId>
       <version>6.6.1</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-java</artifactId>
+      <version>2.44.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-remote-driver</artifactId>
+      <version>2.44.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-api</artifactId>
+      <version>2.44.0</version>
+    </dependency>
+
+    
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-server-standalone</artifactId>
+      <version>2.44.0</version>
+    </dependency>
+
 
     <!-- google parser dependencies -->
     <dependency>
@@ -61,7 +92,6 @@
       </exclusions>
     </dependency>
 
-    <!-- Parquet dependencies -->
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>parquet-hadoop</artifactId>
@@ -104,45 +134,58 @@
       <version>1.8.5</version>
       <scope>test</scope>
     </dependency>
+
+
+    <!-- google parser dependencies -->
+    <dependency>
+      <groupId>com.google.javascript</groupId>
+      <artifactId>closure-compiler</artifactId>
+      <version>v20140730</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
   </dependencies>
 
-
   <build>
-   <plugins>
-     <plugin>
-       <groupId>org.apache.maven.plugins</groupId>
-       <artifactId>maven-compiler-plugin</artifactId>
-       <version>2.3.2</version>
-       <configuration>
-         <source>1.6</source>
-         <target>1.6</target>
-       </configuration>
-     </plugin>
-     <plugin>
-       <groupId>org.apache.maven.plugins</groupId>
-       <artifactId>maven-shade-plugin</artifactId>
-       <version>1.4</version>
-       <executions>
-         <execution>
-           <phase>package</phase>
-           <goals>
-             <goal>shade</goal>
-           </goals>
-           <configuration>
-             <artifactSet>
-               <excludes>
-                 <exclude>junit:junit</exclude>
-                 <exclude>org.mockito:mockito-all</exclude>
-               </excludes>
-             </artifactSet>
-             <transformers>
-               <transformer implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
-             </transformers>
-           </configuration>
-         </execution>
-       </executions>
-     </plugin>
-   </plugins>
- </build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3.2</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <artifactSet>
+                <excludes>
+                  <exclude>junit:junit</exclude>
+                  <exclude>org.mockito:mockito-all</exclude>
+                </excludes>
+              </artifactSet>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ComponentsXmlResourceTransformer"/>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 
 </project>

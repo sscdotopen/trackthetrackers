@@ -20,9 +20,9 @@ package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.IOException;
 
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -36,7 +36,8 @@ public class ArcInputFormat extends FileInputFormat<Text, ArcRecord> {
    *
    */
   public RecordReader<Text,ArcRecord> createRecordReader(InputSplit split, TaskAttemptContext context) 
-        throws IOException, InterruptedException {
+        throws IOException {
+    context.setStatus(split.toString());  
     return new ArcRecordReader();
   }
 
@@ -45,7 +46,7 @@ public class ArcInputFormat extends FileInputFormat<Text, ArcRecord> {
    * <p>ARC files are stored in 100MB files, meaning they will be stored in at
    * most 3 blocks (2 blocks on Hadoop systems with 128MB block size).</p>
    */
-  protected boolean isSplitable(FileSystem fs, Path filename) {
+  protected boolean isSplitable(JobContext context, Path filename) {
     return false;
   }
 }
