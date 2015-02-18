@@ -26,7 +26,25 @@ object FlinkUtils {
   def countByKey[T](data: DataSet[T], extractKey: (T) => Long): DataSet[(Long, Long)] = {
 
     data.groupBy { extractKey }
-        .reduceGroup { group => countBy(extractKey, group) }
+      .reduceGroup { group => countBy(extractKey, group) }
+  }
+
+  def countByStrKey[T](data: DataSet[T], extractKey: (T) => String): DataSet[(String, Long)] = {
+
+    data.groupBy { extractKey }
+      .reduceGroup { group => countByStr(extractKey, group) }
+  }
+
+  private[this] def countByStr[T](extractKey: T => String, group: Iterator[T]): (String, Long) = {
+    val key = extractKey(group.next())
+
+    var count = 1L
+    while (group.hasNext) {
+      group.next()
+      count += 1
+    }
+
+    key -> count
   }
 
   private[this] def countBy[T](extractKey: T => Long, group: Iterator[T]): (Long, Long) = {

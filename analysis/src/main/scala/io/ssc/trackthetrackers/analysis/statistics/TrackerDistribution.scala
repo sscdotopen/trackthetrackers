@@ -22,13 +22,15 @@ import io.ssc.trackthetrackers.analysis.{Edge, FlinkUtils, GraphUtils}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.api.scala._
+import org.apache.flink.core.fs.FileSystem.WriteMode
 
 object TrackerDistribution extends App {
 
-  computeDistribution("/home/ssc/Desktop/sample2000.tsv",
-      "/home/ssc/Entwicklung/datasets/webdatacommons-hyperlink2012-payleveldomain/pld-index")
+  computeDistribution("/home/ssc/Desktop/trackthetrackers/sample2000.tsv",
+      "/home/ssc/Entwicklung/datasets/webdatacommons-hyperlink2012-payleveldomain/pld-index",
+      "/home/ssc/Desktop/trackthetrackers/out/trackerDistribution/")
 
-  def computeDistribution(trackingGraphFile: String, domainIndexFile: String) = {
+  def computeDistribution(trackingGraphFile: String, domainIndexFile: String, outputPath: String) = {
 
     implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
@@ -48,7 +50,7 @@ object TrackerDistribution extends App {
         topTrackers.join(domains).where(0).equalTo(1) { (topTracker, domain) => domain.annotation -> topTracker._2 }
 
 
-    topTrackerDomains.printToErr()
+    topTrackerDomains.writeAsCsv(outputPath, fieldDelimiter = "\t", writeMode = WriteMode.OVERWRITE)
 
     env.execute()
   }
