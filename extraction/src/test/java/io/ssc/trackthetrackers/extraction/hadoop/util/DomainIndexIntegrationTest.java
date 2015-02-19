@@ -19,7 +19,7 @@
 package io.ssc.trackthetrackers.extraction.hadoop.util;
 
 
-import io.ssc.trackthetrackers.extraction.hadoop.Config;
+import io.ssc.trackthetrackers.Config;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

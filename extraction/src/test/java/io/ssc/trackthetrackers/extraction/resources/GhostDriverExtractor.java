@@ -19,7 +19,7 @@
 package io.ssc.trackthetrackers.extraction.resources;
 
 import com.google.common.collect.Sets;
-import io.ssc.trackthetrackers.extraction.hadoop.Config;
+import io.ssc.trackthetrackers.Config;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,13 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import parquet.Closeables;
 
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.Scanner;
 
@@ -64,8 +63,6 @@ public class GhostDriverExtractor {
     all.addAll(imgs);
 
     String uri;
-
-    List<String> scriptHtml =  new ArrayList<String>();
 
     for (Element tag : all) {
       uri = tag.attr("src");
@@ -95,106 +92,100 @@ public class GhostDriverExtractor {
       }
     }
 
-    scriptHtml.add(html);
+    BufferedWriter writer = null;
+    File temp = null;
+    try {
+
+      //create a temporary html source file
+      temp = File.createTempFile(sourceUrl, ".html");
+
+      writer = new BufferedWriter(new FileWriter(temp));
+      writer.write(html);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      Closeables.closeAndSwallowIOExceptions(writer);
+    }
 
 
-    for (String shtml : scriptHtml) {
-
-      BufferedWriter writer = null;
-      File temp = null;
+    File tempLog = null;
+    do {
       try {
-
-        //create a temporary html source file
-        temp = File.createTempFile(sourceUrl, ".html");
-
-        writer = new BufferedWriter(new FileWriter(temp));
-        writer.write(shtml);
-
-      } catch (IOException e) {
+        tempLog = File.createTempFile("log", ".log");
+        tempLog.createNewFile();
+      } catch (Exception e) {
         e.printStackTrace();
-      } finally {
-        Closeables.closeAndSwallowIOExceptions(writer);
       }
+    } while (!tempLog.exists());
 
+    DesiredCapabilities capabilities = new DesiredCapabilities().phantomjs();
+    capabilities.setCapability("phantomjs.binary.path", Config.get("phantomjs.path"));
+    capabilities.setCapability("phantomjs.settings.loadImages", false);
 
-      File tempLog = null;
-      do {
-        try {
-          tempLog = File.createTempFile("log", ".log");
-          tempLog.createNewFile();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      } while (!tempLog.exists());
+    PhantomJSDriver phantom = new PhantomJSDriver(capabilities);
 
-      DesiredCapabilities capabilities = new DesiredCapabilities().phantomjs();
-      capabilities.setCapability("phantomjs.binary.path", Config.get("phantomjs.path"));
-      capabilities.setCapability("phantomjs.settings.loadImages", false);
+    phantom.executePhantomJS(
+        "var page      = this;\n" +
+        "var filename = '" + tempLog.getAbsolutePath() + "';\n" +
+        "var fs = require('fs');\n" +
+        "page.onResourceRequested = function (requestData, networkRequest) {\n" +
+        "    var content;" +
+        "    var isLoaded;" +
+        "    do {\n" +
+        "      isLoaded = true;\n" +
+        "      try {" +
+        "        content = fs.read(filename);\n" +
+        "      } catch (e) {\n" +
+        "        isLoaded = false\n" +
+        "     }" +
+        "    } while (!isLoaded);"+
+        "    fs.write(filename, content + requestData.url + ' ', 'w');\n" +
+        "};\n" +
+        "");
 
-      PhantomJSDriver phantom = new PhantomJSDriver(capabilities);  
+    phantom.get("file://" + temp.getAbsolutePath());
 
-      phantom.executePhantomJS(
-          "var page      = this;\n" +                  
-          "var filename = '" + tempLog.getAbsolutePath() + "';\n" +
-          "var fs = require('fs');\n" +
-          "page.onResourceRequested = function (requestData, networkRequest) {\n" +
-          "    var content;" +
-          "    var isLoaded;" +
-          "    do {\n" +
-          "      isLoaded = true;\n" +        
-          "      try {" +
-          "        content = fs.read(filename);\n" +
-          "      } catch (e) {\n" +
-          "        isLoaded = false\n" + 
-          "     }" +
-          "    } while(!isLoaded);"+
-          "    fs.write(filename, content + requestData.url + ' ', 'w');\n" +
-          "};\n" +
-          "");        
+    Scanner scanner = null;
+    try {
+      scanner = new Scanner(tempLog);
+      while (scanner.hasNextLine()) {
+        String[] tokens = scanner.nextLine().split(" ");
 
-      phantom.get("file://" + temp.getAbsolutePath());
-
-      Scanner scanner = null;
-      try {
-        scanner = new Scanner(tempLog);
-        while (scanner.hasNextLine()) {
-          String[] tokens = scanner.nextLine().split(" ");
-
-          for (String url : tokens) {
-            if (url.contains(".")) {
-              if (url.startsWith("file://")) {
-                url = url.substring(7);
-                url = "http://" + url;
+        for (String url : tokens) {
+          if (url.contains(".")) {
+            if (url.startsWith("file://")) {
+              url = url.substring(7);
+              url = "http://" + url;
+            }
+            // normalize link
+            try {
+              url = urlNormalizer.normalize(url);
+              url = urlNormalizer.extractDomain(url);
+            } catch (MalformedURLException e) {
+              if (log.isWarnEnabled()) {
+                log.warn("Malformed URL: \"" + url + "\"");
               }
-              // normalize link
-              try {
-                url = urlNormalizer.normalize(url);
-                url = urlNormalizer.extractDomain(url);
-              } catch (MalformedURLException e) {
-                if (log.isWarnEnabled()) {
-                  log.warn("Malformed URL: \"" + url + "\"");
-                }
-              } catch (StackOverflowError err) {
-                if (log.isWarnEnabled()) {
-                  log.warn("Stack Overflow Error: \"" + url + "\"");
-                }
+            } catch (StackOverflowError err) {
+              if (log.isWarnEnabled()) {
+                log.warn("Stack Overflow Error: \"" + url + "\"");
               }
-              if (isValidDomain(url)) {
-                resources.add(new Resource(url, Resource.Type.SCRIPT));
-              }
+            }
+            if (isValidDomain(url)) {
+              resources.add(new Resource(url, Resource.Type.SCRIPT));
             }
           }
         }
-      } catch (IOException e) {
-        System.out.println(e.getStackTrace());
-      } finally {
-        temp.delete(); //delete temporary html source file
-        tempLog.delete();//delete temporary request log file
-        Closeables.closeAndSwallowIOExceptions(scanner);
       }
-      phantom.close();
-      phantom.quit();  
-    } 
+    } catch (IOException e) {
+      System.out.println(e.getStackTrace());
+    } finally {
+      temp.delete();
+      tempLog.delete();
+      Closeables.closeAndSwallowIOExceptions(scanner);
+    }
+    phantom.close();
+    phantom.quit();
     
     return resources;
   }

@@ -32,8 +32,6 @@ import java.net.URL;
 import java.util.Set;
 import java.util.SortedSet;
 
-import static org.junit.Assert.assertTrue;
-
 public class PhantomJSvsGoogleTest {
 
   @Test
@@ -106,7 +104,7 @@ public class PhantomJSvsGoogleTest {
     }
 
     for (String phantomJSUrl : viewersExtractedPhantomJS) {
-      if(!viewersExtractedGoogle.contains(phantomJSUrl)) {
+      if (!viewersExtractedGoogle.contains(phantomJSUrl)) {
         onlyPhantomJS.add(phantomJSUrl);
       }
     }
@@ -115,16 +113,16 @@ public class PhantomJSvsGoogleTest {
     for (String url : matches) {
       System.out.println("\t" + url);
     }
-    System.out.println("--- ONLY FOUND BY GOOGLE JS PARSER ----");
-    for (String url : onlyGoogle) {
-      System.out.println("\t" + url);
-    }
+
     System.out.println("--- ONLY FOUND BY PHANTOMJS ----");
     for (String url : onlyPhantomJS) {
       System.out.println("\t" + url);
     }
 
-    assertTrue("False positives detected!", onlyGoogle.isEmpty());
+    System.out.println("--- ONLY FOUND BY GOOGLE JS PARSER (POTENTIAL FALSE POSITIVES) ----");
+    for (String url : onlyGoogle) {
+      System.out.println("\t" + url);
+    }
   }
     
   String normalize(String url) {

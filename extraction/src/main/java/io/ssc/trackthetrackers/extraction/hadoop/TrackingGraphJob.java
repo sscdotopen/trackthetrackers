@@ -128,10 +128,6 @@ public class TrackingGraphJob extends HadoopJob {
               String trackingHost = InternetDomainName.from(trackingDomain).topPrivateDomain().toString();
               int trackingHostIndex = domainIndex.indexFor(trackingHost);
               trackingHosts[n++] = trackingHostIndex;
-              /*if (!trackingHost.equals(trackedHost)) {
-                int trackingHostIndex = domainIndex.indexFor(trackingHost);
-                ctx.write(new IntWritable(trackingHostIndex), new IntWritable(trackedHostIndex));
-              }*/
             }
 
             ctx.write(new IntWritable(trackedHostIndex), new IntArrayWritable(trackingHosts));

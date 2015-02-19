@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop;
+package io.ssc.trackthetrackers;
 
 import java.util.Properties;
 
@@ -31,10 +31,35 @@ public class Config {
       if (props == null) {
         props = new Properties();
         props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
+        validateConfig();
       }
       return props.getProperty(key);
     } catch (Exception e) {
       throw new IllegalStateException("Unable to load config file!", e);
     }
   }
+
+  private static void validateConfig() {
+
+    if (nullOrEmpty("commoncrawl.samples.path")) {
+      throw new IllegalStateException("[commoncrawl.samples.path] in conf.properties must point to the folder " +
+          "that contains the extraction/src/test/resources/commoncrawl folder");
+    }
+
+    if (nullOrEmpty("webdatacommons.pldfile")) {
+      throw new IllegalStateException("[webdatacommons.pldfile] in conf.properties must point to the webdata commons " +
+          "domain index file, download it from " +
+          "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/pld-index.gz");
+    }
+
+    if (nullOrEmpty("phantomjs.path")) {
+      throw new IllegalStateException("[phantomjs.path] in conf.properties must point to a local phantomjs binary, " +
+          "get it from http://phantomjs.org/download.html");
+    }
+  }
+
+  private static boolean nullOrEmpty(String key) {
+    return props.getProperty(key) == null || "".equals(props.getProperty(key));
+  }
+
 }

@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
+import io.ssc.trackthetrackers.Config;
 import org.apache.hadoop.util.ToolRunner;
 
 public class CommonCrawlSampleIntegrationTest {
