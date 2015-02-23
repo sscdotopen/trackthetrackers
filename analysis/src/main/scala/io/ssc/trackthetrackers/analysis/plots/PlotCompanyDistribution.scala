@@ -26,11 +26,14 @@ import scala.io.Source
 
 import java.awt._
 
+import io.ssc.trackthetrackers.Config
+
 object PlotCompanyDistribution extends App {
 
   var companiesWithProbability = Seq[(String, Double)]()
 
-  for (file <- new File("/home/ssc/Desktop/trackthetrackers/out/companyDistribution/companyDistribution").listFiles) {
+  
+  for (file <- new File(Config.get("companyDistribution.path")).listFiles) {
     companiesWithProbability ++= Source.fromFile(file).getLines.map { line =>
       val tokens = line.split("\t")
       tokens(0) -> tokens(1).toDouble
