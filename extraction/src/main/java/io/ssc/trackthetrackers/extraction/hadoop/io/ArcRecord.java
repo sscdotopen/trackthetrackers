@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter
+ * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+// modified version of https://github.com/norvigaward/2012-naward15/blob/master/src/cwi/arcUtils/ArcRecord.java
 
 package io.ssc.trackthetrackers.extraction.hadoop.io;
 

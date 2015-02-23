@@ -17,6 +17,11 @@
  * under the License.
  */
 
+// package modified by Common Crawl -
+// originates from Apache Commons Compress 1.4.1
+
+// modified version of https://github.com/norvigaward/2012-naward15/blob/master/src/compressor/CompressorInputStream.java
+
 package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.InputStream;
