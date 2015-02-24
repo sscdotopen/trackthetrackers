@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter
+ * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,12 +120,14 @@ public class GhostDriverExtractor {
       }
     } while (!tempLog.exists());
 
+    PhantomJSDriverService service = new PhantomJSDriverService.Builder()
+        .usingPhantomJSExecutable(new File(Config.get("phantomjs.path"))).build();
+    
     DesiredCapabilities capabilities = new DesiredCapabilities().phantomjs();
-    capabilities.setCapability("phantomjs.binary.path", Config.get("phantomjs.path"));
     capabilities.setCapability("phantomjs.settings.loadImages", false);
-
-    PhantomJSDriver phantom = new PhantomJSDriver(capabilities);
-
+    
+    PhantomJSDriver phantom = new PhantomJSDriver(service, capabilities);
+    
     phantom.executePhantomJS(
         "var page      = this;\n" +
         "var filename = '" + tempLog.getAbsolutePath() + "';\n" +

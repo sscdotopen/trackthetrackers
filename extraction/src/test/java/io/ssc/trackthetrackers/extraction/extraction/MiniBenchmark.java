@@ -1,8 +1,6 @@
-package io.ssc.trackthetrackers.extraction.extraction;
-
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter
+ * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +16,10 @@ package io.ssc.trackthetrackers.extraction.extraction;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package io.ssc.trackthetrackers.extraction.extraction;
+
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import io.ssc.trackthetrackers.extraction.resources.Resource;
 import io.ssc.trackthetrackers.extraction.resources.ResourceExtractor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

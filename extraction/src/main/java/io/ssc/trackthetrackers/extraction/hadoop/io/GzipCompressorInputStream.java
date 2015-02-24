@@ -20,6 +20,8 @@
 // Source code taken from Apache Commons Compress 1.4.1.  Feature is being
 // submitted to Apache project - patch will be applied if approved.
 
+// Modified version of https://github.com/norvigaward/2012-naward15/blob/master/src/compressor/gzip/GzipCompressorInputStream.java
+
 package io.ssc.trackthetrackers.extraction.hadoop.io;
 
 import java.io.IOException;

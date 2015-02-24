@@ -1,3 +1,5 @@
 commoncrawl.samples.path=
 webdatacommons.pldfile=
 phantomjs.path=
+companyDistribution.path=
+trackerDistribution.path=
