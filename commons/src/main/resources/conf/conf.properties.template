@@ -1,5 +1,6 @@
 commoncrawl.samples.path=
+analysis.trackingraphsample.path=
 webdatacommons.pldfile=
+webdatacommons.pldfile.unzipped=
 phantomjs.path=
-companyDistribution.path=
-trackerDistribution.path=
+analysis.results.path=

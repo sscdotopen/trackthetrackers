@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,9 +46,20 @@ public class Config {
           "that contains the extraction/src/test/resources/commoncrawl folder");
     }
 
+    if (nullOrEmpty("analysis.trackingraphsample.path")) {
+      throw new IllegalStateException("[analysis.trackingraphsample.path] in conf.properties must point to " +
+          "analysis/src/resources/sampleSeg.tsv");
+    }
+
     if (nullOrEmpty("webdatacommons.pldfile")) {
       throw new IllegalStateException("[webdatacommons.pldfile] in conf.properties must point to the webdata commons " +
           "domain index file, download it from " +
+          "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/pld-index.gz");
+    }
+
+    if (nullOrEmpty("webdatacommons.pldfile.unzipped")) {
+      throw new IllegalStateException("[webdatacommons.pldfile.unzipped] in conf.properties must point to the " +
+          "unzipped webdata commons domain index file, download it from " +
           "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/pld-index.gz");
     }
 
@@ -56,10 +67,18 @@ public class Config {
       throw new IllegalStateException("[phantomjs.path] in conf.properties must point to a local phantomjs binary, " +
           "get it from http://phantomjs.org/download.html");
     }
+
+    if (nullOrEmpty("analysis.results.path") || !endsWith("analysis.results.path", "/")) {
+      throw new IllegalStateException("[analysis.results.path] in conf.properties must point to a local directory " +
+          "where the analysis results will be stored and end with a /");
+    }
   }
 
   private static boolean nullOrEmpty(String key) {
     return props.getProperty(key) == null || "".equals(props.getProperty(key));
   }
 
+  private static boolean endsWith(String key, String pattern) {
+    return props.getProperty(key).endsWith(pattern);
+  }
 }

@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.statistics
 
+import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis.{Edge, FlinkUtils, GraphUtils}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala.ExecutionEnvironment
@@ -26,9 +27,8 @@ import org.apache.flink.core.fs.FileSystem.WriteMode
 
 object TrackerDistribution extends App {
 
-  computeDistribution("/home/ssc/Desktop/trackthetrackers/sample2000.tsv",
-      "/home/ssc/Entwicklung/datasets/webdatacommons-hyperlink2012-payleveldomain/pld-index",
-      "/home/ssc/Desktop/trackthetrackers/out/trackerDistribution/")
+  computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+      Config.get("analysis.results.path") + "trackerDistribution")
 
   def computeDistribution(trackingGraphFile: String, domainIndexFile: String, outputPath: String) = {
 
@@ -44,7 +44,7 @@ object TrackerDistribution extends App {
 
     val topTrackers = trackersWithNumDomainsTracked.map(new TrackerProbability())
                                                    .withBroadcastSet(numTrackedHosts, "numTrackedHosts")
-                                                   .filter { _._2 >= 0.01 }
+                                                   .filter { _._2 >= 0.005 }
 
     val topTrackerDomains =
         topTrackers.join(domains).where(0).equalTo(1) { (topTracker, domain) => domain.annotation -> topTracker._2 }

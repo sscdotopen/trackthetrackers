@@ -32,8 +32,7 @@ object PlotCompanyDistribution extends App {
 
   var companiesWithProbability = Seq[(String, Double)]()
 
-  
-  for (file <- new File(Config.get("companyDistribution.path")).listFiles) {
+  for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {
     companiesWithProbability ++= Source.fromFile(file).getLines.map { line =>
       val tokens = line.split("\t")
       tokens(0) -> tokens(1).toDouble
