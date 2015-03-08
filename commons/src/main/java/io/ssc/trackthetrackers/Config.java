@@ -63,6 +63,12 @@ public class Config {
           "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/pld-index.gz");
     }
 
+    if (nullOrEmpty("webdatacommons.pldarcfile.unzipped")) {
+      throw new IllegalStateException("[webdatacommons.pldarcfile.unzipped] in conf.properties must point to the " +
+          "unzipped webdata commons hyperlink graph file, download it from " +
+          "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/pld-arc.gz");
+    }
+
     if (nullOrEmpty("phantomjs.path")) {
       throw new IllegalStateException("[phantomjs.path] in conf.properties must point to a local phantomjs binary, " +
           "get it from http://phantomjs.org/download.html");

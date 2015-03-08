@@ -2,5 +2,6 @@ commoncrawl.samples.path=
 analysis.trackingraphsample.path=
 webdatacommons.pldfile=
 webdatacommons.pldfile.unzipped=
+webdatacommons.pldarcfile.unzipped=
 phantomjs.path=
 analysis.results.path=

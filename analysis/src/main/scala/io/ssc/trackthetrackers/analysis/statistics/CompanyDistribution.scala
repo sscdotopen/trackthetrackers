@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,11 @@
 package io.ssc.trackthetrackers.analysis.statistics
 
 import io.ssc.trackthetrackers.Config
-import io.ssc.trackthetrackers.analysis.{Edge, FlinkUtils, GraphUtils}
+import io.ssc.trackthetrackers.analysis.{FlinkUtils, GraphUtils}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.api.scala._
+import org.apache.flink.configuration.Configuration
 import org.apache.flink.core.fs.FileSystem.WriteMode
 
 object CompanyDistribution extends App {
@@ -43,7 +44,7 @@ object CompanyDistribution extends App {
                             .map { edge => Dataset.domainsByCompany(edge.src.toInt) -> edge.target }
                             .distinct
 
-    val companyCounts = FlinkUtils.countByStrKey(companyEdges, { t: (String, Long) => t._1 })
+    val companyCounts = FlinkUtils.countByStrKey(companyEdges, { t: (String, Int) => t._1 })
 
     val companyProbabilities = companyCounts.map(new CompanyProbability())
                                             .withBroadcastSet(numTrackedHosts, "numTrackedHosts")
