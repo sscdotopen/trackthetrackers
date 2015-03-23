@@ -1,5 +1,6 @@
 commoncrawl.samples.path=
 analysis.trackingraphsample.path=
+analysis.trackingraphminisample.path=
 webdatacommons.pldfile=
 webdatacommons.pldfile.unzipped=
 webdatacommons.pldarcfile.unzipped=

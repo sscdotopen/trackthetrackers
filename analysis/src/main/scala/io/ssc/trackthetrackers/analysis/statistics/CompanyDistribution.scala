@@ -36,12 +36,11 @@ object CompanyDistribution extends App {
     implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
     val edges = GraphUtils.readEdges(trackingGraphFile)
-    val domains = GraphUtils.readVertices(domainIndexFile)
 
     val numTrackedHosts = edges.distinct("target").map { _ => Tuple1(1L) }.sum(0)
 
-    val companyEdges = edges.filter { edge => Dataset.domainsByCompany.contains(edge.src.toInt) }
-                            .map { edge => Dataset.domainsByCompany(edge.src.toInt) -> edge.target }
+    val companyEdges = edges.filter { edge => Dataset.domainsByCompany.contains(edge.src) }
+                            .map { edge => Dataset.domainsByCompany(edge.src) -> edge.target }
                             .distinct
 
     val companyCounts = FlinkUtils.countByStrKey(companyEdges, { t: (String, Int) => t._1 })

@@ -23,11 +23,11 @@ import org.apache.flink.api.scala.{DataSet, _}
 object GraphUtils {
 
   def readVertices(file: String)(implicit env: ExecutionEnvironment) = {
-    env.readCsvFile[AnnotatedVertex](file, "\n", '\t')
+    env.readCsvFile[AnnotatedVertex](file, "\n", "\t")
   }
 
   def readEdges(file: String)(implicit env: ExecutionEnvironment) = {
-    env.readCsvFile[Edge](file, "\n", '\t')
+    env.readCsvFile[Edge](file, "\n", "\t")
   }
 
   def toAdjacencyList(edges: DataSet[Edge]): DataSet[AdjacencyList] = {

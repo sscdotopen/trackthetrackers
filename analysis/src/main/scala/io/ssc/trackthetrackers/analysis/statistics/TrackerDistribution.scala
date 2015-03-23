@@ -55,9 +55,9 @@ object TrackerDistribution extends App {
     env.execute()
   }
 
-  class TrackerProbability() extends RichMapFunction[(Long, Long), (Long, Double)] {
+  class TrackerProbability() extends RichMapFunction[(Int, Long), (Int, Double)] {
 
-    override def map(trackedIdWithCount: (Long, Long)): (Long, Double) = {
+    override def map(trackedIdWithCount: (Int, Long)): (Int, Double) = {
 
       val numTrackedHosts = getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numTrackedHosts").get(0)._1
 

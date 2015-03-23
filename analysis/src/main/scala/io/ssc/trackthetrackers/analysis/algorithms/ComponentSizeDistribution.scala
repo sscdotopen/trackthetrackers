@@ -36,7 +36,7 @@ object ComponentSizeDistribution extends App {
 
     val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edgeList = env.readCsvFile[Edge](edgeFile, fieldDelimiter = '\t')
+    val edgeList = env.readCsvFile[Edge](edgeFile, fieldDelimiter = "\t")
 
     val initialAssignments = edgeList.flatMap { edge => Array(Tuple1(edge.src), Tuple1(edge.target)) }
                                      .distinct

@@ -23,7 +23,7 @@ import org.apache.flink.api.scala._
 
 object FlinkUtils {
 
-  def countByKey[T](data: DataSet[T], extractKey: (T) => Long): DataSet[(Long, Long)] = {
+  def countByKey[T](data: DataSet[T], extractKey: (T) => Int): DataSet[(Int, Long)] = {
 
     data.groupBy { extractKey }
       .reduceGroup { group => countBy(extractKey, group) }
@@ -47,7 +47,7 @@ object FlinkUtils {
     key -> count
   }
 
-  private[this] def countBy[T](extractKey: T => Long, group: Iterator[T]): (Long, Long) = {
+  private[this] def countBy[T](extractKey: T => Int, group: Iterator[T]): (Int, Long) = {
     val key = extractKey(group.next())
 
     var count = 1L
@@ -58,25 +58,5 @@ object FlinkUtils {
 
     key -> count
   }
-
-  /*
-  def groupCount[T, K](data: DataSet[T], extractKey: (T) => K): DataSet[(K, Long)] = {
-
-    data.groupBy { extractKey }
-        .reduceGroup { group => countBy(extractKey, group) }
-  }
-
-  private[this] def countBy[T, K](extractKey: T => K,
-                                  group: Iterator[T]): (K, Long) = {
-    val key = extractKey(group.next())
-
-    var count = 1L
-    while (group.hasNext) {
-      group.next()
-      count += 1
-    }
-
-    key -> count
-  }*/
 
 }

@@ -51,6 +51,11 @@ public class Config {
           "analysis/src/resources/sampleSeg.tsv");
     }
 
+    if (nullOrEmpty("analysis.trackingraphminisample.path")) {
+      throw new IllegalStateException("[analysis.trackingraphminisample.path] in conf.properties must point to " +
+          "analysis/src/resources/sampleMini.tsv");
+    }
+
     if (nullOrEmpty("webdatacommons.pldfile")) {
       throw new IllegalStateException("[webdatacommons.pldfile] in conf.properties must point to the webdata commons " +
           "domain index file, download it from " +
