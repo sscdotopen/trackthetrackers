@@ -47,6 +47,6 @@ object PlotTrackerDistribution extends App {
     dataset.addValue(probability, "", tracker)
   }
 
-  new SingleSeriesBarChart("tracking domain distribution", "tracking domain", "probability", Color.RED, dataset)
+  new SingleSeriesBarChart("tracking domain distribution", "tracking domain", "probability", Color.RED, dataset, null)
 }
 

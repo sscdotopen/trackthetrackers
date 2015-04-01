@@ -59,7 +59,7 @@ object PlotCompanyDistributionByRank extends App {
     
     val filename = folder + "chart-CompanyDistribution-ByPageRank-TopKDomains-" + k.toString + ".png"
 
-    new SingleSeriesBarChartSave("tracking company distribution", "company", "probability", Color.RED, dataset, filename)
+    new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset, filename)
   }
 }
 
