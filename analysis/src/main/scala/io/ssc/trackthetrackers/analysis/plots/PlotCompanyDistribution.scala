@@ -48,5 +48,6 @@ object PlotCompanyDistribution extends App {
   }
 
   new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset)
+  //new SingleSeriesBarChartSave("tracking company distribution", "company", "probability", Color.RED, dataset, "test.png")
 }
 

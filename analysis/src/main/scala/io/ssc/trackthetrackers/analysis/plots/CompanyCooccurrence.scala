@@ -16,18 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.analysis.statistics
+package io.ssc.trackthetrackers.analysis.plots
 
 import java.util
 
 import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis.GraphUtils
-import io.ssc.trackthetrackers.analysis.plots.CorrelationLikeHeatMap
+import io.ssc.trackthetrackers.analysis.statistics.Dataset
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat
-import org.apache.flink.api.scala.ExecutionEnvironment
-import org.apache.flink.api.scala._
-import scala.collection.mutable.{ListBuffer, BitSet}
+import org.apache.flink.api.scala.{ExecutionEnvironment, _}
+
 import scala.collection.JavaConversions._
+import scala.collection.mutable.{BitSet, ListBuffer}
 
 object CompanyCooccurrence extends App {
 

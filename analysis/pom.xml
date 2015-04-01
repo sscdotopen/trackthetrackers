@@ -11,9 +11,20 @@
 
   <artifactId>analysis</artifactId>
 
+
   <properties>
     <flink.version>0.9-SNAPSHOT</flink.version>
   </properties>
+
+  <repositories>
+    <repository>
+      <id>apache.snapshots</id>
+      <name>Apache Development Snapshot Repository</name>
+      <url>https://repository.apache.org/content/repositories/snapshots/</url>
+      <releases><enabled>false</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+  </repositories>  
 
   <dependencies>
     <dependency>
@@ -42,7 +53,46 @@
       <artifactId>jfreechart</artifactId>
       <version>1.0.19</version>
     </dependency>
+    
+    <!-- Unfolding map app -->
+    <dependency>
+      <groupId>unfolding</groupId>
+      <artifactId>unfoldingmaps</artifactId>
+      <version>0.9.7</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/unfolding.0.9.7beta.jar</systemPath>
+    </dependency>      
+    <dependency>
+      <groupId>processing</groupId>
+      <artifactId>unfoldingmaps</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/core.jar</systemPath>
+    </dependency>     
+    <dependency>
+      <groupId>glexception</groupId>
+      <artifactId>unfoldingmaps</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/jogl-all.jar</systemPath>
+    </dependency> 
+    <dependency>
+      <groupId>json</groupId>
+      <artifactId>unfoldingmaps</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/json4processing.jar</systemPath>
+    </dependency>     
+    <dependency>
+      <groupId>gluegen</groupId>
+      <artifactId>unfoldingmaps</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/gluegen-rt.jar</systemPath>
+    </dependency> 
+    
   </dependencies>
+   
 
   <!-- We use the maven-assembly plugin to create a fat jar that contains all dependencies
     except flink and it's transitive dependencies. The resulting fat-jar can be executed
@@ -72,6 +122,8 @@
           </execution>
         </executions>
       </plugin>
+
+        
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

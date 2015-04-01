@@ -18,12 +18,17 @@
 
 package io.ssc.trackthetrackers.analysis
 
+import org.apache.flink.api.java.CollectionEnvironment
 import org.apache.flink.api.scala.{DataSet, _}
 
 object GraphUtils {
 
   def readVertices(file: String)(implicit env: ExecutionEnvironment) = {
     env.readCsvFile[AnnotatedVertex](file, "\n", "\t")
+  }
+
+  def readVerticesC(file: String)(implicit env: CollectionEnvironment) = {
+    env.readCsvFile(file)
   }
 
   def readEdges(file: String)(implicit env: ExecutionEnvironment) = {

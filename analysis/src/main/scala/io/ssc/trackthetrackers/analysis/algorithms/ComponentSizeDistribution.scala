@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
+import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis.{FlinkUtils, Edge}
 import org.apache.flink.api.scala._
 import org.apache.flink.core.fs.FileSystem.WriteMode
@@ -26,8 +27,7 @@ import org.apache.flink.util.Collector
 @deprecated
 object ComponentSizeDistribution extends App {
 
-  componentSizeDist(
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv", 500,
+  componentSizeDist(Config.get("analysis.trackingraphsample.path") + "/part-r-00000", 500,
     "/tmp/flink-scala/componentSizes/")
 
   case class Assignment(vertex: Int, component: Int)

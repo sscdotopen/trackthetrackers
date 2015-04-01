@@ -18,18 +18,18 @@
 
 package io.ssc.trackthetrackers.analysis.plots
 
-import java.awt.{Dimension, Color}
+import java.awt.{Color, Dimension}
+import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.JFrame
-import java.io.File
 
-import org.jfree.chart.{ChartPanel, ChartFactory}
 import org.jfree.chart.axis.CategoryLabelPositions
 import org.jfree.chart.plot.{CategoryPlot, PlotOrientation}
-import org.jfree.chart.renderer.category.{StandardBarPainter, BarRenderer}
+import org.jfree.chart.renderer.category.{BarRenderer, StandardBarPainter}
+import org.jfree.chart.{ChartFactory, ChartPanel}
 import org.jfree.data.category.CategoryDataset
 
-class SingleSeriesBarChart(title: String, xLabel: String, yLabel: String, barColor: Color, dataset: CategoryDataset)
+class SingleSeriesBarChartSave(title: String, xLabel: String, yLabel: String, barColor: Color, dataset: CategoryDataset, filename: String)
   extends JFrame {
 
   val chart = ChartFactory.createBarChart(
@@ -63,5 +63,11 @@ class SingleSeriesBarChart(title: String, xLabel: String, yLabel: String, barCol
   pack()
   setVisible(true)
   setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+
+  val image = chart.createBufferedImage(1024, 768)
+  val outputfile = new File(filename)
+  ImageIO.write(image, "png", outputfile)
+  
+  dispose()
 
 }
