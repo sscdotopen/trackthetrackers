@@ -23,7 +23,7 @@
       <url>https://repository.apache.org/content/repositories/snapshots/</url>
       <releases><enabled>false</enabled></releases>
       <snapshots><enabled>true</enabled></snapshots>
-    </repository>
+    </repository> 
   </repositories>  
 
   <dependencies>
@@ -63,34 +63,34 @@
       <systemPath>${project.basedir}/lib/unfolding.0.9.7beta.jar</systemPath>
     </dependency>      
     <dependency>
-      <groupId>processing</groupId>
-      <artifactId>unfoldingmaps</artifactId>
+      <groupId>unfolding</groupId>
+      <artifactId>processing</artifactId>
       <version>1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/core.jar</systemPath>
     </dependency>     
     <dependency>
-      <groupId>glexception</groupId>
-      <artifactId>unfoldingmaps</artifactId>
+      <groupId>unfolding</groupId>
+      <artifactId>glexception</artifactId>
       <version>1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/jogl-all.jar</systemPath>
     </dependency> 
     <dependency>
-      <groupId>json</groupId>
-      <artifactId>unfoldingmaps</artifactId>
+      <groupId>unfolding</groupId>
+      <artifactId>json</artifactId>
       <version>1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/json4processing.jar</systemPath>
     </dependency>     
     <dependency>
-      <groupId>gluegen</groupId>
-      <artifactId>unfoldingmaps</artifactId>
+      <groupId>unfolding</groupId>
+      <artifactId>gluegen</artifactId>
       <version>1.0</version>
       <scope>system</scope>
       <systemPath>${project.basedir}/lib/gluegen-rt.jar</systemPath>
     </dependency> 
-    
+
   </dependencies>
    
 

@@ -27,11 +27,7 @@ import org.apache.flink.util.Collector
 @deprecated
 object ComponentSizeDistribution extends App {
 
-<<<<<<< HEAD
   componentSizeDist(Config.get("analysis.trackingraphsample.path") + "/part-r-00000", 500,
-=======
-  componentSizeDist(Config.get("analysis.trackingraphsample.path"), 500,
->>>>>>> minor changes
     "/tmp/flink-scala/componentSizes/")
 
   case class Assignment(vertex: Int, component: Int)
