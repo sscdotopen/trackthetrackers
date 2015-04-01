@@ -19,9 +19,7 @@
 package io.ssc.trackthetrackers.analysis.plots
 
 import java.awt.{Dimension, Color}
-import javax.imageio.ImageIO
 import javax.swing.JFrame
-import java.io.File
 
 import org.jfree.chart.{ChartPanel, ChartFactory}
 import org.jfree.chart.axis.CategoryLabelPositions

@@ -35,58 +35,32 @@ object ToplevelCountryMap extends App {
   val company = "Google"
 
   val writer = new FileWriter(Config.get("company.distribution.by.country"), true)
-
-
-  val codes = Source.fromFile(new File(Config.get("population.csv"))).getLines
-
-  var map = new mutable.HashMap[String, String]()
-  var i = 0
-  for (code <- codes) {
-    if (i > 0) {
-      val data = code.split(";")
-      map(data(0)) = data(1)
-    }
-    i += 1
-  }
   
-  
-  
+
   val lines = Source.fromFile(new File(Config.get("topleveldomainByCountry.csv"))).getLines
 
   for (domainCountry <- lines) {
-    val splits = domainCountry.split(" = ")
+    val splits = domainCountry.split(",")   
     
-    if (!map.contains(splits(1))) {
-      System.out.println("we didn't find: " + splits(0) + " - " + splits(1))
-    } else 
-    {
-      
-      CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
-        Config.get("analysis.results.path") + "companyDistribution", splits(0).toLowerCase, null, 0)
+    CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+      Config.get("analysis.results.path") + "companyDistribution", splits(0).toLowerCase, null, 0) 
 
-      var found = false
-      for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {
-        val ll = Source.fromFile(file).getLines
-        for (line <- ll) {
-          val tokens = line.split("\t")
+    for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {
+      val ll = Source.fromFile(file).getLines
+      for (line <- ll) {
+        val tokens = line.split("\t")
 
-          if (tokens(0).equals(company)) {
-            writer.write(splits(0) + "," + splits(1) + "," + map(splits(1)) + "," + company + "," + tokens(1) + "\n")
-            found = true
-          }
+        if (tokens(0).equals(company)) {
+          writer.write(splits(0) + "," + splits(1) + "," + splits(2) + "," + company + "," + tokens(1) + "\n")
         }
       }
-      if (!found) {
-        writer.write(splits(0) + "," + splits(1) + "," + map(splits(1)) + "," + company + "," + "0.0" + "\n")
-      }
-      writer.flush()
-      
     }
+
+    writer.flush()
   }
-  writer.close()
+  writer.close()  
   
   val mapApp = new ChoroplethMapAppTracker()
   PApplet.main(Array("io.ssc.trackthetrackers.analysis.algorithms.plots.ChoroplethMapAppTracker"))
-  
 
 }
