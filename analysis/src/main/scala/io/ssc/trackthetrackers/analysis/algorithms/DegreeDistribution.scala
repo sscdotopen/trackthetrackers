@@ -44,7 +44,7 @@ object DegreeDistribution extends App {
     env.execute()
   }
 
-  private[this] def degreeDist(extract: Edge => Long, edges: DataSet[Edge], numVertices: Long) = {
+  private[this] def degreeDist(extract: Edge => Int, edges: DataSet[Edge], numVertices: Long) = {
 
     FlinkUtils.countByKey(edges, extract)
       .groupBy { _._2 }

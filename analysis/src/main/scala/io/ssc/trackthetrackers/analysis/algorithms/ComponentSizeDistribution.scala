@@ -30,7 +30,7 @@ object ComponentSizeDistribution extends App {
     "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv", 500,
     "/tmp/flink-scala/componentSizes/")
 
-  case class Assignment(vertex: Long, component: Long)
+  case class Assignment(vertex: Int, component: Int)
 
   def componentSizeDist(edgeFile: String, maxIterations: Int, outputDir: String) = {
 
@@ -65,7 +65,7 @@ object ComponentSizeDistribution extends App {
 
     val componentsWithSize = FlinkUtils.countByKey(assignments, { assignment: Assignment => assignment.component })
     val sizeWithNumComponents =
-      FlinkUtils.countByKey(componentsWithSize, { componentWithSize: (Long, Long) => componentWithSize._2 })
+      FlinkUtils.countByKey(componentsWithSize, { componentWithSize: (Int, Long) => componentWithSize._2.toInt })
 
     sizeWithNumComponents.writeAsText(outputDir, WriteMode.OVERWRITE)
 
