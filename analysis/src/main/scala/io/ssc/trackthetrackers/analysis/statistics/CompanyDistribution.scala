@@ -19,29 +19,60 @@
 package io.ssc.trackthetrackers.analysis.statistics
 
 import io.ssc.trackthetrackers.Config
-import io.ssc.trackthetrackers.analysis.{FlinkUtils, GraphUtils}
+import io.ssc.trackthetrackers.analysis.{Edge, FlinkUtils, GraphUtils}
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.scala.ExecutionEnvironment
-import org.apache.flink.api.scala._
-import org.apache.flink.configuration.Configuration
+import org.apache.flink.api.common.operators.Order
+import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.core.fs.FileSystem.WriteMode
 
 object CompanyDistribution extends App {
 
-  computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
-    Config.get("analysis.results.path") + "companyDistribution")
+  case class Rankvertex(vertex: String, rank: Double)
 
-  def computeDistribution(trackingGraphFile: String, domainIndexFile: String, outputPath: String) = {
+  computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+    Config.get("analysis.results.path") + "companyDistribution", null, Config.get("webdatacommons.hostgraph-pr.unzipped"), 3000)
+
+  def computeDistribution(trackingGraphFile: String, domainIndexFile: String, outputPath: String, toplevelDomain: String, pageRankFile: String, topKdomains: Int) = {
 
     implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
     val edges = GraphUtils.readEdges(trackingGraphFile)
 
-    val numTrackedHosts = edges.distinct("target").map { _ => Tuple1(1L) }.sum(0)
+    val domains = GraphUtils.readVertices(domainIndexFile)
+    
+    //filter by pageRank
+    var companyEdgesByPageRank = edges
+    if (pageRankFile != null && topKdomains > 0) {
+      val pageRankVertices = env.readCsvFile[Rankvertex](pageRankFile, "\n", "\t").map(rank => (rank.vertex, rank.rank))
 
-    val companyEdges = edges.filter { edge => Dataset.domainsByCompany.contains(edge.src) }
+      val result = pageRankVertices.join(domains)
+        .where(0)
+        .equalTo(0) 
+          { (pageRankVertex, annotatedVertex) => (0, pageRankVertex._1, pageRankVertex._2, annotatedVertex.id) } //url => id
+        .groupBy(0)
+        .sortGroup(2, Order.DESCENDING) //sort by PageRank
+        .first(topKdomains) //filter first k domains
+        
+      companyEdgesByPageRank = edges.join(result).where("target").equalTo(3) { (edge, rankVertex) => edge }
+      
+    }
+    
+    
+    //filter by domain
+    var companyEdgesByTopleveldomain = companyEdgesByPageRank
+    if (toplevelDomain != null) {
+      val companyDomains =
+        edges.join(domains).where(1).equalTo(1) { (edge, domain) => (edge.src, edge.target, domain.annotation) }
+
+      companyEdgesByTopleveldomain = companyDomains.filter(domain => domain._3.endsWith(toplevelDomain))
+        .map { tuple => new Edge(tuple._1, tuple._2)}
+    }
+
+    val numTrackedHosts = companyEdgesByTopleveldomain.distinct("target").map { _ => Tuple1(1L) }.sum(0)
+
+    val companyEdges = companyEdgesByTopleveldomain.filter { edge => Dataset.domainsByCompany.contains(edge.src) }
                             .map { edge => Dataset.domainsByCompany(edge.src) -> edge.target }
-                            .distinct
+                            .distinct   
 
     val companyCounts = FlinkUtils.countByStrKey(companyEdges, { t: (String, Int) => t._1 })
 

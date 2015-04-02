@@ -18,35 +18,41 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
-import io.ssc.trackthetrackers.analysis.GraphUtils
+
+import io.ssc.trackthetrackers.Config
+import io.ssc.trackthetrackers.analysis.{AnnotatedVertex, FlinkUtils, GraphUtils}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.java.aggregation.Aggregations
 import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.core.fs.FileSystem.WriteMode
 import org.apache.flink.util.Collector
 import org.apache.flink.api.scala._
+import scala.io.Source
 
 @deprecated
 object DanglingPageRank extends App {
 
-  pageRank(
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/cfindergoogle/uris.tsv",
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/cfindergoogle/links.tsv",
-    15763, .15, 100, 0.0001, "/tmp/flink-scala/pageRanks/")
+  pageRank(Config.get("webdatacommons.pldarcfile.unzipped"), Config.get("webdatacommons.pldfile.unzipped"),
+    .15, 10, 0.0001, "/tmp/flink-scala/pageRanks/")
 
-  case class RankedVertex(id: Long, rank: Double)
-  case class DanglingVertex(id: Long)
+  case class RankedVertex(id: Int, rank: Double)
+  case class DanglingVertex(id: Int)
 
-  def pageRank(urisFile: String, linksFile: String, numVertices: Long, teleportationProbability: Double,
+  def pageRank(graphFile: String, domainIndexFile: String, teleportationProbability: Double,
                maxIterations: Int, epsilon: Double, outputPath: String) = {
 
     implicit val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val initialRanks =
-        GraphUtils.readVertices(urisFile)
-           .map { annotatedVertex => RankedVertex(annotatedVertex.id , 1.0 / numVertices) }
+    val lines = GraphUtils.readEdges(graphFile)
 
-    val edges = GraphUtils.toAdjacencyList(GraphUtils.readEdges(linksFile))
+    val numVertices = lines.map { _ => new Tuple1[Long](1L) }.sum(0)
+
+    val initialRanks =
+        GraphUtils.readVertices(domainIndexFile)
+                  .map(new InitRanks())
+                  .withBroadcastSet(numVertices, "numVertices")
+
+    val edges = GraphUtils.toAdjacencyList(lines)
 
     val danglingVertices =
       initialRanks.coGroup(edges).where("id").equalTo("src") {
@@ -72,15 +78,16 @@ object DanglingPageRank extends App {
           }
         .groupBy("id")
         .aggregate(Aggregations.SUM, "rank")
-        .map(new RecomputeRank(teleportationProbability, numVertices))
+        .map(new RecomputeRank(teleportationProbability))
         .withBroadcastSet(danglingRank, "danglingRank")
+        .withBroadcastSet(numVertices, "numVertices")
 
       val terminated =
         currentRanks.join(newRanks).where("id").equalTo("id") {
           (currentRank, newRank) => math.abs(currentRank.rank - newRank.rank)
         }
         .reduce { _ + _ }
-        .filter { _ >= 0.0001 } //TODO use epsilon here, breaks closure cleaning unfortunately
+        .filter { _ >= epsilon } //TODO use epsilon here, breaks closure cleaning unfortunately
 
         (newRanks, terminated)
     }
@@ -90,19 +97,25 @@ object DanglingPageRank extends App {
     env.execute()
   }
 
-  class RecomputeRank(teleportationProbability: Double, numVertices: Long)
-    extends RichMapFunction[RankedVertex, RankedVertex] {
-
+  class RecomputeRank(teleportationProbability: Double) extends RichMapFunction[RankedVertex, RankedVertex] {
     override def map(r: RankedVertex): RankedVertex = {
-
       val danglingRank = getRuntimeContext.getBroadcastVariable[Double]("danglingRank").get(0)
+      val numVertices = getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numVertices").get(0)._1
+
       val rankFromNeighbors = r.rank
 
       val newRank =
         (rankFromNeighbors + (danglingRank / numVertices)) * (1.0 - teleportationProbability) +
-        (teleportationProbability / numVertices)
+          (teleportationProbability / numVertices)
 
       RankedVertex(r.id, newRank)
+    }
+  }
+  
+  class InitRanks() extends RichMapFunction[AnnotatedVertex, RankedVertex] {
+    override def map(r: AnnotatedVertex): RankedVertex = {
+      RankedVertex(r.id , 1.0 / getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numVertices").get(0)._1)
+      
     }
   }
 

@@ -16,12 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.analysis.plots
+package io.ssc.trackthetrackers.analysis.format
 
 import java.io.{BufferedWriter, File, FileWriter}
 import java.util
-
-import org.apache.flink.shaded.com.google.common.io.Closeables
 
 import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis._
@@ -30,6 +28,7 @@ import org.apache.flink.api.common.functions.RichFilterFunction
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat
 import org.apache.flink.api.scala.{ExecutionEnvironment, _}
 import org.apache.flink.configuration.Configuration
+import org.apache.flink.shaded.com.google.common.io.Closeables
 
 import scala.collection.JavaConversions._
 

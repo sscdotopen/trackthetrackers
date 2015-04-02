@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis
 
+import org.apache.flink.api.java.CollectionEnvironment
 import org.apache.flink.api.scala.{DataSet, _}
 
 object GraphUtils {
