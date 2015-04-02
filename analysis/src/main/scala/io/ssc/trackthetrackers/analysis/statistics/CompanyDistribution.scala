@@ -48,23 +48,21 @@ object CompanyDistribution extends App {
       val result = pageRankVertices.join(domains)
         .where(0)
         .equalTo(0) 
-          { (pageRankVertex, annotatedVertex) => (0, pageRankVertex._1, pageRankVertex._2, annotatedVertex.id)} //url => id
+          { (pageRankVertex, annotatedVertex) => (0, pageRankVertex._1, pageRankVertex._2, annotatedVertex.id) } //url => id
         .groupBy(0)
         .sortGroup(2, Order.DESCENDING) //sort by PageRank
         .first(topKdomains) //filter first k domains
-        //.map { t => (t._4, t._3) } //map to -> (domainID, pageRank)
         
-      companyEdgesByPageRank = edges.join(result).where("target").equalTo(3)
-                                          { (edge, rankVertex) => edge }
+      companyEdgesByPageRank = edges.join(result).where("target").equalTo(3) { (edge, rankVertex) => edge }
       
     }
     
     
     //filter by domain
     var companyEdgesByTopleveldomain = companyEdgesByPageRank
-    if ( toplevelDomain != null) {
+    if (toplevelDomain != null) {
       val companyDomains =
-        edges.join(domains).where(1).equalTo(1) { (edge, domain) => (edge.src, edge.target, domain.annotation)}
+        edges.join(domains).where(1).equalTo(1) { (edge, domain) => (edge.src, edge.target, domain.annotation) }
 
       companyEdgesByTopleveldomain = companyDomains.filter(domain => domain._3.endsWith(toplevelDomain))
         .map { tuple => new Edge(tuple._1, tuple._2)}
@@ -72,8 +70,8 @@ object CompanyDistribution extends App {
 
     val numTrackedHosts = companyEdgesByTopleveldomain.distinct("target").map { _ => Tuple1(1L) }.sum(0)
 
-    val companyEdges = companyEdgesByTopleveldomain.filter { edge => Dataset.domainsByCompany.contains(edge.src.toInt) }
-                            .map { edge => Dataset.domainsByCompany(edge.src.toInt) -> edge.target }
+    val companyEdges = companyEdgesByTopleveldomain.filter { edge => Dataset.domainsByCompany.contains(edge.src) }
+                            .map { edge => Dataset.domainsByCompany(edge.src) -> edge.target }
                             .distinct   
 
     val companyCounts = FlinkUtils.countByStrKey(companyEdges, { t: (String, Int) => t._1 })

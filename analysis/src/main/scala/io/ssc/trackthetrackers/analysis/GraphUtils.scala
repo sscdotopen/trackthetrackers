@@ -27,10 +27,6 @@ object GraphUtils {
     env.readCsvFile[AnnotatedVertex](file, "\n", "\t")
   }
 
-  def readVerticesC(file: String)(implicit env: CollectionEnvironment) = {
-    env.readCsvFile(file)
-  }
-
   def readEdges(file: String)(implicit env: ExecutionEnvironment) = {
     env.readCsvFile[Edge](file, "\n", "\t")
   }

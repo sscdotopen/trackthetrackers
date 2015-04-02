@@ -32,11 +32,6 @@ import scala.io.Source
 @deprecated
 object DanglingPageRank extends App {
 
-  /*
-  pageRank(Config.get("analysis.trackingraphsample.path") + "/part-r-00000", Config.get("webdatacommons.pldfile.unzipped"),
-    .15, 10, 0.0001, "/tmp/flink-scala/pageRanks/") */
-
-  
   pageRank(Config.get("webdatacommons.pldarcfile.unzipped"), Config.get("webdatacommons.pldfile.unzipped"),
     .15, 10, 0.0001, "/tmp/flink-scala/pageRanks/")
 
@@ -50,7 +45,7 @@ object DanglingPageRank extends App {
 
     val lines = GraphUtils.readEdges(graphFile)
 
-    val numVertices = lines.map { _ => new Tuple1[Long](1L)}.sum(0)
+    val numVertices = lines.map { _ => new Tuple1[Long](1L) }.sum(0)
 
     val initialRanks =
         GraphUtils.readVertices(domainIndexFile)
@@ -102,12 +97,8 @@ object DanglingPageRank extends App {
     env.execute()
   }
 
-
-  class RecomputeRank(teleportationProbability: Double)
-    extends RichMapFunction[RankedVertex, RankedVertex] {
-
+  class RecomputeRank(teleportationProbability: Double) extends RichMapFunction[RankedVertex, RankedVertex] {
     override def map(r: RankedVertex): RankedVertex = {
-
       val danglingRank = getRuntimeContext.getBroadcastVariable[Double]("danglingRank").get(0)
       val numVertices = getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numVertices").get(0)._1
 
@@ -121,10 +112,7 @@ object DanglingPageRank extends App {
     }
   }
   
-
-  class InitRanks()
-    extends RichMapFunction[AnnotatedVertex, RankedVertex] {
-
+  class InitRanks() extends RichMapFunction[AnnotatedVertex, RankedVertex] {
     override def map(r: AnnotatedVertex): RankedVertex = {
       RankedVertex(r.id , 1.0 / getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numVertices").get(0)._1)
       

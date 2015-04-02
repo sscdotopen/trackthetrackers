@@ -30,6 +30,7 @@ import processing.core.PImage;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Visualizes distribution of a certain tracking company as a choropleth map. Countries are colored
@@ -40,12 +41,11 @@ import java.util.List;
  */
 public class ChoroplethMapAppTracker extends PApplet {
 
-  UnfoldingMap map;
+  private UnfoldingMap map;
+  private LargeMapImageUtils largeMapImageUtils;
 
-  LargeMapImageUtils lmiUtils;
-
-  HashMap<String, DataEntry> dataEntriesMap;
-  List<Marker> countryMarkers;
+  private Map<String, DataEntry> dataEntries;
+  private List<Marker> countryMarkers;
 
   public void setup() {
     size(800, 600, OPENGL);
@@ -62,13 +62,13 @@ public class ChoroplethMapAppTracker extends PApplet {
     map.addMarkers(countryMarkers);
 
     // Load company distribution data
-    dataEntriesMap = loadTrackerDensityFromCSV(Config.get("company.distribution.by.country"));
-    println("Loaded " + dataEntriesMap.size() + " data entries");
+    dataEntries = loadTrackerDensityFromCSV(Config.get("company.distribution.by.country"));
+    println("Loaded " + dataEntries.size() + " data entries");
 
     // Country markers are colored according to its company distribution (only once)
     shadeCountries();
 
-    lmiUtils = new LargeMapImageUtils(this, map);
+    largeMapImageUtils = new LargeMapImageUtils(this, map);
   }
 
   public void draw() {
@@ -77,13 +77,13 @@ public class ChoroplethMapAppTracker extends PApplet {
     // Draw map tiles and country markers
     map.draw();
 
-    lmiUtils.run();
+    largeMapImageUtils.run();
   }
 
   public void keyPressed() {
     if (key == 's') {
       // Around current center and with current zoom level
-      PImage snapshot = lmiUtils.makeSnapshot();
+      PImage snapshot = largeMapImageUtils.makeSnapshot();
       snapshot.save("pic.png");
     }
   }
@@ -92,31 +92,24 @@ public class ChoroplethMapAppTracker extends PApplet {
     for (Marker marker : countryMarkers) {
       // Find data for country of the current marker
       String countryId = marker.getId();
-      DataEntry dataEntry = dataEntriesMap.get(countryId);
+      DataEntry dataEntry = dataEntries.get(countryId);
 
       float transparency = 200;
 
       if (dataEntry != null && dataEntry.value != null) {
-        // Encode value as brightness (values range: 0-1000)
-        /*
-        float transparency = map(dataEntry.value, 0.0f, 1.0f, 10, 255);
-        System.out.println("transparency: " + transparency);
-        marker.setColor(color(255, 0, 0, transparency));*/
-
+        // Encode value as color (values range: 0-1.0)
         float red = PApplet.map(dataEntry.value, 0.0f, 1.0f, 0, 255);
         float blue = PApplet.map((1.0f - dataEntry.value), 0.0f, 1.0f, 0, 255);
         marker.setColor(color(red, 0, blue, transparency));
-
-
-        } else {
+      } else {
           // No value available
           marker.setColor(color(100, 120));
         }
       }
     }
 
-    public HashMap<String, DataEntry> loadTrackerDensityFromCSV(String fileName) {
-      HashMap<String, DataEntry> dataEntriesMap = new HashMap<String, DataEntry>();
+    public Map<String, DataEntry> loadTrackerDensityFromCSV(String fileName) {
+      Map<String, DataEntry> dataPoints = new HashMap<String, DataEntry>();
 
       String[] rows = loadStrings(fileName);
       for (String row : rows) {
@@ -127,11 +120,11 @@ public class ChoroplethMapAppTracker extends PApplet {
           dataEntry.countryName = columns[1];
           dataEntry.id = columns[2];
           dataEntry.value = Float.parseFloat(columns[4]);
-          dataEntriesMap.put(dataEntry.id, dataEntry);
+          dataPoints.put(dataEntry.id, dataEntry);
         }
       }
 
-      return dataEntriesMap;
+      return dataPoints;
     }
 
     class DataEntry {

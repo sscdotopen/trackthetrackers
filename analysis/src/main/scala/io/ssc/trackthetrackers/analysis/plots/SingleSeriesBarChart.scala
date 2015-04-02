@@ -29,7 +29,7 @@ import org.jfree.chart.plot.{CategoryPlot, PlotOrientation}
 import org.jfree.chart.renderer.category.{StandardBarPainter, BarRenderer}
 import org.jfree.data.category.CategoryDataset
 
-class SingleSeriesBarChart(title: String, xLabel: String, yLabel: String, barColor: Color, dataset: CategoryDataset, snapshotFilename: String)
+class SingleSeriesBarChart(title: String, xLabel: String, yLabel: String, barColor: Color, dataset: CategoryDataset, snapshotFilename: String = null)
   extends JFrame {
 
   val chart = ChartFactory.createBarChart(

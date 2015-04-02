@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ package io.ssc.trackthetrackers.analysis.plots
 import java.io.{FileWriter, File}
 
 import io.ssc.trackthetrackers.analysis.algorithms.plots.ChoroplethMapAppTracker
+import org.apache.flink.shaded.com.google.common.io.Closeables
 import processing.core.PApplet
 
 import scala.collection.mutable
@@ -34,33 +35,34 @@ object ToplevelCountryMap extends App {
 
   val company = "Google"
 
-  val writer = new FileWriter(Config.get("company.distribution.by.country"), true)
-  
+  var writer: FileWriter = null
+  try {
+    writer = new FileWriter(Config.get("company.distribution.by.country"), true)
 
-  val lines = Source.fromFile(new File(Config.get("topleveldomainByCountry.csv"))).getLines
+    val lines = Source.fromFile(new File(Config.get("topleveldomainByCountry.csv"))).getLines
 
-  for (domainCountry <- lines) {
-    val splits = domainCountry.split(",")   
-    
-    CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
-      Config.get("analysis.results.path") + "companyDistribution", splits(0).toLowerCase, null, 0) 
+    for (domainCountry <- lines) {
+      val splits = domainCountry.split(",")
 
-    for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {
-      val ll = Source.fromFile(file).getLines
-      for (line <- ll) {
-        val tokens = line.split("\t")
+      CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+        Config.get("analysis.results.path") + "companyDistribution", splits(0).toLowerCase, null, 0)
 
-        if (tokens(0).equals(company)) {
-          writer.write(splits(0) + "," + splits(1) + "," + splits(2) + "," + company + "," + tokens(1) + "\n")
+      for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {
+        val dataEntries = Source.fromFile(file).getLines
+        for (dataEntry <- dataEntries) {
+          val tokens = dataEntry.split("\t")
+
+          if (tokens(0).equals(company)) {
+            writer.write(splits(0) + "," + splits(1) + "," + splits(2) + "," + company + "," + tokens(1) + "\n")
+          }
         }
       }
+      writer.flush()
     }
-
-    writer.flush()
+  } finally {
+    Closeables.close(writer, false)
   }
-  writer.close()  
   
   val mapApp = new ChoroplethMapAppTracker()
   PApplet.main(Array("io.ssc.trackthetrackers.analysis.algorithms.plots.ChoroplethMapAppTracker"))
-
 }

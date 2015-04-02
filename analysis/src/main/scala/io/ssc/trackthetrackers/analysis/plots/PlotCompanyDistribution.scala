@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,6 @@ object PlotCompanyDistribution extends App {
     dataset.addValue(probability, "", tracker)
   }
 
-  new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset, null)
-  //new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset, "test.png")
+  new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset)
 }
 

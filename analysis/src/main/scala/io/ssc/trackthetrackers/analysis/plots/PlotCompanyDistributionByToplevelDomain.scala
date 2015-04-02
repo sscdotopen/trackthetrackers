@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

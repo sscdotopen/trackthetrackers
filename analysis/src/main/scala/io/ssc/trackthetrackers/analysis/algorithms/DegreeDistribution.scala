@@ -27,8 +27,7 @@ import org.apache.flink.api.scala._
 @deprecated
 object DegreeDistribution extends App {
 
-  fromEdges(Config.get("analysis.trackingraphsample.path"),
-            "/tmp/flink-scala/", 59661)
+  fromEdges(Config.get("analysis.trackingraphsample.path"), "/tmp/flink-scala/", 59661)
 
   def fromEdges(edgeFile: String, outputPath: String, numVertices: Long) = {
 
