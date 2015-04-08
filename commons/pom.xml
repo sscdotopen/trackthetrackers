@@ -28,6 +28,7 @@
         </exclusion>
       </exclusions>
     </dependency>
+   
   </dependencies>
 
   <pluginRepositories>

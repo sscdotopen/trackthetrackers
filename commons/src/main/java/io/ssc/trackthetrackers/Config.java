@@ -30,8 +30,12 @@ public class Config {
     try {
       if (props == null) {
         props = new Properties();
+      
         props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
-        validateConfig();
+     
+      //  validateConfig();
+      
+
       }
       return props.getProperty(key);
     } catch (Exception e) {

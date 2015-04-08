@@ -28,10 +28,12 @@ public class CommonCrawlSampleIntegrationTest {
     ExtractionJob extraction = new ExtractionJob();
     TrackingGraphJob trackingGraph = new TrackingGraphJob();
 
+    /*
     ToolRunner.run(extraction, new String[] {
         "--input", Config.get("commoncrawl.samples.path"),
         "--output", "/tmp/commoncrawl-extraction/"
     });
+    */
 
     ToolRunner.run(trackingGraph, new String[] {
         "--input", "/tmp/commoncrawl-extraction/",
