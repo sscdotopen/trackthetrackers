@@ -45,23 +45,23 @@ object TrackerDistribution extends App {
     val topTrackers = trackersWithNumDomainsTracked.map(new TrackerProbability())
                                                    .withBroadcastSet(numTrackedHosts, "numTrackedHosts")
                                                    .filter { _._2 >= 0.005 }
-
+    
     val topTrackerDomains =
         topTrackers.join(domains).where(0).equalTo(1) { (topTracker, domain) => domain.annotation -> topTracker._2 }
-
-
+    
     topTrackerDomains.writeAsCsv(outputPath, fieldDelimiter = "\t", writeMode = WriteMode.OVERWRITE)
 
     env.execute()
   }
 
-  class TrackerProbability() extends RichMapFunction[(Long, Long), (Long, Double)] {
 
-    override def map(trackedIdWithCount: (Long, Long)): (Long, Double) = {
+  class TrackerProbability() extends RichMapFunction[(Int, Long), (Int, Double)] {
+
+    override def map(trackedIdWithCount: (Int, Long)): (Int, Double) = {
 
       val numTrackedHosts = getRuntimeContext.getBroadcastVariable[Tuple1[Long]]("numTrackedHosts").get(0)._1
 
-      trackedIdWithCount._1 -> trackedIdWithCount._2.toDouble / numTrackedHosts
+      trackedIdWithCount._1.toInt -> trackedIdWithCount._2.toDouble / numTrackedHosts
     }
   }
 

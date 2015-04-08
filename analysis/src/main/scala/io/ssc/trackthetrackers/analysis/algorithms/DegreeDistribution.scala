@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
+import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis.{GraphUtils, Edge, FlinkUtils}
 import org.apache.flink.api.scala.{DataSet, ExecutionEnvironment}
 import org.apache.flink.core.fs.FileSystem.WriteMode
@@ -26,8 +27,7 @@ import org.apache.flink.api.scala._
 @deprecated
 object DegreeDistribution extends App {
 
-  fromEdges("/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv",
-            "/tmp/flink-scala/", 59661)
+  fromEdges(Config.get("analysis.trackingraphsample.path"), "/tmp/flink-scala/", 59661)
 
   def fromEdges(edgeFile: String, outputPath: String, numVertices: Long) = {
 
@@ -44,7 +44,7 @@ object DegreeDistribution extends App {
     env.execute()
   }
 
-  private[this] def degreeDist(extract: Edge => Long, edges: DataSet[Edge], numVertices: Long) = {
+  private[this] def degreeDist(extract: Edge => Int, edges: DataSet[Edge], numVertices: Long) = {
 
     FlinkUtils.countByKey(edges, extract)
       .groupBy { _._2 }

@@ -18,6 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis.algorithms
 
+import io.ssc.trackthetrackers.Config
 import io.ssc.trackthetrackers.analysis.{FlinkUtils, Edge}
 import org.apache.flink.api.scala._
 import org.apache.flink.core.fs.FileSystem.WriteMode
@@ -26,17 +27,16 @@ import org.apache.flink.util.Collector
 @deprecated
 object ComponentSizeDistribution extends App {
 
-  componentSizeDist(
-    "/home/ssc/Entwicklung/projects/trackthetrackers/analysis/src/main/resources/trackinggraph-sample.tsv", 500,
+  componentSizeDist(Config.get("analysis.trackingraphsample.path") + "/part-r-00000", 500,
     "/tmp/flink-scala/componentSizes/")
 
-  case class Assignment(vertex: Long, component: Long)
+  case class Assignment(vertex: Int, component: Int)
 
   def componentSizeDist(edgeFile: String, maxIterations: Int, outputDir: String) = {
 
     val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edgeList = env.readCsvFile[Edge](edgeFile, fieldDelimiter = '\t')
+    val edgeList = env.readCsvFile[Edge](edgeFile, fieldDelimiter = "\t")
 
     val initialAssignments = edgeList.flatMap { edge => Array(Tuple1(edge.src), Tuple1(edge.target)) }
                                      .distinct
@@ -65,7 +65,7 @@ object ComponentSizeDistribution extends App {
 
     val componentsWithSize = FlinkUtils.countByKey(assignments, { assignment: Assignment => assignment.component })
     val sizeWithNumComponents =
-      FlinkUtils.countByKey(componentsWithSize, { componentWithSize: (Long, Long) => componentWithSize._2 })
+      FlinkUtils.countByKey(componentsWithSize, { componentWithSize: (Int, Long) => componentWithSize._2.toInt })
 
     sizeWithNumComponents.writeAsText(outputDir, WriteMode.OVERWRITE)
 

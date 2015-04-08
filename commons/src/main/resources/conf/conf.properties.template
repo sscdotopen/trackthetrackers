@@ -1,7 +1,15 @@
 commoncrawl.samples.path=
 analysis.trackingraphsample.path=
+analysis.trackingraphminisample.path=
 webdatacommons.pldfile=
 webdatacommons.pldfile.unzipped=
 webdatacommons.pldarcfile.unzipped=
 phantomjs.path=
 analysis.results.path=
+topleveldomainByCountry.csv=
+countries.geo.json=
+webdatacommons.hostgraph-pr.unzipped=
+output.images=
+company.distribution.by.country=
+
+        

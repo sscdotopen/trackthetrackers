@@ -55,6 +55,11 @@ public class Config {
           "analysis/src/resources/sampleSeg.tsv");
     }
 
+    if (nullOrEmpty("analysis.trackingraphminisample.path")) {
+      throw new IllegalStateException("[analysis.trackingraphminisample.path] in conf.properties must point to " +
+          "analysis/src/resources/sampleMini.tsv");
+    }
+
     if (nullOrEmpty("webdatacommons.pldfile")) {
       throw new IllegalStateException("[webdatacommons.pldfile] in conf.properties must point to the webdata commons " +
           "domain index file, download it from " +
@@ -82,6 +87,38 @@ public class Config {
       throw new IllegalStateException("[analysis.results.path] in conf.properties must point to a local directory " +
           "where the analysis results will be stored and end with a /");
     }
+
+    if (nullOrEmpty("topleveldomainByCountry.csv")) {
+      throw new IllegalStateException("[topleveldomainByCountry.csv] in conf.properties must point to a local csv file, " +
+          "which matches toplevel domains with the corresponding country and can be found here: \n" + 
+          "trackthetrackers/extraction/src/test/resources/unfolding/topleveldomainByCountry.csv");
+    }
+
+    if (nullOrEmpty("countries.geo.json")) {
+      throw new IllegalStateException("[countries.geo.json] in conf.properties must point to a local json file, " +
+          "which contains the geo information of country coordinates. Can be found here: \n" +
+          "trackthetrackers/extraction/src/test/resources/unfolding/countries.geo.json\n" +
+          "Or downloaded here: \n" +
+          "https://raw.githubusercontent.com/tillnagel/unfolding/master/data/data/countries.geo.json");
+    }
+
+    if (nullOrEmpty("webdatacommons.hostgraph-pr.unzipped")) {
+      throw new IllegalStateException("[webdatacommons.hostgraph-pr.unzipped] in conf.properties must point to a local csv file, " +
+          "which contains a domain with its page rank. Can be downloaded here: \n" +
+          "http://data.dws.informatik.uni-mannheim.de/hyperlinkgraph/2012-08/ranking/hostgraph-pr.tsv.gz\n");
+    }
+
+    if (nullOrEmpty("output.images") || !endsWith("output.images", "/")) {
+      throw new IllegalStateException("[output.images] in conf.properties must point to a local folder, " +
+          "which will contain snapshots of created charts\n" +
+          "The name of the directory has to end with a /\n");
+    }
+
+    if (nullOrEmpty("company.distribution.by.country")) {
+      throw new IllegalStateException("[company.distribution.by.country] in conf.properties must point to a local csv file, " +
+         "which will contain a country with a corresponding value.\n" +
+         "This is an intermediate result to be able to draw the world map.\n");
+    }  
   }
 
   private static boolean nullOrEmpty(String key) {

@@ -1,0 +1,205 @@
+AD,Andorra,AND
+AE,United Arab Emirates,ARE
+AF,Afghanistan,AFG
+AG,Antigua and Barbuda,ATG
+AL,Albania,ALB
+AM,Armenia,ARM
+AO,Angola,AGO
+AR,Argentina,ARG
+AS,American Samoa,ASM
+AT,Austria,AUT
+AU,Australia,AUS
+AW,Aruba,ABW
+AZ,Azerbaijan,AZE
+BA,Bosnia and Herzegovina,BIH
+BB,Barbados,BRB
+BD,Bangladesh,BGD
+BE,Belgium,BEL
+BF,Burkina Faso,BFA
+BG,Bulgaria,BGR
+BH,Bahrain,BHR
+BI,Burundi,BDI
+BJ,Benin,BEN
+BM,Bermuda,BMU
+BN,Brunei Darussalam,BRN
+BO,Bolivia,BOL
+BR,Brazil,BRA
+BS,Bahamas. The,BHS
+BT,Bhutan,BTN
+BW,Botswana,BWA
+BY,Belarus,BLR
+BZ,Belize,BLZ
+CA,Canada,CAN
+CF,Central African Republic,CAF
+CD,Congo. Dem. Rep.,COD
+CG,Congo. Rep.,COG
+CH,Switzerland,CHE
+CL,Chile,CHL
+CM,Cameroon,CMR
+CN,China,CHN
+CO,Colombia,COL
+CR,Costa Rica,CRI
+CU,Cuba,CUB
+CV,Cape Verde,CPV
+CY,Cyprus,CYP
+CZ,Czech Republic,CZE
+DE,Germany,DEU
+DJ,Djibouti,DJI
+DK,Denmark,DNK
+DM,Dominica,DMA
+DO,Dominican Republic,DOM
+DZ,Algeria,DZA
+EC,Ecuador,ECU
+EE,Estonia,EST
+EG,Egypt. Arab Rep.,EGY
+ER,Eritrea,ERI
+ES,Spain,ESP
+ET,Ethiopia,ETH
+FI,Finland,FIN
+FJ,Fiji,FJI
+FM,Micronesia. Fed. Sts.,FSM
+FR,France,FRA
+GA,Gabon,GAB
+GB,United Kingdom,GBR
+GD,Grenada,GRD
+GE,Georgia,GEO
+GH,Ghana,GHA
+GI,Gibraltar,GIB
+GL,Greenland,GRL
+GM,Gambia. The,GMB
+GN,Guinea,GIN
+GQ,Equatorial Guinea,GNQ
+GR,Greece,GRC
+GT,Guatemala,GTM
+GU,Guam,GUM
+GW,Guinea-Bissau,GNB
+GY,Guyana,GUY
+HK,Hong Kong SAR. China,HKG
+HN,Honduras,HND
+HR,Croatia,HRV
+HT,Haiti,HTI
+HU,Hungary,HUN
+ID,Indonesia,IDN
+IE,Ireland,IRL
+IL,Israel,ISR
+IN,India,IND
+IQ,Iraq,IRQ
+IR,Iran. Islamic Rep.,IRN
+IS,Iceland,ISL
+IT,Italy,ITA
+JM,Jamaica,JAM
+JO,Jordan,JOR
+JP,Japan,JPN
+KE,Kenya,KEN
+KG,Kyrgyz Republic,KGZ
+KH,Cambodia,KHM
+KI,Kiribati,KIR
+KM,Comoros,COM
+KN,St. Kitts and Nevis,KNA
+KP,Korea. Dem. Rep.,PRK
+KR,Korea. Rep.,KOR
+KW,Kuwait,KWT
+KY,Cayman Islands,CYM
+KZ,Kazakhstan,KAZ
+LA,Lao PDR,LAO
+LB,Lebanon,LBN
+LC,St. Lucia,LCA
+LI,Liechtenstein,LIE
+LK,Sri Lanka,LKA
+LR,Liberia,LBR
+LS,Lesotho,LSO
+LT,Lithuania,LTU
+LU,Luxembourg,LUX
+LV,Latvia,LVA
+LY,Libya,LBY
+MA,Morocco,MAR
+MC,Monaco,MCO
+MD,Moldova,MDA
+MG,Madagascar,MDG
+MH,Marshall Islands,MHL
+MK,Macedonia. FYR,MKD
+ML,Mali,MLI
+MM,Myanmar,MMR
+MN,Mongolia,MNG
+MO,Macao SAR. China,MAC
+MP,Northern Mariana Islands,MNP
+MR,Mauritania,MRT
+MT,Malta,MLT
+MU,Mauritius,MUS
+MV,Maldives,MDV
+MW,Malawi,MWI
+MX,Mexico,MEX
+MY,Malaysia,MYS
+MZ,Mozambique,MOZ
+NA,Namibia,NAM
+NC,New Caledonia,NCL
+NE,Niger,NER
+NG,Nigeria,NGA
+NI,Nicaragua,NIC
+NL,Netherlands,NLD
+NO,Norway,NOR
+NP,Nepal,NPL
+NZ,New Zealand,NZL
+OM,Oman,OMN
+PA,Panama,PAN
+PE,Peru,PER
+PF,French Polynesia,PYF
+PG,Papua New Guinea,PNG
+PH,Philippines,PHL
+PK,Pakistan,PAK
+PL,Poland,POL
+PR,Puerto Rico,PRI
+PT,Portugal,PRT
+PW,Palau,PLW
+PY,Paraguay,PRY
+QA,Qatar,QAT
+RO,Romania,ROU
+RU,Russia,RUS
+RW,Rwanda,RWA
+SA,Saudi Arabia,SAU
+Sb,Solomon Islands,SLB
+SC,Seychelles,SYC
+SD,Sudan,SDN
+SS,South Sudan,SSD
+SE,Sweden,SWE
+SG,Singapore,SGP
+SI,Slovenia,SVN
+SK,Slovak Republic,SVK
+SL,Sierra Leone,SLE
+SM,San Marino,SMR
+SN,Senegal,SEN
+SO,Somalia,SOM
+SR,Suriname,SUR
+ST,Sao Tome and Principe,STP
+SV,El Salvador,SLV
+SY,Syrian Arab Republic,SYR
+SZ,Swaziland,SWZ
+TC,Turks and Caicos Islands,TCA
+TD,Chad,TCD
+TG,Togo,TGO
+TH,Thailand,THA
+TJ,Tajikistan,TJK
+TM,Turkmenistan,TKM
+TN,Tunisia,TUN
+TO,Tonga,TON
+TR,Turkey,TUR
+TT,Trinidad and Tobago,TTO
+TV,Tuvalu,TUV
+TZ,Tanzania,TZA
+UA,Ukraine,UKR
+UG,Uganda,UGA
+UK,United Kingdom,GBR
+US,United States of America,USA
+UY,Uruguay,URY
+UZ,Uzbekistan,UZB
+VC,St. Vincent and the Grenadines,VCT
+VE,Venezuela. RB,VEN
+VI,Virgin Islands (U.S.),VIR
+VN,Vietnam,VNM
+VU,Vanuatu,VUT
+WS,Samoa,WSM
+YE,Yemen. Rep.,YEM
+YT,Mayotte,MYT
+ZA,South Africa,ZAF
+ZM,Zambia,ZMB
+ZW,Zimbabwe,ZWE
