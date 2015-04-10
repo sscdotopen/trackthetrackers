@@ -111,20 +111,12 @@ public class TrackingGraphJob extends HadoopJob {
       for (Integer trackingHost : trackingHosts.keySet()) {
     	  
     	List tags = Arrays.asList(trackingHosts.get(trackingHost).split(DELIM));
-    	System.out.println();
     	String trackingTypeMask = "";
     	
     	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.SCRIPT )) ? "1": "0";
     	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.IFRAME )) ? "1": "0";
     	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.IMAGE )) ? "1": "0";
     	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.LINK )) ? "1": "0";
-
-    	/*
-    	trackingTypeMask  = tags.contains( Integer.toString( TrackingTypes.SCRIPT )) ? trackingTypeMask+"1": trackingTypeMask+"0";
-    	trackingTypeMask  = tags.contains( Integer.toString( TrackingTypes.IFRAME )) ? trackingTypeMask+"1": trackingTypeMask+"0";
-    	trackingTypeMask  = tags.contains( Integer.toString( TrackingTypes.IMAGE )) ? trackingTypeMask+"1": trackingTypeMask+"0";
-    	trackingTypeMask  = tags.contains( Integer.toString( TrackingTypes.LINK )) ? trackingTypeMask+"1": trackingTypeMask+"0";
-    	*/
 
     	String out = trackedHostIndex + "\t"+ trackingTypeMask ;  
         ctx.write(new IntWritable(trackingHost), new Text(out));

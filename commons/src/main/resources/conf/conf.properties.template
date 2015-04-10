@@ -12,4 +12,9 @@ webdatacommons.hostgraph-pr.unzipped=
 output.images=
 company.distribution.by.country=
 
+#in case one need to run the extraction\TrackerWithTypeTest.java
+#these files can be found under the extraction project src\test\resources\trackingtypemask 
+trackingtype.sample.nomask=
+trackingtype.sample.withmask=
+
         
