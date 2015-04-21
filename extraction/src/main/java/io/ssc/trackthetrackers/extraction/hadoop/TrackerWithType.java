@@ -18,88 +18,92 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
+public class TrackerWithType {
 
+  private String       trackerDomain;
+  private int          trackerID;
+  private TrackingType trackerType;
 
-public class TrackerWithType  {
+  public TrackerWithType() {
+  }
 
-  private String trackerDomain;
-  private int trackerID;
-  private int trackerType;
+  public TrackerWithType(String trackerDomain, int trackerID, TrackingType trackerType) {
+    super();
+    this.trackerDomain = trackerDomain;
+    this.trackerID = trackerID;
+    this.trackerType = trackerType;
+  }
 
-  public TrackerWithType() {}
+  public String getTrackerDomain() {
+    return trackerDomain;
+  }
 
-public TrackerWithType(String trackerDomain, int trackerID, int trackerType) {
-	super();
-	this.trackerDomain = trackerDomain;
-	this.trackerID = trackerID;
-	this.trackerType = trackerType;
-}
+  public void setTrackerDomain(String trackerDomain) {
+    this.trackerDomain = trackerDomain;
+  }
 
-public String getTrackerDomain() {
-	return trackerDomain;
-}
+  public int getTrackerID() {
+    return trackerID;
+  }
 
-public void setTrackerDomain(String trackerDomain) {
-	this.trackerDomain = trackerDomain;
-}
+  public void setTrackerID(int trackerID) {
+    this.trackerID = trackerID;
+  }
 
-public int getTrackerID() {
-	return trackerID;
-}
+  public TrackingType getTrackerType() {
+    return trackerType;
+  }
 
-public void setTrackerID(int trackerID) {
-	this.trackerID = trackerID;
-}
+  public void setTrackerType(TrackingType trackerType) {
+    this.trackerType = trackerType;
+  }
 
-public int getTrackerType() {
-	return trackerType;
-}
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((trackerDomain == null) ? 0 : trackerDomain.hashCode());
+    result = prime * result + trackerID;
+    result = prime * result + trackerType.ordinal();
+    return result;
+  }
 
-public void setTrackerType(int trackerType) {
-	this.trackerType = trackerType;
-}
+  @Override
+  public boolean equals(Object obj) {
 
-@Override
-public int hashCode() {
-	final int prime = 31;
-	int result = 1;
-	result = prime * result
-			+ ((trackerDomain == null) ? 0 : trackerDomain.hashCode());
-	result = prime * result + trackerID;
-	result = prime * result + trackerType;
-	return result;
-}
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
 
-@Override
-public boolean equals(Object obj) {
-	if (this == obj)
-		return true;
-	if (obj == null)
-		return false;
-	if (getClass() != obj.getClass())
-		return false;
-	TrackerWithType other = (TrackerWithType) obj;
-	if (trackerDomain == null) {
-		if (other.trackerDomain != null)
-			return false;
-	} else if (!trackerDomain.equals(other.trackerDomain))
-		return false;
-	if (trackerID != other.trackerID)
-		return false;
-	if (trackerType != other.trackerType)
-		return false;
-	return true;
-}
+    TrackerWithType other = (TrackerWithType) obj;
 
-@Override
-public String toString() {
-	return "TrackerWithType [trackerDomain=" + trackerDomain + ", trackerID="
-			+ trackerID + ", trackerType=" + trackerType + "]";
-}
+    if (trackerDomain == null) {
+      if (other.trackerDomain != null) {
+        return false;
+      }
+    } else {
+      if (!trackerDomain.equals(other.trackerDomain)) {
+        return false;
+      }
+    }
+    if (trackerID != other.trackerID) {
+      return false;
+    }
+    if (trackerType != other.trackerType) {
+      return false;
+    }
+    return true;
+  }
 
-
-
-
-
-
+  @Override
+  public String toString() {
+    return "TrackerWithType [trackerDomain=" + trackerDomain + ", trackerID=" + trackerID + ", trackerType="
+        + trackerType + "]";
+  }
 }

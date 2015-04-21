@@ -32,14 +32,12 @@ public class Config {
         props = new Properties();
       
         props.load(Config.class.getResourceAsStream("/conf/conf.properties"));
-     
-      //  validateConfig();
-      
+        validateConfig();
 
       }
       return props.getProperty(key);
     } catch (Exception e) {
-      throw new IllegalStateException("Unable to load config file!", e);
+      throw new IllegalStateException("Unable to load config file! ", e);
     }
   }
 

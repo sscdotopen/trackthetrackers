@@ -20,11 +20,9 @@ package io.ssc.trackthetrackers.extraction.hadoop;
 
 import com.google.common.collect.Sets;
 import com.google.common.net.InternetDomainName;
-
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -36,16 +34,13 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
-
 import parquet.proto.ProtoParquetInputFormat;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,14 +54,14 @@ public class TrackingGraphJob extends HadoopJob {
   @Override
   public int run(String[] args) throws Exception {
 
-    Map<String,String> parsedArgs = parseArgs(args);
+    Map<String, String> parsedArgs = parseArgs(args);
 
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
-        EdgeListMapper.class, IntWritable.class, TwoDIntArrayWritable.class,
-        DistinctifyReducer.class, IntWritable.class, Text.class, false, true);
+        EdgeListMapper.class, IntWritable.class, TwoDIntArrayWritable.class, DistinctifyReducer.class,
+        IntWritable.class, Text.class, false, true);
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
@@ -78,54 +73,62 @@ public class TrackingGraphJob extends HadoopJob {
 
   static class DistinctifyReducer extends Reducer<IntWritable, TwoDIntArrayWritable, IntWritable, Text> {
 
-	private final String DELIM = "#";
-	
+    private final String DELIM = "#";
+
     @Override
     protected void reduce(IntWritable trackedHost, Iterable<TwoDIntArrayWritable> values, Context ctx)
         throws IOException, InterruptedException {
-    	
-      Map<Integer,String> trackingHosts = new HashMap<Integer,String>();
+      Map<Integer, String> trackingHosts = new HashMap<Integer, String>();
       int trackedHostIndex = trackedHost.get();
-      
-      //fill out the trackers and tracking type into a set 
+
+      // fill out the trackers and tracking type into a set
       for (TwoDArrayWritable tdArray : values) {
-      	  
-    	 Writable [][] array = tdArray.get();    	
-    	 for(int i=0; i< array.length; i++){
-    		 int trackingHostIndex = ((IntWritable) array[i][0]).get();
-    		 int trackingHostType = ((IntWritable) array[i][1]).get();
-    		     		 
-    		 //don't add a link from the tracked node to itslef
-    		 //concatenate the tracking types for each unique tracker-tracked site
-    		 if(trackingHostIndex!= trackedHostIndex)
-    			 if(trackingHosts.containsKey(trackingHostIndex)){
-    				 trackingHosts.put(trackingHostIndex, trackingHosts.get(trackingHostIndex)+ Integer.toString(trackingHostType)+DELIM);
-    				 
-    			 }else
-    				 trackingHosts.put(trackingHostIndex, Integer.toString(trackingHostType)+DELIM ); 				     			 	 
-    	 }
-   	 
+        try {
+          Writable[][] array = tdArray.get();
+          for (int i = 0; i < array.length; i++) {
+            int trackingHostIndex = ((IntWritable) array[i][0]).get();
+            int trackingHostType = ((IntWritable) array[i][1]).get();
+
+            // don't add a link from the tracked node to itself
+            // concatenate the tracking types for each unique tracker-tracked
+            // site
+            if (trackingHostIndex != trackedHostIndex)
+              if (trackingHosts.containsKey(trackingHostIndex)) {
+                trackingHosts.put(trackingHostIndex,
+                    trackingHosts.get(trackingHostIndex) + Integer.toString(trackingHostType) + DELIM);
+              } else
+                trackingHosts.put(trackingHostIndex, Integer.toString(trackingHostType) + DELIM);
+          }
+        } catch (Exception ex) {
+          // TODO log or count
+          continue;
+        }
       }
-      
 
       for (Integer trackingHost : trackingHosts.keySet()) {
-    	  
-    	List tags = Arrays.asList(trackingHosts.get(trackingHost).split(DELIM));
-    	String trackingTypeMask = "";
-    	
-    	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.SCRIPT )) ? "1": "0";
-    	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.IFRAME )) ? "1": "0";
-    	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.IMAGE )) ? "1": "0";
-    	trackingTypeMask  += tags.contains( Integer.toString( TrackingTypes.LINK )) ? "1": "0";
+        try {
+          List<String> tags = Arrays.asList(trackingHosts.get(trackingHost).split(DELIM));
+          String trackingTypeMask = "";
 
-    	String out = trackedHostIndex + "\t"+ trackingTypeMask ;  
-        ctx.write(new IntWritable(trackingHost), new Text(out));
+          // the TrackingType enum is serialized as it's ordinal int value, so
+          // parse it as int
+          trackingTypeMask += tags.contains(Integer.toString(TrackingType.SCRIPT.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(Integer.toString(TrackingType.IFRAME.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(Integer.toString(TrackingType.IMAGE.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(Integer.toString(TrackingType.LINK.ordinal())) ? "1" : "0";
+
+          String out = trackedHostIndex + "\t" + trackingTypeMask;
+          ctx.write(new IntWritable(trackingHost), new Text(out));
+        } catch (Exception ex) {
+          // TODO log or count
+          continue;
+        }
       }
     }
   }
 
-
-  static class EdgeListMapper extends Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, TwoDIntArrayWritable> {
+  static class EdgeListMapper extends
+      Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, TwoDIntArrayWritable> {
 
     private static DomainIndex domainIndex;
 
@@ -139,61 +142,79 @@ public class TrackingGraphJob extends HadoopJob {
       }
     }
 
-    public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder, Context ctx)
-        throws IOException, InterruptedException {
+    public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder, Context ctx) throws IOException,
+        InterruptedException {
+      try {
+        if (parsedPageBuilder != null) {
+          ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
+          if (parsedPage != null) {
+            // try to get the topPrivateDomain of the tracked host. If the
+            // lookup failed ignore this parsed page
+            String uri = "";
+            int trackedHostIndex = 0;
+            try {
+              uri = new URI(parsedPage.getUrl()).getHost().toString();
+              String trackedHost = InternetDomainName.from(uri).topPrivateDomain().toString();
+              trackedHostIndex = domainIndex.indexFor(trackedHost);
+            } catch (Exception e) {
+              // TODO: Log or count
+              return;
+            }
 
-    	
-    	
-      if (parsedPageBuilder != null) {
-        ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
-        if (parsedPage != null) {
-          try {
-
-            String uri = new URI(parsedPage.getUrl()).getHost().toString();
-            String trackedHost = InternetDomainName.from(uri).topPrivateDomain().toString();
-
-            int trackedHostIndex = domainIndex.indexFor(trackedHost);
-
+            // extract all the potential trackers from the page
             Set<TrackerWithType> allTrackingDomains = Sets.newHashSet();
-            
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getScriptsList(), TrackingTypes.SCRIPT ));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getIframesList(),TrackingTypes.IFRAME ));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getImagesList(),TrackingTypes.IMAGE));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getLinksList(),TrackingTypes.LINK ));
+            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getScriptsList(), TrackingType.SCRIPT));
+            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getIframesList(), TrackingType.IFRAME));
+            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getImagesList(), TrackingType.IMAGE));
+            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getLinksList(), TrackingType.LINK));
 
-            IntWritable[][] trackingHosts = new IntWritable[allTrackingDomains.size()][2];
-
-            int n = 0;
+            // filter out the valid tracking hosts based on their
+            // topPrivateDomain and index lookup
+            Set<TrackerWithType> trackingHosts = Sets.newHashSet();
             for (TrackerWithType trackingDomain : allTrackingDomains) {
-              String trackingHost = InternetDomainName.from(trackingDomain.getTrackerDomain()).topPrivateDomain().toString();
-              int trackingHostIndex = domainIndex.indexFor(trackingHost);
-              trackingHosts[n][0] = new IntWritable(trackingHostIndex);
-              trackingHosts[n][1] = new IntWritable(trackingDomain.getTrackerType());
+              try {
+                String trackingHost = InternetDomainName.from(trackingDomain.getTrackerDomain()).topPrivateDomain()
+                    .toString();
+                int trackingHostIndex = domainIndex.indexFor(trackingHost);
+                TrackerWithType trackerWithIndex = new TrackerWithType("", trackingHostIndex,
+                    trackingDomain.getTrackerType());
+                trackingHosts.add(trackerWithIndex);
+              } catch (Exception ex) {
+                // TODO: Log or count
+                // Do not stop if one tracker has failed in lookups
+                continue;
+              }
+            }
+
+            // copy the set containing valid trackers into 2DArray. Prepare for
+            // serialization
+            IntWritable[][] trackers2D = new IntWritable[trackingHosts.size()][2];
+            int n = 0;
+            for (TrackerWithType tracker : trackingHosts) {
+              trackers2D[n][0] = new IntWritable(tracker.getTrackerID());
+              trackers2D[n][1] = new IntWritable(tracker.getTrackerType().ordinal());
               n++;
             }
-            
-            TwoDIntArrayWritable out = new TwoDIntArrayWritable();
-            out.set(trackingHosts);
-         
-            ctx.write(new IntWritable(trackedHostIndex), out);
 
-          } catch (Exception e) {
-            //TODO counter
+            // set the output to be serialized for reducers
+            TwoDIntArrayWritable trackers2DWritable = new TwoDIntArrayWritable();
+            trackers2DWritable.set(trackers2D);
+
+            ctx.write(new IntWritable(trackedHostIndex), trackers2DWritable);
           }
         }
+      } catch (Exception ex) {
+        // TODO: Counter
+        // in case an un-handled exception. do not fail the job
+        return;
       }
     }
-  
 
-    private Collection<TrackerWithType> createTrackersWithType(List<String> trackers, int type){
-    	
-    	List<TrackerWithType> ret = new ArrayList<TrackerWithType>(trackers.size());
-    	for(String tracker: trackers)
-    		ret.add(new TrackerWithType(tracker, 0 , type));
-    	return ret;
-    	
+    private Collection<TrackerWithType> createTrackersWithType(List<String> trackers, TrackingType type) {
+      List<TrackerWithType> trackerWithTypeList = new ArrayList<TrackerWithType>(trackers.size());
+      for (String tracker : trackers)
+        trackerWithTypeList.add(new TrackerWithType(tracker, 0, type));
+      return trackerWithTypeList;
     }
-  
   }
-
 }

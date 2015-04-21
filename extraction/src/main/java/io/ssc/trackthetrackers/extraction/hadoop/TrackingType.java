@@ -18,20 +18,6 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
-import io.ssc.trackthetrackers.Config;
-import org.apache.hadoop.util.ToolRunner;
-
-public class CommonCrawlSampleIntegrationTest {
-
-  public static void main(String[] args) throws Exception {
-    
-    ExtractionJob extraction = new ExtractionJob();
-    TrackingGraphJob trackingGraph = new TrackingGraphJob();
-
-    ToolRunner.run(extraction, new String[] { "--input", Config.get("commoncrawl.samples.path"), "--output",
-        "/tmp/commoncrawl-extraction/" });
-
-    ToolRunner.run(trackingGraph, new String[] { "--input", "/tmp/commoncrawl-extraction/", "--output",
-        "/tmp/commoncrawl-trackingraph/", "--domainIndex", Config.get("webdatacommons.pldfile") });
-  }
+public enum TrackingType {
+  SCRIPT, IFRAME, IMAGE, LINK
 }
