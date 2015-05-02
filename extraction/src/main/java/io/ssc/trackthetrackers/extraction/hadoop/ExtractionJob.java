@@ -52,7 +52,7 @@ import java.util.Map;
 
 public class ExtractionJob extends HadoopJob {
 
-  public static enum JobCounters {
+  public enum JobCounters {
     PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS, STACKOVERFLOW_ERRORS
   }
 

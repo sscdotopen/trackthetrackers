@@ -16,19 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package io.ssc.trackthetrackers.extraction.resources;
 
 import com.google.common.collect.Sets;
-import com.google.javascript.jscomp.parsing.Config;
-import com.google.javascript.jscomp.parsing.Config.LanguageMode;
 import com.google.javascript.jscomp.parsing.ParserRunner;
-import com.google.javascript.rhino.ErrorReporter;
 import com.google.javascript.rhino.Node;
-import com.google.javascript.rhino.jstype.SimpleSourceFile;
-import com.google.javascript.rhino.jstype.StaticSourceFile;
-
-import org.apache.commons.validator.routines.DomainValidator;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -41,8 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -53,31 +44,10 @@ public class ResourceExtractor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
 
-  private final URLNormalizer urlNormalizer = new URLNormalizer();
+  private static final Pattern javascriptPattern =
+      Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
-  private final Pattern javascriptPattern = Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
-
-  private final static Set<String> EXTRA_ANNOTATIONS = new HashSet<String>(Arrays.asList(
-      "suppressReceiverCheck",
-      "suppressGlobalPropertiesCheck"
-  ));
-
-  private final Config config = ParserRunner.createConfig(true, LanguageMode.ECMASCRIPT5_STRICT, true, EXTRA_ANNOTATIONS);
-  private final StaticSourceFile f = new SimpleSourceFile("input", false);
-
-  private final ErrorReporter errorReporter = new ErrorReporter() {
-    @Override
-    public void warning(String message, String sourceName, int line, int lineOffset) {
-      // Ignore.
-    }
-
-    @Override
-    public void error(String message, String sourceName, int line, int lineOffset) {
-      if (LOG.isWarnEnabled()) {
-        //LOG.warn("Parser Error: \"" + message + "\"");
-      }
-    }
-  };
+  private final JavascriptParser javascriptParser = new JavascriptParser();
 
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
@@ -85,7 +55,7 @@ public class ResourceExtractor {
     List<String> scriptHtml = new ArrayList<String>();
 
     Set<Resource> resources = Sets.newHashSet();
-    String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
+    String prefixForInternalLinks = URLHandler.createPrefixForInternalLinks(sourceUrl);
 
     Document doc = Jsoup.parse(html);
     Elements iframes = doc.select("iframe[src]");
@@ -108,178 +78,108 @@ public class ResourceExtractor {
       }
 
       if (uri.contains(".")) {
-        uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-        // normalize link
+        uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
-          uri = urlNormalizer.normalize(uri);
-          uri = urlNormalizer.extractDomain(uri);
+          uri = URLHandler.extractHost(uri);
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + uri + "\"");
           }
-        } catch (StackOverflowError err) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Stack Overflow Error: \"" + uri + "\"");
-          }
         }
-        if (isValidDomain(uri)) {
+        if (URLHandler.isValidDomain(uri)) {
           resources.add(new Resource(uri, type(tag.tag().toString())));
         }
       }
 
       if (tag.tag().toString().equals("script")) { //filter functions
-        if (tag.data().length() > 1) {
-          scriptHtml.add(tag.data());
+        String data = tag.data();
+        if (data.length() > 1) {
+          scriptHtml.add(data);
         }
       }
     }
 
 
-    List<String> parsedStrings = new ArrayList<String>();
+    List<String> javaScriptUrlCandidates = new ArrayList<String>();
 
     for (String script : scriptHtml) {
       try {
-        ParserRunner.ParseResult r = ParserRunner.parse(f, script, config, errorReporter);
-        //printTree(r.ast, 0);
-
-        parseStrings(r.ast, parsedStrings);
-      } catch (Exception e) {
-        if (LOG.isWarnEnabled()) {
-          //LOG.warn("Parser Exception: \"" + e + "\"");
-        }
-      }
+        ParserRunner.ParseResult parseResult = javascriptParser.parse(script);
+        findUrlCandidates(parseResult.ast, javaScriptUrlCandidates);
+      } catch (Exception e) {}
     }
 
-    tokenizeStrings(parsedStrings); //get strings within strings
+    findUrlsInCode(javaScriptUrlCandidates);
 
-    resources.addAll(filterResourcesFromStrings(parsedStrings)); // check whether strings are actual urls
+    resources.addAll(filterResourcesFromStrings(javaScriptUrlCandidates));
 
     return resources;
   }
 
-  //parse url when it is within the string
-  private void tokenizeStrings(List<String> parsedStrings) {
+  private void findUrlsInCode(List<String> candidateUrls) {
 
-    List<Integer> toBeReplaced = new ArrayList<Integer>();
+    List<String> urlsInCode = new ArrayList<String>();
 
-    List<String> tokenizedStrings = new ArrayList<String>();
+    Iterator<String> iterator = candidateUrls.iterator();
+    while (iterator.hasNext()) {
 
-    for (int o = 0; o < parsedStrings.size(); o++) {
-      String currentString = parsedStrings.get(o);
+      String currentString = iterator.next();
 
       if (currentString.contains("\"") || currentString.contains("'")) {
         Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
-        boolean found = false;
+        boolean removedUponFind = false;
         while (matcher.find()) {
-          if (!found) {
-            found = true;
-            toBeReplaced.add(o);
+          if (!removedUponFind) {
+            removedUponFind = true;
+            iterator.remove();
           }
 
           for (int i = 0; i < matcher.groupCount(); i++) {
             String token = matcher.group(i);
 
-            if (token != null && !token.contains("\"") && !token.contains("'") && isUrl(token)) {
-              tokenizedStrings.add(token);
+            if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token)) {
+              urlsInCode.add(token);
             }
           }
         }
       }
     }
 
-    for (int o = toBeReplaced.size() - 1; o >= 0; o--) {
-      parsedStrings.remove((int) toBeReplaced.get(o));
-    }
-
-    parsedStrings.addAll(tokenizedStrings);
+    candidateUrls.addAll(urlsInCode);
   }
 
 
   private Set<Resource> filterResourcesFromStrings(List<String> parsedStrings) {
     Set<Resource> resources = Sets.newHashSet();
     for (String url : parsedStrings) {
-      if (isUrl(url)) {
-        // normalize link
+      if (URLHandler.couldBeUrl(url)) {
         try {
-          url = urlNormalizer.normalize(url);
-          url = urlNormalizer.extractDomain(url);
+          url = URLHandler.extractHost(url);
+          if (URLHandler.isValidDomain(url)) {
+            resources.add(new Resource(url, Resource.Type.SCRIPT));
+          }
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + url + "\"");
           }
-        } catch (StackOverflowError err) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Stack Overflow Error: \"" + url + "\"");
-          }
-        }
-        if (isValidDomain(url)) {
-          resources.add(new Resource(url, Resource.Type.SCRIPT));
         }
       }
     }
     return resources;
   }
 
-  private boolean isUrl(String url) {
+  private void findUrlCandidates(Node currentNode, List<String> urlCandidates) {
 
-    if (!url.contains(".")) {
-      return false;
-    }
-
-    //remove and check white space
-    url = url.trim();
-    if (url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
-      return false;
-    }
-
-    //TODO: check this condition
-    //this doesnt work for something like localhost:80/...
-    if (url.contains(":")) {
-      if (url.indexOf(':') < url.length() - 1 && url.charAt(url.indexOf(':') + 1) != '/') {
-        return false;
+    if (currentNode.isString()) {
+      if (currentNode.getString().contains(".")) {
+        urlCandidates.add(currentNode.getString());
       }
     }
 
-    return true;
-  }
-
-  private void printTree(Node root, int level) {
-    for (int i = 0; i < level; i++) {
-      System.out.print("\t");
-    }
-    System.out.println(root);
-
-    for (Node child : root.children()) {
-      printTree(child, level + 1);
+    for (Node child : currentNode.children()) {
+      findUrlCandidates(child, urlCandidates);
     }
   }
-
-  private void parseStrings(Node root, List<String> parsedStrings) {
-    if (root.isString()) {
-      if (root.getString().contains(".")) {
-        parsedStrings.add(root.getString());
-      }
-    }
-
-    for (Node child : root.children()) {
-      parseStrings(child, parsedStrings);
-    }
-  }
-
-  private boolean isValidDomain(String url) {
-    if (!url.contains(".") || url.contains("///")) {
-      return false;
-    }
-
-    if (url.contains(";") || url.contains("=") || url.contains("?")) {
-      return false;
-    }
-
-    int startTopLevelDomain = url.lastIndexOf('.');
-    String topLevelDomain = url.substring(startTopLevelDomain + 1);
-    return DomainValidator.getInstance().isValidTld(topLevelDomain);
-  }
-
 
   private Resource.Type type(String tag) {
     if ("script".equals(tag)) {
