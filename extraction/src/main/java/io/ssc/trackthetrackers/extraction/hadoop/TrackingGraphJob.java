@@ -55,7 +55,7 @@ public class TrackingGraphJob extends HadoopJob {
 
     Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
         EdgeListMapper.class, IntWritable.class, IntArrayWritable.class,
-        DistinctifyReducer.class, IntWritable.class, IntWritable.class, false, true);
+        DistinctifyReducer.class, IntWritable.class, IntWritable.class, false);
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());

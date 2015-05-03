@@ -44,12 +44,10 @@ public class GhostDriverExtractor {
 
   private static final Logger log = LoggerFactory.getLogger(GhostDriverExtractor.class);
 
-  private final URLHandler urlHandler = new URLHandler();
-
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
     Set<Resource> resources = Sets.newHashSet();
-    String prefixForInternalLinks = urlHandler.createPrefixForInternalLinks(sourceUrl);
+    String prefixForInternalLinks = URLHandler.createPrefixForInternalLinks(sourceUrl);
 
     Document doc = Jsoup.parse(html);
     Elements iframes = doc.select("iframe[src]");
@@ -72,9 +70,9 @@ public class GhostDriverExtractor {
       }
 
       if (uri.contains(".")) {
-        uri = urlHandler.expandIfInternalLink(prefixForInternalLinks, uri);
+        uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
-          uri = urlHandler.extractHost(uri);
+          uri = URLHandler.extractHost(uri);
         } catch (MalformedURLException e) {
           if (log.isWarnEnabled()) {
             log.warn("Malformed URL: \"" + uri + "\"");
@@ -155,7 +153,7 @@ public class GhostDriverExtractor {
               url = "http://" + url;
             }
             try {
-              url = urlHandler.extractHost(url);
+              url = URLHandler.extractHost(url);
             } catch (MalformedURLException e) {
               if (log.isWarnEnabled()) {
                 log.warn("Malformed URL: \"" + url + "\"");

@@ -25,6 +25,8 @@ import java.net.MalformedURLException;
 
 class URLHandler {
 
+  private URLHandler() {}
+
   public static boolean couldBeUrl(String url) {
 
     if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {

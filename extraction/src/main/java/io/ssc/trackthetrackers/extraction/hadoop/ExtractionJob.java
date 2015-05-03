@@ -48,12 +48,23 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ExtractionJob extends HadoopJob {
 
   public enum JobCounters {
-    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS, STACKOVERFLOW_ERRORS
+    PAGES, RESOURCES, PROTOCOL_EXCEPTIONS, HTTP_EXCEPTIONS, PARSE_EXCEPTIONS, CHARSET_EXCEPTIONS, STACKOVERFLOW_ERRORS,
+    EXTRACTIONS_KILLED
   }
 
   public static void main(String[] args) throws Exception {
@@ -69,7 +80,7 @@ public class ExtractionJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
-                      CommonCrawlExtractionMapper.class, null, null, true);
+                      CommonCrawlExtractionMapper.class, null, null);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);
     ProtoParquetOutputFormat.setCompression(job, CompressionCodecName.SNAPPY);
@@ -78,14 +89,49 @@ public class ExtractionJob extends HadoopJob {
     job.waitForCompletion(true);
 
     return 0;
-  }  
+  }
+
+  /** custom ThreadFactory which allows explicit stopping of created threads for deadlock resolution */
+  static class RobustThreadFactory implements ThreadFactory {
+
+    private final ThreadFactory delegate = Executors.defaultThreadFactory();
+
+    private final List<Thread> threadsCreated = new ArrayList<Thread>();
+
+    @Override
+    public Thread newThread(Runnable runnable) {
+      Thread thread = delegate.newThread(runnable);
+      threadsCreated.add(thread);
+      return thread;
+    }
+
+    /*ugly, but necessary as the google JS parser sometimes deadlocks... */
+    void killDeadlockedThreads() {
+      for (Thread thread : threadsCreated) {
+        if (thread.isAlive()) {
+          thread.interrupt();
+          thread.stop();
+        }
+      }
+    }
+  }
 
   static class CommonCrawlExtractionMapper extends Mapper<Writable, ArcRecord, Void, ParsedPageProtos.ParsedPage> {
 
     private final ResourceExtractor resourceExtractor = new ResourceExtractor();
 
+    private final RobustThreadFactory threadFactory = new RobustThreadFactory();
+    private ExecutorService executorService = Executors.newSingleThreadExecutor(threadFactory);
+
     @Override
-    public void map(Writable key, ArcRecord record, Context context) throws IOException, InterruptedException {
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+      super.cleanup(context);
+      executorService.shutdownNow();
+      threadFactory.killDeadlockedThreads();
+    }
+
+    @Override
+    public void map(Writable key, final ArcRecord record, Context context) throws IOException, InterruptedException {
 
       if ("text/html".equals(record.getContentType())) {
         Charset charset = null;
@@ -108,7 +154,7 @@ public class ExtractionJob extends HadoopJob {
             charset = Charset.forName("ISO-8859-1");
           }
 
-          String html;
+          final String html;
           InputStreamReader reader = null;
           try {
             reader = new InputStreamReader(httpResponse.getEntity().getContent(), charset);
@@ -117,7 +163,14 @@ public class ExtractionJob extends HadoopJob {
             Closeables.close(reader, true);
           }
 
-          Iterable<Resource> resources = resourceExtractor.extractResources(record.getURL(), html);
+          Future<Iterable<Resource>> futureResources = executorService.submit(new Callable<Iterable<Resource>>() {
+            @Override
+            public Iterable<Resource> call() throws Exception {
+              return resourceExtractor.extractResources(record.getURL(), html);
+            }
+          });
+
+          Iterable<Resource> resources = futureResources.get(3, TimeUnit.SECONDS);
 
           context.getCounter(JobCounters.PAGES).increment(1);
           context.getCounter(JobCounters.RESOURCES).increment(Iterables.size(resources));
@@ -125,7 +178,7 @@ public class ExtractionJob extends HadoopJob {
           ParsedPageProtos.ParsedPage.Builder builder = ParsedPageProtos.ParsedPage.newBuilder();
 
           builder.setUrl(record.getURL())
-                 .setArchiveTime(record.getArchiveDate().getTime());
+              .setArchiveTime(record.getArchiveDate().getTime());
 
           for (Resource resource : resources) {
             if (Resource.Type.SCRIPT.equals(resource.type())) {
@@ -148,8 +201,22 @@ public class ExtractionJob extends HadoopJob {
           throw new IOException(e);
         } catch (StackOverflowError soe) {
           context.getCounter(JobCounters.STACKOVERFLOW_ERRORS).increment(1);
+        } catch (ExecutionException e) {
+          context.getCounter(JobCounters.EXTRACTIONS_KILLED).increment(1);
+          robustExecutorServiceRest();
+        } catch (TimeoutException e) {
+          context.getCounter(JobCounters.EXTRACTIONS_KILLED).increment(1);
+          robustExecutorServiceRest();
         }
       }
     }
+
+    private void robustExecutorServiceRest() {
+      executorService.shutdownNow();
+      threadFactory.killDeadlockedThreads();
+      executorService = Executors.newSingleThreadExecutor(threadFactory);
+    }
   }
+
+
 }

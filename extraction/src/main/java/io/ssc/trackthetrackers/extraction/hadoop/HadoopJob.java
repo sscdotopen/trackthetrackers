@@ -35,16 +35,7 @@ import java.util.Collections;
 import java.util.Map;
 
 public abstract class HadoopJob extends Configured implements Tool {
-  
-  public long getCount(Job job, Enum<?> counterType) throws IOException {
-    if (job != null) {
-      Counters counters = job.getCounters();
-      Counter c = counters.findCounter(counterType);
-      return c.getValue();
-    }
-    return 0L;
-  }
-  
+
   protected Map<String,String> parseArgs(String[] args) {
     if (args == null || args.length % 2 != 0) {
       throw new IllegalStateException("Cannot convert args!");
@@ -59,23 +50,18 @@ public abstract class HadoopJob extends Configured implements Tool {
 
 
   protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                        Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+                        Class keyClass, Class valueClass) throws IOException {
 
-    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass,
-                  deleteOutputFolder);
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass);
 
     job.setNumReduceTasks(0);
     return job;
   }
 
   private Job map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
-                  Class keyClass, Class valueClass, boolean deleteOutputFolder) throws IOException {
+                  Class keyClass, Class valueClass) throws IOException {
 
     Configuration conf = new Configuration();
-
-    if (deleteOutputFolder) {
-      FileSystem.get(conf).delete(output, true);
-    }
 
     Job job = new Job(conf, mapperClass.getSimpleName());
 
@@ -99,10 +85,9 @@ public abstract class HadoopJob extends Configured implements Tool {
 
   protected Job mapReduce(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
                           Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
-                          Class reducerValueClass, boolean combinable, boolean deleteOutputFolder) throws IOException {
+                          Class reducerValueClass, boolean combinable) throws IOException {
 
-    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass,
-                  deleteOutputFolder);
+    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass);
 
     job.setReducerClass(reducerClass);
     job.setOutputKeyClass(reducerKeyClass);
@@ -111,8 +96,6 @@ public abstract class HadoopJob extends Configured implements Tool {
     if (combinable) {
       job.setCombinerClass(reducerClass);
     }
-
-//    FileOutputFormat.setCompressOutput(job, true);
 
     return job;
   }
