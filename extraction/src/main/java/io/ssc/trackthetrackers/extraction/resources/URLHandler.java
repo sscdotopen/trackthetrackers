@@ -27,22 +27,15 @@ class URLHandler {
 
   public static boolean couldBeUrl(String url) {
 
-    if (!url.contains(".")) {
-      return false;
-    }
-
-    //remove and check white space
-    String trimmedUrl = url.trim();
-    if (trimmedUrl.contains(" ") || trimmedUrl.contains("\t") || trimmedUrl.contains("\r") ||
-        trimmedUrl.contains("\n")) {
+    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
       return false;
     }
 
     //TODO: check this condition
     //this doesnt work for something like localhost:80/...
-    int colonIndex = trimmedUrl.indexOf(':');
+    int colonIndex = url.indexOf(':');
     if (colonIndex != -1) {
-      if (colonIndex < trimmedUrl.length() - 1 && trimmedUrl.charAt(colonIndex + 1) != '/') {
+      if (colonIndex < url.length() - 1 && url.charAt(colonIndex + 1) != '/') {
         return false;
       }
     }
@@ -79,31 +72,31 @@ class URLHandler {
     return prefixForInternalLinks;
   }
 
-  public static String extractHost(String urlString) throws MalformedURLException {
+  public static String extractHost(String candidateUrl) throws MalformedURLException {
 
-    urlString = urlString.trim();
-
-    if (urlString.isEmpty()) {           // permit empty
-      return urlString;
+    if (candidateUrl.isEmpty()) {           // permit empty
+      return candidateUrl;
     }
+
+    String url = candidateUrl;
 
     //add protocol if not existent
-    if (urlString.startsWith(".")) {
-      urlString = urlString.substring(1);
+    if (url.startsWith(".")) {
+      url = url.substring(1);
     }
 
-    if (!urlString.contains(":")) {
-      if (!urlString.startsWith("//")) {
-        urlString = "//" + urlString;
+    if (!url.contains(":")) {
+      if (!url.startsWith("//")) {
+        url = "//" + url;
       }
-      urlString = ":" + urlString;
+      url = ":" + url;
     }
 
-    if (urlString.startsWith(":")) {
-      urlString = "http" + urlString;
+    if (url.startsWith(":")) {
+      url = "http" + url;
     }
 
-    return new URL(urlString).getHost().toLowerCase();
+    return new URL(url).getHost().toLowerCase();
   }
 
 }

@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,49 +52,39 @@ public class ResourceExtractor {
 
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
-    List<String> scriptHtml = new ArrayList<String>();
-
     Set<Resource> resources = Sets.newHashSet();
     String prefixForInternalLinks = URLHandler.createPrefixForInternalLinks(sourceUrl);
 
+    List<Element> elements = new ArrayList<Element>();
+
     Document doc = Jsoup.parse(html);
-    Elements iframes = doc.select("iframe[src]");
-    Elements links = doc.select("link[href]");
-    Elements imgs = doc.select("img[src]");
     Elements scripts = doc.select("script");
 
-    Elements allElements = iframes.clone();
-    allElements.addAll(scripts);
-    allElements.addAll(links);
-    allElements.addAll(imgs);
+    elements.addAll(doc.select("iframe[src]"));
+    elements.addAll(doc.select("link[href]"));
+    elements.addAll(doc.select("img[src]"));
+    elements.addAll(scripts);
 
     String uri;
 
-    for (Element tag : allElements) {
-      uri = tag.attr("src");
+    for (Element element : elements) {
+      uri = element.attr("src").trim();
 
       if (!uri.contains(".")) {
-        uri = tag.attr("href");
+        uri = element.attr("href").trim();
       }
 
       if (uri.contains(".")) {
         uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
           uri = URLHandler.extractHost(uri);
+          if (URLHandler.isValidDomain(uri)) {
+            resources.add(new Resource(uri, type(element.tag().toString())));
+          }
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + uri + "\"");
           }
-        }
-        if (URLHandler.isValidDomain(uri)) {
-          resources.add(new Resource(uri, type(tag.tag().toString())));
-        }
-      }
-
-      if (tag.tag().toString().equals("script")) { //filter functions
-        String data = tag.data();
-        if (data.length() > 1) {
-          scriptHtml.add(data);
         }
       }
     }
@@ -102,16 +92,19 @@ public class ResourceExtractor {
 
     List<String> javaScriptUrlCandidates = new ArrayList<String>();
 
-    for (String script : scriptHtml) {
+    for (Element script : scripts) {
       try {
-        ParserRunner.ParseResult parseResult = javascriptParser.parse(script);
-        findUrlCandidates(parseResult.ast, javaScriptUrlCandidates);
+        String scriptContents = script.data();
+        if (scriptContents.length() > 1) {
+          ParserRunner.ParseResult parseResult = javascriptParser.parse(scriptContents);
+          findUrlCandidates(parseResult.ast, javaScriptUrlCandidates);
+        }
       } catch (Exception e) {}
     }
 
     findUrlsInCode(javaScriptUrlCandidates);
 
-    resources.addAll(filterResourcesFromStrings(javaScriptUrlCandidates));
+    resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
 
     return resources;
   }
@@ -134,11 +127,11 @@ public class ResourceExtractor {
             iterator.remove();
           }
 
-          for (int i = 0; i < matcher.groupCount(); i++) {
-            String token = matcher.group(i);
+          for (int groupIndex = 0; groupIndex < matcher.groupCount(); groupIndex++) {
+            String token = matcher.group(groupIndex);
 
             if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token)) {
-              urlsInCode.add(token);
+              urlsInCode.add(token.trim());
             }
           }
         }
@@ -149,9 +142,9 @@ public class ResourceExtractor {
   }
 
 
-  private Set<Resource> filterResourcesFromStrings(List<String> parsedStrings) {
+  private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
     Set<Resource> resources = Sets.newHashSet();
-    for (String url : parsedStrings) {
+    for (String url : candidateUrls) {
       if (URLHandler.couldBeUrl(url)) {
         try {
           url = URLHandler.extractHost(url);
