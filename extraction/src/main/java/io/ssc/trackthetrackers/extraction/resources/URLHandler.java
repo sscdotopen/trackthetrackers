@@ -1,17 +1,17 @@
 /**
  * Track the trackers
  * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
- *
+ * <p/>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * <p/>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * <p/>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -25,14 +25,15 @@ import java.net.MalformedURLException;
 
 class URLHandler {
 
-  private URLHandler() {}
+  private URLHandler() {
+  }
 
   public static boolean couldBeUrl(String url) {
-		if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
+    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
       return false;
     }
 
-		//TODO: check this condition
+    //TODO: check this condition
     //this doesnt work for something like localhost:80/...
     int colonIndex = url.indexOf(':');
     if (colonIndex != -1) {
@@ -41,14 +42,14 @@ class URLHandler {
       }
     }
 
-		return true;
+    return true;
   }
 
   public static boolean isValidDomain(String url) {
     int startTopLevelDomain = url.lastIndexOf('.');
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
-		
-		return DomainValidator.getInstance().isValidTld(topLevelDomain);
+
+    return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
 
   public static String expandIfInternalLink(String prefixForInternalLinks, String link) {
@@ -73,16 +74,16 @@ class URLHandler {
     }
     return prefixForInternalLinks;
   }
-	
-	public static String cleanURL(String url) {
-		String newUrl = new String(url);
-		newUrl = newUrl.split("\\?")[0].trim(); //remove php parameters
-		
-		if (newUrl.startsWith("rtmp:")) {
-			newUrl = newUrl.replace("rtmp:", "http:");
-		}
-		return newUrl;
-	}
+
+  public static String cleanURL(String url) {
+    String newUrl = new String(url);
+    newUrl = newUrl.split("\\?")[0].trim(); //remove php parameters
+
+    if (newUrl.startsWith("rtmp:")) {
+      newUrl = newUrl.replace("rtmp:", "http:");
+    }
+    return newUrl;
+  }
 
   public static String extractHost(String candidateUrl) throws MalformedURLException {
 
@@ -102,13 +103,13 @@ class URLHandler {
         url = "//" + url;
       }
       url = ":" + url;
-		}
+    }
 
     if (url.startsWith(":")) {
       url = "http" + url;
     }
 
-		return new URL(url).getHost().toLowerCase();
+    return new URL(url).getHost().toLowerCase();
   }
 
 }
