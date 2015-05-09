@@ -28,12 +28,11 @@ class URLHandler {
   private URLHandler() {}
 
   public static boolean couldBeUrl(String url) {
-
-    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
+		if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
       return false;
     }
 
-    //TODO: check this condition
+		//TODO: check this condition
     //this doesnt work for something like localhost:80/...
     int colonIndex = url.indexOf(':');
     if (colonIndex != -1) {
@@ -42,13 +41,14 @@ class URLHandler {
       }
     }
 
-    return true;
+		return true;
   }
 
   public static boolean isValidDomain(String url) {
     int startTopLevelDomain = url.lastIndexOf('.');
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
-    return DomainValidator.getInstance().isValidTld(topLevelDomain);
+		
+		return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
 
   public static String expandIfInternalLink(String prefixForInternalLinks, String link) {
@@ -73,6 +73,16 @@ class URLHandler {
     }
     return prefixForInternalLinks;
   }
+	
+	public static String cleanURL(String url) {
+		String newUrl = new String(url);
+		newUrl = newUrl.split("\\?")[0].trim(); //remove php parameters
+		
+		if (newUrl.startsWith("rtmp:")) {
+			newUrl = newUrl.replace("rtmp:", "http:");
+		}
+		return newUrl;
+	}
 
   public static String extractHost(String candidateUrl) throws MalformedURLException {
 
@@ -80,7 +90,7 @@ class URLHandler {
       return candidateUrl;
     }
 
-    String url = candidateUrl;
+    String url = cleanURL(candidateUrl);
 
     //add protocol if not existent
     if (url.startsWith(".")) {
@@ -92,13 +102,13 @@ class URLHandler {
         url = "//" + url;
       }
       url = ":" + url;
-    }
+		}
 
     if (url.startsWith(":")) {
       url = "http" + url;
     }
 
-    return new URL(url).getHost().toLowerCase();
+		return new URL(url).getHost().toLowerCase();
   }
 
 }

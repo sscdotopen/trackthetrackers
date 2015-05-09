@@ -66,15 +66,15 @@ public class ResourceExtractor {
     elements.addAll(scripts);
 
     String uri;
-
-    for (Element element : elements) {
+		
+		for (Element element : elements) {
       uri = element.attr("src").trim();
 
       if (!uri.contains(".")) {
         uri = element.attr("href").trim();
       }
 
-      if (uri.contains(".")) {
+			if (uri.contains(".")) {
         uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
           uri = URLHandler.extractHost(uri);
@@ -89,9 +89,7 @@ public class ResourceExtractor {
       }
     }
 
-
     List<String> javaScriptUrlCandidates = new ArrayList<String>();
-
     for (Element script : scripts) {
       try {
         String scriptContents = script.data();
@@ -101,16 +99,15 @@ public class ResourceExtractor {
         }
       } catch (Exception e) {}
     }
+		
+		findUrlsInCode(javaScriptUrlCandidates);
 
-    findUrlsInCode(javaScriptUrlCandidates);
-
-    resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
+		resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
 
     return resources;
   }
 
   private void findUrlsInCode(List<String> candidateUrls) {
-
     List<String> urlsInCode = new ArrayList<String>();
 
     Iterator<String> iterator = candidateUrls.iterator();
@@ -140,22 +137,22 @@ public class ResourceExtractor {
 
     candidateUrls.addAll(urlsInCode);
   }
-
-
-  private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
+	
+	private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
     Set<Resource> resources = Sets.newHashSet();
     for (String url : candidateUrls) {
-      if (URLHandler.couldBeUrl(url)) {
+      if (URLHandler.couldBeUrl(url.trim())) {
         try {
-          url = URLHandler.extractHost(url);
-          if (URLHandler.isValidDomain(url)) {
+					url = URLHandler.extractHost(url);
+
+					if (URLHandler.isValidDomain(url)) {
             resources.add(new Resource(url, Resource.Type.SCRIPT));
-          }
+					}
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + url + "\"");
           }
-        }
+				}
       }
     }
     return resources;
