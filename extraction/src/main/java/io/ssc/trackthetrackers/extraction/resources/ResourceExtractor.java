@@ -89,7 +89,9 @@ public class ResourceExtractor {
       }
     }
 
+
     List<String> javaScriptUrlCandidates = new ArrayList<String>();
+
     for (Element script : scripts) {
       try {
         String scriptContents = script.data();
@@ -109,6 +111,7 @@ public class ResourceExtractor {
   }
 
   private void findUrlsInCode(List<String> candidateUrls) {
+
     List<String> urlsInCode = new ArrayList<String>();
 
     Iterator<String> iterator = candidateUrls.iterator();
@@ -145,7 +148,6 @@ public class ResourceExtractor {
       if (URLHandler.couldBeUrl(url.trim())) {
         try {
           url = URLHandler.extractHost(url);
-
           if (URLHandler.isValidDomain(url)) {
             resources.add(new Resource(url, Resource.Type.SCRIPT));
           }

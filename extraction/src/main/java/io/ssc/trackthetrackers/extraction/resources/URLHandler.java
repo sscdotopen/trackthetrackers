@@ -47,6 +47,11 @@ class URLHandler {
 
   public static boolean isValidDomain(String url) {
     int startTopLevelDomain = url.lastIndexOf('.');
+
+    if (startTopLevelDomain == -1) {
+      return false;
+    }
+
     String topLevelDomain = url.substring(startTopLevelDomain + 1);
 
     return DomainValidator.getInstance().isValidTld(topLevelDomain);
@@ -78,12 +83,19 @@ class URLHandler {
   public static String cleanURL(String url) {
     String newUrl = new String(url);
     newUrl = newUrl.split("\\?")[0].trim(); //remove php parameters
+    newUrl = newUrl.split("#")[0]; //remove other stuff
 
     if (newUrl.startsWith("rtmp:")) {
       newUrl = newUrl.replace("rtmp:", "http:");
     }
     return newUrl;
   }
+
+  public static String clearDomain(String domain) {
+    String splits[] = domain.split("=");
+    return splits[splits.length - 1];
+  }
+
 
   public static String extractHost(String candidateUrl) throws MalformedURLException {
 
@@ -109,7 +121,7 @@ class URLHandler {
       url = "http" + url;
     }
 
-    return new URL(url).getHost().toLowerCase();
+    return clearDomain(new URL(url).getHost().toLowerCase());
   }
 
 }
