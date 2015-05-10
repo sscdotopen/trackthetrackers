@@ -28,4 +28,14 @@ public class URLHandlerTest {
   public void orgUk() {
     assertTrue(URLHandler.isValidDomain("lala.co.uk"));
   }
+
+  @Test
+  public void wrongURL() {
+    assertTrue(!URLHandler.isValidDomain("uk"));
+  }
+
+  @Test
+  public void couldBeURL() {
+    assertTrue(!URLHandler.couldBeUrl("user@example.com"));
+  }
 }

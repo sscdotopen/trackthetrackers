@@ -1,17 +1,14 @@
 /**
  * Track the trackers
  * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
- * <p/>
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * <p/>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * <p/>
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -46,6 +43,7 @@ public class ResourceExtractor {
 
   private static final Pattern javascriptPattern =
       Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
+      
 
   private final JavascriptParser javascriptParser = new JavascriptParser();
 
@@ -69,7 +67,7 @@ public class ResourceExtractor {
 
     for (Element element : elements) {
       uri = element.attr("src").trim();
-
+      
       if (!uri.contains(".")) {
         uri = element.attr("href").trim();
       }
@@ -89,9 +87,7 @@ public class ResourceExtractor {
       }
     }
 
-
     List<String> javaScriptUrlCandidates = new ArrayList<String>();
-
     for (Element script : scripts) {
       try {
         String scriptContents = script.data();
@@ -99,10 +95,9 @@ public class ResourceExtractor {
           ParserRunner.ParseResult parseResult = javascriptParser.parse(scriptContents);
           findUrlCandidates(parseResult.ast, javaScriptUrlCandidates);
         }
-      } catch (Exception e) {
-      }
+      } catch (Exception e) {}
     }
-
+    
     findUrlsInCode(javaScriptUrlCandidates);
 
     resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
@@ -120,6 +115,7 @@ public class ResourceExtractor {
       String currentString = iterator.next();
 
       if (currentString.contains("\"") || currentString.contains("'")) {
+
         Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
         boolean removedUponFind = false;
         while (matcher.find()) {
@@ -131,7 +127,7 @@ public class ResourceExtractor {
           for (int groupIndex = 0; groupIndex < matcher.groupCount(); groupIndex++) {
             String token = matcher.group(groupIndex);
 
-            if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token)) {
+            if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token.trim())) {
               urlsInCode.add(token.trim());
             }
           }
