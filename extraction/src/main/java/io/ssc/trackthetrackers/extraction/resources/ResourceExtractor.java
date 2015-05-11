@@ -1,14 +1,17 @@
 /**
  * Track the trackers
  * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
+ * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ * 
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -29,21 +32,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.*;
 
 
 public class ResourceExtractor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
-
-  private static final Pattern javascriptPattern =
-      Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
-      
 
   private final JavascriptParser javascriptParser = new JavascriptParser();
 
@@ -98,52 +92,38 @@ public class ResourceExtractor {
       } catch (Exception e) {}
     }
     
-    findUrlsInCode(javaScriptUrlCandidates);
+    List<String> list = findUrlsInCode(javaScriptUrlCandidates);
 
-    resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
+    resources.addAll(resourcesFromCandidates(list));
 
     return resources;
   }
 
-  private void findUrlsInCode(List<String> candidateUrls) {
+  private List<String> findUrlsInCode(List<String> candidateUrls) {
 
-    List<String> urlsInCode = new ArrayList<String>();
+    List<String> urlsInCode = new ArrayList<String>();  
 
-    Iterator<String> iterator = candidateUrls.iterator();
-    while (iterator.hasNext()) {
-
-      String currentString = iterator.next();
-
-      if (currentString.contains("\"") || currentString.contains("'")) {
-
-        Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
-        boolean removedUponFind = false;
-        while (matcher.find()) {
-          if (!removedUponFind) {
-            removedUponFind = true;
-            iterator.remove();
-          }
-
-          for (int groupIndex = 0; groupIndex < matcher.groupCount(); groupIndex++) {
-            String token = matcher.group(groupIndex);
-
-            if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token.trim())) {
-              urlsInCode.add(token.trim());
-            }
-          }
+    for (String currentString : candidateUrls) {
+      String [] splits = currentString.split("\"|'");
+      
+      for (String token : splits) {
+        String tok = token.trim();
+        if (URLHandler.couldBeUrl(tok)) {
+          urlsInCode.add(tok);
         }
       }
     }
 
-    candidateUrls.addAll(urlsInCode);
+    return urlsInCode;
   }
 
   private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
     Set<Resource> resources = Sets.newHashSet();
     for (String url : candidateUrls) {
-      if (URLHandler.couldBeUrl(url.trim())) {
+      if (URLHandler.couldBeUrl(url)) {
         try {
           url = URLHandler.extractHost(url);
+
           if (URLHandler.isValidDomain(url)) {
             resources.add(new Resource(url, Resource.Type.SCRIPT));
           }
@@ -161,7 +141,7 @@ public class ResourceExtractor {
 
     if (currentNode.isString()) {
       if (currentNode.getString().contains(".")) {
-        urlCandidates.add(currentNode.getString());
+        urlCandidates.add(currentNode.getString().trim());
       }
     }
 

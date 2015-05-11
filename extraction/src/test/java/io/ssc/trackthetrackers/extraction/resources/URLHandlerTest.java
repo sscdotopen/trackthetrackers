@@ -35,6 +35,11 @@ public class URLHandlerTest {
   }
 
   @Test
+  public void wrongURL2() {
+    assertTrue(!URLHandler.isValidDomain(".uk"));
+  }
+
+  @Test
   public void couldBeURL() {
     assertTrue(!URLHandler.couldBeUrl("user@example.com"));
   }
