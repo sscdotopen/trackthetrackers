@@ -1,17 +1,17 @@
 /**
  * Track the trackers
  * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -70,9 +70,7 @@ public class ResourceExtractor {
         uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
           uri = URLHandler.extractHost(uri);
-          if (URLHandler.isValidDomain(uri)) {
-            resources.add(new Resource(uri, type(element.tag().toString())));
-          }
+          resources.add(new Resource(uri, type(element.tag().toString())));
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + uri + "\"");
@@ -92,9 +90,9 @@ public class ResourceExtractor {
       } catch (Exception e) {}
     }
     
-    List<String> list = findUrlsInCode(javaScriptUrlCandidates);
-
-    resources.addAll(resourcesFromCandidates(list));
+    List<String> splittedUrlCandidates = findUrlsInCode(javaScriptUrlCandidates);
+    
+    resources.addAll(resourcesFromCandidates(splittedUrlCandidates));
 
     return resources;
   }
@@ -109,6 +107,7 @@ public class ResourceExtractor {
       for (String token : splits) {
         String tok = token.trim();
         if (URLHandler.couldBeUrl(tok)) {
+          tok = tok.replace("\\.", ".");          
           urlsInCode.add(tok);
         }
       }
@@ -120,17 +119,12 @@ public class ResourceExtractor {
   private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
     Set<Resource> resources = Sets.newHashSet();
     for (String url : candidateUrls) {
-      if (URLHandler.couldBeUrl(url)) {
-        try {
-          url = URLHandler.extractHost(url);
-
-          if (URLHandler.isValidDomain(url)) {
-            resources.add(new Resource(url, Resource.Type.SCRIPT));
-          }
-        } catch (MalformedURLException e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Malformed URL: \"" + url + "\"");
-          }
+      try {
+        url = URLHandler.extractHost(url);
+        resources.add(new Resource(url, Resource.Type.SCRIPT));
+      } catch (MalformedURLException e) {
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Malformed URL: \"" + url + "\"");
         }
       }
     }

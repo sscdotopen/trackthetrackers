@@ -207,6 +207,16 @@ public class ResourceExtractionTest {
     assertEquals("ad-emea.doubleclick.net", resource.url());
   }
 
+
+  @Test
+  public void testURLValidation() {
+    String html = "<iframe src=\"http://google+wrong+domain.com/\"></iframe>" +
+        "<iframe src=\"http://user@google.com/\"></iframe>" +
+        "<iframe src=\"http://user(at)google.com/\"></iframe>";
+    Iterable<Resource> resources = extractor.extractResources("web.de", html);
+    assertEquals(resources.iterator().hasNext(), false);
+  }
+
   @Test
   public void testScriptExtraction () {
     String html = "<script src=\"http://skin.ztat.net/s/04g/js/zalando.min.js\"  type=\"text/javascript\"></script>";

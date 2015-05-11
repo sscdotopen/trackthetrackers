@@ -20,23 +20,45 @@ package io.ssc.trackthetrackers.extraction.resources;
 
 import org.junit.Test;
 
+import java.net.MalformedURLException;
+
 import static org.junit.Assert.assertTrue;
 
 public class URLHandlerTest {
 
+  
   @Test
   public void orgUk() {
-    assertTrue(URLHandler.isValidDomain("lala.co.uk"));
+    try {
+      assertTrue(URLHandler.extractHost("lala.co.uk").length() == 10);
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void orgUk2() {
+    try {
+      assertTrue(URLHandler.extractHost("lala.co.uk:8080").length() == 10);
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
   }
 
   @Test
   public void wrongURL() {
-    assertTrue(!URLHandler.isValidDomain("uk"));
+    try {
+      URLHandler.extractHost("uk");
+      assertTrue(false);
+    } catch (MalformedURLException e) {}
   }
 
   @Test
   public void wrongURL2() {
-    assertTrue(!URLHandler.isValidDomain(".uk"));
+    try {
+      URLHandler.extractHost(".uk");
+      assertTrue(false);
+    } catch (MalformedURLException e) {}
   }
 
   @Test

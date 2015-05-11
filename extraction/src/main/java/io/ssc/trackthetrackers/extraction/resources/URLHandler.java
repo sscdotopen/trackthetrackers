@@ -1,17 +1,17 @@
 /**
  * Track the trackers
  * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,7 +20,6 @@ package io.ssc.trackthetrackers.extraction.resources;
 
 import org.apache.commons.validator.routines.DomainValidator;
 
-import java.net.URL;
 import java.net.MalformedURLException;
 
 class URLHandler {
@@ -31,29 +30,8 @@ class URLHandler {
     if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n") || url.contains("@")) {
       return false;
     }
-    
-    //TODO: check this condition
-    //this doesnt work for something like localhost:80/...
-    int colonIndex = url.indexOf(':');
-    if (colonIndex != -1) {
-      if (colonIndex < url.length() - 1 && url.charAt(colonIndex + 1) != '/') {
-        return false;
-      }
-    }
 
     return true;
-  }
-
-  public static boolean isValidDomain(String url) {
-    int startTopLevelDomain = url.lastIndexOf('.');
-
-    if (startTopLevelDomain <= 0) {
-      return false;
-    }
-
-    String topLevelDomain = url.substring(startTopLevelDomain + 1);
-
-    return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
 
   public static String expandIfInternalLink(String prefixForInternalLinks, String link) {
@@ -79,29 +57,40 @@ class URLHandler {
     return prefixForInternalLinks;
   }
 
-  public static String cleanURL(String url) {
-    String newUrl = url.split("\\?")[0].trim(); //remove php parameters
-    newUrl = newUrl.split("#")[0]; //remove other stuff
-
-    if (newUrl.startsWith("rtmp:")) {
-      newUrl = newUrl.replace("rtmp:", "http:");
+  public static String parseDomain(String url) {
+    
+    //parse domain from URL manually
+    String nUrl = "";
+    final int len = url.length();
+    boolean isDot = false;
+    int startDomain = 0;
+    for (int i = 0; i < len; i++) {
+      if (url.charAt(i) == '=') { //for javascript parsing src "=" domain -> to get a starting point
+        if (startDomain <= i) {
+          startDomain = i+1;
+        }
+      }
+      
+      if(isDot) {
+        if (url.charAt(i) == '/') { // find google.com "/" to get the end point of domain
+          nUrl = url.substring(startDomain,i);
+          return nUrl;        
+        }
+        if (url.charAt(i) == ':') {  // find google.com ":" 8080  to get the end point of domain
+          nUrl = url.substring(startDomain,i);
+          return nUrl;
+        }
+      } else {
+        if (url.charAt(i) == '/') { //find http: "//" to get a starting point
+          startDomain = i + 1;
+        }
+        if (url.charAt(i) == '.') { //if the dots are present, we are in the domain part of the string
+          isDot = true;
+        }        
+      }
     }
-    return newUrl;
+    return url.substring(startDomain);
   }
-
-  public static String clearDomain(String domain) throws MalformedURLException {
-    
-    domain = domain.replace("\\.", ".");
-       
-    String splits[] = domain.split("=");
-    
-    if (domain.contains("(") || domain.contains(")") || domain.contains("+") || domain.contains("\\")) {
-      throw new MalformedURLException();
-    }
-    
-    return splits[splits.length - 1];
-  }
-
 
   public static String extractHost(String candidateUrl) throws MalformedURLException {
 
@@ -109,25 +98,17 @@ class URLHandler {
       return candidateUrl;
     }
 
-    String url = cleanURL(candidateUrl);
-
-    //add protocol if not existent
-    if (url.startsWith(".")) {
-      url = url.substring(1);
+    String domain = parseDomain(candidateUrl);
+    
+    if (domain.startsWith(".")) {
+      domain = domain.substring(1);
     }
 
-    if (!url.contains(":")) {
-      if (!url.startsWith("//")) {
-        url = "//" + url;
-      }
-      url = ":" + url;
+    if (!DomainValidator.getInstance().isValid(domain)) {
+      throw new MalformedURLException();
     }
 
-    if (url.startsWith(":")) {
-      url = "http" + url;
-    }
-
-    return clearDomain(new URL(url).getHost().toLowerCase());
+    return domain;
   }
 
 }
