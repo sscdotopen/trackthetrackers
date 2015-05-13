@@ -16,5 +16,3 @@ company.distribution.by.country=
 #these files can be found under the extraction project src\test\resources\trackingtypemask 
 trackingtype.sample.nomask=
 trackingtype.sample.withmask=
-
-        
