@@ -20,7 +20,6 @@ package io.ssc.trackthetrackers.extraction.resources;
 
 import com.google.common.collect.Sets;
 import io.ssc.trackthetrackers.Config;
-import org.apache.commons.validator.routines.DomainValidator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -45,12 +44,10 @@ public class GhostDriverExtractor {
 
   private static final Logger log = LoggerFactory.getLogger(GhostDriverExtractor.class);
 
-  private final URLNormalizer urlNormalizer = new URLNormalizer();
-
   public Iterable<Resource> extractResources(String sourceUrl, String html) {
 
     Set<Resource> resources = Sets.newHashSet();
-    String prefixForInternalLinks = urlNormalizer.createPrefixForInternalLinks(sourceUrl);
+    String prefixForInternalLinks = URLHandler.createPrefixForInternalLinks(sourceUrl);
 
     Document doc = Jsoup.parse(html);
     Elements iframes = doc.select("iframe[src]");
@@ -73,21 +70,15 @@ public class GhostDriverExtractor {
       }
 
       if (uri.contains(".")) {
-        uri = urlNormalizer.expandIfInternalLink(prefixForInternalLinks, uri);
-        // normalize link
+        uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
-          uri = urlNormalizer.normalize(uri);
-          uri = urlNormalizer.extractDomain(uri);
+          uri = URLHandler.extractHost(uri);
         } catch (MalformedURLException e) {
           if (log.isWarnEnabled()) {
             log.warn("Malformed URL: \"" + uri + "\"");
           }
-        } catch (StackOverflowError err) {
-          if (log.isWarnEnabled()) {
-            log.warn("Stack Overflow Error: \"" + uri + "\"");
-          }
         }
-        if (isValidDomain(uri)) {
+        if (URLHandler.isValidDomain(uri)) {
           resources.add(new Resource(uri, type(tag.tag().toString())));
         }
       }
@@ -161,20 +152,14 @@ public class GhostDriverExtractor {
               url = url.substring(7);
               url = "http://" + url;
             }
-            // normalize link
             try {
-              url = urlNormalizer.normalize(url);
-              url = urlNormalizer.extractDomain(url);
+              url = URLHandler.extractHost(url);
             } catch (MalformedURLException e) {
               if (log.isWarnEnabled()) {
                 log.warn("Malformed URL: \"" + url + "\"");
               }
-            } catch (StackOverflowError err) {
-              if (log.isWarnEnabled()) {
-                log.warn("Stack Overflow Error: \"" + url + "\"");
-              }
             }
-            if (isValidDomain(url)) {
+            if (URLHandler.isValidDomain(url)) {
               resources.add(new Resource(url, Resource.Type.SCRIPT));
             }
           }
@@ -192,21 +177,6 @@ public class GhostDriverExtractor {
     
     return resources;
   }
-
-  private boolean isValidDomain(String url) {
-    if (!url.contains(".") || url.contains("///")) {
-      return false;
-    }
-  
-    if (url.contains(";") || url.contains("=") || url.contains("?")) {
-      return false;
-    }
-  
-    int startTopLevelDomain = url.lastIndexOf('.');
-    String topLevelDomain = url.substring(startTopLevelDomain + 1);
-    return DomainValidator.getInstance().isValidTld(topLevelDomain);
-  }
-  
   
   private Resource.Type type(String tag) {
     if ("script".equals(tag)) {

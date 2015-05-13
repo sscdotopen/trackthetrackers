@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz, Karim Wadie
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ public class TrackingGraphTestJob extends HadoopJob {
 
       Job toEdgeList = mapReduce(inputPath, outPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
           EdgeListMapper.class, IntWritable.class, TwoDIntArrayWritable.class, DummyReducer.class, IntWritable.class,
-          Text.class, false, true);
+          Text.class, false);
 
       Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
       Path trackingGraphUnderTest = new Path(parsedArgs.get("--trackingGraphUnderTest"));

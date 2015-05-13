@@ -46,6 +46,11 @@ public class Config {
           "that contains the extraction/src/test/resources/commoncrawl folder");
     }
 
+    if (nullOrEmpty("commoncrawl.problematic.path")) {
+      throw new IllegalStateException("[commoncrawl.samples.path] in conf.properties must point to the folder " +
+          "that contains the extraction/src/test/resources/commoncrawl folder");
+    }
+
     if (nullOrEmpty("analysis.trackingraphsample.path")) {
       throw new IllegalStateException("[analysis.trackingraphsample.path] in conf.properties must point to " +
           "analysis/src/resources/sampleSeg.tsv");

@@ -1,6 +1,6 @@
 /**
  * Track the trackers
- * Copyright (C) 2014  Sebastian Schelter, Felix Neutatz
+ * Copyright (C) 2015  Sebastian Schelter, Felix Neutatz, Karim Wadie
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,9 +68,9 @@ public class TrackerWithTypeTest {
    */
   @Test
   public void correctMask() throws Exception {
-    TrackingGraphTestJob trackingGraph = new TrackingGraphTestJob();
+    TrackingGraphTestJob trackingGraphJob = new TrackingGraphTestJob();
 
-    int result = ToolRunner.run(trackingGraph, new String[] { "--input", "/tmp/commoncrawl-extraction/", "--output",
+    int result = ToolRunner.run(trackingGraphJob, new String[] { "--input", "/tmp/commoncrawl-extraction/", "--output",
         "/tmp/commoncrawl-test-trackinggraph/", "--domainIndex", Config.get("webdatacommons.pldfile"),
         "--trackingGraphUnderTest", Config.get("trackingtype.sample.withmask") });
 
