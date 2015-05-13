@@ -20,8 +20,8 @@ package io.ssc.trackthetrackers.extraction.hadoop;
 
 public class TrackerWithType {
 
-  private String       trackerDomain;
-  private int          trackerID;
+  private String trackerDomain;
+  private int trackerID;
   private TrackingType trackerType;
 
   public TrackerWithType() {

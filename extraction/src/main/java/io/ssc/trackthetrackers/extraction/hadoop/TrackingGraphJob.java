@@ -62,7 +62,7 @@ public class TrackingGraphJob extends HadoopJob {
     Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
         EdgeListMapper.class, IntWritable.class, TwoDIntArrayWritable.class, DistinctifyReducer.class,
         IntWritable.class, Text.class, false);
-    
+
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
 
@@ -82,22 +82,22 @@ public class TrackingGraphJob extends HadoopJob {
       int trackedHostIndex = trackedHost.get();
 
       // fill out the trackers and tracking type into a set
-      for (TwoDArrayWritable tdArray : values) {
+      for (TwoDArrayWritable trackersWithTypeMsg : values) {
         try {
-          Writable[][] array = tdArray.get();
-          for (int i = 0; i < array.length; i++) {
-            int trackingHostIndex = ((IntWritable) array[i][0]).get();
-            int trackingHostType = ((IntWritable) array[i][1]).get();
+          Writable[][] trackersWithType = trackersWithTypeMsg.get();
+          for (int i = 0; i < trackersWithType.length; i++) {
+            int trackingHostIndex = ((IntWritable) trackersWithType[i][0]).get();
+            int trackingHostType = ((IntWritable) trackersWithType[i][1]).get();
 
-            // don't add a link from the tracked node to itself
-            // concatenate the tracking types for each unique tracker-tracked
-            // site
-            if (trackingHostIndex != trackedHostIndex)
+            // don't add a link from the tracked node to itself concatenate the tracking types for each unique tracker-trackedsite
+            if (trackingHostIndex != trackedHostIndex) {
               if (trackingHosts.containsKey(trackingHostIndex)) {
                 trackingHosts.put(trackingHostIndex,
-                    trackingHosts.get(trackingHostIndex) + Integer.toString(trackingHostType) + DELIM);
-              } else
-                trackingHosts.put(trackingHostIndex, Integer.toString(trackingHostType) + DELIM);
+                    trackingHosts.get(trackingHostIndex) + String.valueOf(trackingHostType) + DELIM);
+              } else {
+                trackingHosts.put(trackingHostIndex, String.valueOf(trackingHostType) + DELIM);
+              }
+            }
           }
         } catch (Exception ex) {
           // TODO log or count
@@ -110,12 +110,11 @@ public class TrackingGraphJob extends HadoopJob {
           List<String> tags = Arrays.asList(trackingHosts.get(trackingHost).split(DELIM));
           String trackingTypeMask = "";
 
-          // the TrackingType enum is serialized as it's ordinal int value, so
-          // parse it as int
-          trackingTypeMask += tags.contains(Integer.toString(TrackingType.SCRIPT.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(Integer.toString(TrackingType.IFRAME.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(Integer.toString(TrackingType.IMAGE.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(Integer.toString(TrackingType.LINK.ordinal())) ? "1" : "0";
+          // the TrackingType enum is serialized as it's ordinal int value, so parse it as int
+          trackingTypeMask += tags.contains(String.valueOf(TrackingType.SCRIPT.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(String.valueOf(TrackingType.IFRAME.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(String.valueOf(TrackingType.IMAGE.ordinal())) ? "1" : "0";
+          trackingTypeMask += tags.contains(String.valueOf(TrackingType.LINK.ordinal())) ? "1" : "0";
 
           String out = trackedHostIndex + "\t" + trackingTypeMask;
           ctx.write(new IntWritable(trackingHost), new Text(out));
@@ -148,8 +147,7 @@ public class TrackingGraphJob extends HadoopJob {
         if (parsedPageBuilder != null) {
           ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
           if (parsedPage != null) {
-            // try to get the topPrivateDomain of the tracked host. If the
-            // lookup failed ignore this parsed page
+            // try to get the topPrivateDomain of the tracked host. If the lookup failed ignore this parsed page
             String uri = "";
             int trackedHostIndex = 0;
             try {
@@ -168,8 +166,7 @@ public class TrackingGraphJob extends HadoopJob {
             allTrackingDomains.addAll(createTrackersWithType(parsedPage.getImagesList(), TrackingType.IMAGE));
             allTrackingDomains.addAll(createTrackersWithType(parsedPage.getLinksList(), TrackingType.LINK));
 
-            // filter out the valid tracking hosts based on their
-            // topPrivateDomain and index lookup
+            // filter out the valid tracking hosts based on their topPrivateDomain and index lookup
             Set<TrackerWithType> trackingHosts = Sets.newHashSet();
             for (TrackerWithType trackingDomain : allTrackingDomains) {
               try {
@@ -186,21 +183,20 @@ public class TrackingGraphJob extends HadoopJob {
               }
             }
 
-            // copy the set containing valid trackers into 2DArray. Prepare for
-            // serialization
-            IntWritable[][] trackers2D = new IntWritable[trackingHosts.size()][2];
+            // copy the set containing valid trackers into 2DArray. Prepare for serialization
+            IntWritable[][] trackersWithType = new IntWritable[trackingHosts.size()][2];
             int n = 0;
             for (TrackerWithType tracker : trackingHosts) {
-              trackers2D[n][0] = new IntWritable(tracker.getTrackerID());
-              trackers2D[n][1] = new IntWritable(tracker.getTrackerType().ordinal());
+              trackersWithType[n][0] = new IntWritable(tracker.getTrackerID());
+              trackersWithType[n][1] = new IntWritable(tracker.getTrackerType().ordinal());
               n++;
             }
 
             // set the output to be serialized for reducers
-            TwoDIntArrayWritable trackers2DWritable = new TwoDIntArrayWritable();
-            trackers2DWritable.set(trackers2D);
+            TwoDIntArrayWritable trackersWithTypeMsg = new TwoDIntArrayWritable();
+            trackersWithTypeMsg.set(trackersWithType);
 
-            ctx.write(new IntWritable(trackedHostIndex), trackers2DWritable);
+            ctx.write(new IntWritable(trackedHostIndex), trackersWithTypeMsg);
           }
         }
       } catch (Exception ex) {
@@ -212,8 +208,9 @@ public class TrackingGraphJob extends HadoopJob {
 
     private Collection<TrackerWithType> createTrackersWithType(List<String> trackers, TrackingType type) {
       List<TrackerWithType> trackerWithTypeList = new ArrayList<TrackerWithType>(trackers.size());
-      for (String tracker : trackers)
+      for (String tracker : trackers){
         trackerWithTypeList.add(new TrackerWithType(tracker, 0, type));
+      }
       return trackerWithTypeList;
     }
   }

@@ -90,10 +90,10 @@ public class TrackingGraphTestJob extends HadoopJob {
     private static Map<String, String> trackingGraphUnderTest;
 
     public Map<String, String> trackingGraphFromFile(FileSystem localFile, Path path) throws Exception {
-      BufferedReader br;
+      BufferedReader bufferReader;
       Map<String, String> graphMap = new HashMap<String, String>();
-      br = new BufferedReader(new InputStreamReader(localFile.open(path)));
-      String line = br.readLine();
+      bufferReader = new BufferedReader(new InputStreamReader(localFile.open(path)));
+      String line = bufferReader.readLine();
 
       while (line != null) {
         String[] toks = line.split("\\s+");
@@ -101,9 +101,9 @@ public class TrackingGraphTestJob extends HadoopJob {
           throw new Exception("Input file is missing a column. Format should be [tracker tracked trackingtypemask] ");
         }
         graphMap.put(toks[0] + "#" + toks[1], toks[2]);
-        line = br.readLine();
+        line = bufferReader.readLine();
       }
-      br.close();
+      bufferReader.close();
       return graphMap;
     }
 
@@ -125,8 +125,7 @@ public class TrackingGraphTestJob extends HadoopJob {
           throw new IOException("building the graph map failed");
         }
       }
-
-      if (trackingGraphUnderTest.size() == 0) {
+      if (trackingGraphUnderTest.isEmpty()) {
         throw new IOException("graph map is empty");
       }
     }
@@ -198,8 +197,9 @@ public class TrackingGraphTestJob extends HadoopJob {
 
     private Collection<TrackerWithType> createTrackersWithType(List<String> trackers, TrackingType type) {
       List<TrackerWithType> trackerWithTypeList = new ArrayList<TrackerWithType>(trackers.size());
-      for (String tracker : trackers)
+      for (String tracker : trackers) {
         trackerWithTypeList.add(new TrackerWithType(tracker, 0, type));
+      }
       return trackerWithTypeList;
     }
   }
