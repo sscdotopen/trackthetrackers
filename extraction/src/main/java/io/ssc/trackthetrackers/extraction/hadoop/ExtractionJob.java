@@ -76,10 +76,10 @@ public class ExtractionJob extends HadoopJob {
 
     Map<String,String> parsedArgs = parseArgs(args);
 
-    Path inputPath = new Path(parsedArgs.get("--input"));
+    Path[] inputPaths = inputPaths(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    Job job = mapOnly(inputPath, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
+    Job job = mapOnly(inputPaths, outputPath, ArcInputFormat.class, ProtoParquetOutputFormat.class,
                       CommonCrawlExtractionMapper.class, null, null);
 
     ProtoParquetOutputFormat.setProtobufClass(job, ParsedPageProtos.ParsedPage.class);

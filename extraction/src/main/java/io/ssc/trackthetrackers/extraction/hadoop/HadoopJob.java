@@ -48,8 +48,16 @@ public abstract class HadoopJob extends Configured implements Tool {
     return Collections.unmodifiableMap(parsedArgs);
   }
 
+  protected Path[] inputPaths(String arg) {
+    String[] tokens = arg.split(",");
+    Path[] paths = new Path[tokens.length];
+    for (int pos = 0; pos < tokens.length; pos++) {
+      paths[pos] = new Path(tokens[pos]);
+    }
+    return paths;
+  }
 
-  protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+  protected Job mapOnly(Path[] input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
                         Class keyClass, Class valueClass) throws IOException {
 
     Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass);
@@ -58,7 +66,16 @@ public abstract class HadoopJob extends Configured implements Tool {
     return job;
   }
 
-  private Job map(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+  protected Job mapOnly(Path input, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                        Class keyClass, Class valueClass) throws IOException {
+
+    Job job = map(new Path[] { input }, output, inputFormatClass, outputFormatClass, mapperClass, keyClass, valueClass);
+
+    job.setNumReduceTasks(0);
+    return job;
+  }
+
+  private Job map(Path[] inputPaths, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
                   Class keyClass, Class valueClass) throws IOException {
 
     Configuration conf = new Configuration();
@@ -73,7 +90,10 @@ public abstract class HadoopJob extends Configured implements Tool {
       job.setMapOutputValueClass(valueClass);
     }
 
-    FileInputFormat.addInputPath(job,input);
+    for (Path input : inputPaths) {
+      FileInputFormat.addInputPath(job, input);
+    }
+
     job.setInputFormatClass(inputFormatClass);
 
     job.setOutputFormatClass(outputFormatClass);
@@ -87,7 +107,16 @@ public abstract class HadoopJob extends Configured implements Tool {
                           Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
                           Class reducerValueClass, boolean combinable) throws IOException {
 
-    Job job = map(input, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass, mapperValueClass);
+    return mapReduce(new Path[] { input }, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass,
+        mapperValueClass, reducerClass, reducerKeyClass, reducerValueClass, combinable);
+  }
+
+  protected Job mapReduce(Path[] inputs, Path output, Class inputFormatClass, Class outputFormatClass, Class mapperClass,
+                          Class mapperKeyClass, Class mapperValueClass, Class reducerClass, Class reducerKeyClass,
+                          Class reducerValueClass, boolean combinable) throws IOException {
+
+    Job job = map(inputs, output, inputFormatClass, outputFormatClass, mapperClass, mapperKeyClass,
+        mapperValueClass);
 
     job.setReducerClass(reducerClass);
     job.setOutputKeyClass(reducerKeyClass);
@@ -99,5 +128,4 @@ public abstract class HadoopJob extends Configured implements Tool {
 
     return job;
   }
-
 }
