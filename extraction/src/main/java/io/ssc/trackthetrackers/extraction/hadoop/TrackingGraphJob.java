@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
+import io.ssc.trackthetrackers.extraction.hadoop.util.IndexNotFoundException;
 import io.ssc.trackthetrackers.extraction.hadoop.util.TopPrivateDomainExtractor;
 import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostWithType;
 import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostsWithTypes;
@@ -85,6 +86,7 @@ public class TrackingGraphJob extends HadoopJob {
 
       for (TrackingHostsWithTypes someTrackingHostsWithTypes : trackingHostsWithTypes) {
         for (TrackingHostWithType trackingHostWithType : someTrackingHostsWithTypes.values()) {
+
           //int trackingHostIndex = trackingHostWithType.trackingDomain();
           //if (trackingHostIndex != trackedHostIndex) {
           String trackingHost = trackingHostWithType.trackingDomain();
@@ -154,8 +156,17 @@ public class TrackingGraphJob extends HadoopJob {
           Set<TrackingHostWithType> trackingHostsWithType = Sets.newHashSet();
           for (TrackingHostWithType trackingDomain : trackingDomainsWithTypes) {
             try {
-              String trackingHost = TopPrivateDomainExtractor.extract(trackingDomain.trackingDomain());
-              trackingHostsWithType.add(new TrackingHostWithType(trackingHost, trackingDomain.type()));
+
+              boolean isSameHost = false;
+              try {
+                int trackingHostIndex = domainIndex.indexFor(trackingDomain.trackingDomain());
+                isSameHost = trackedHostIndex == trackingHostIndex;
+              } catch (IndexNotFoundException e) {}
+
+              if (!isSameHost) {
+                String trackingHost = TopPrivateDomainExtractor.extract(trackingDomain.trackingDomain());
+                trackingHostsWithType.add(new TrackingHostWithType(trackingHost, trackingDomain.type()));
+              }
             } catch (Exception e) {
               ctx.getCounter(JobCounters.INVALID_TRACKING_HOST_DOMAINS).increment(1);
             }

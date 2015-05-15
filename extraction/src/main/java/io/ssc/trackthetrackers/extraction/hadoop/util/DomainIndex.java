@@ -45,7 +45,7 @@ public class DomainIndex {
     int index = hashesToIndices.get(hash);
 
     if (index == 0) {
-      throw new IllegalStateException("Unknown paylevelDomain: " + paylevelDomain);
+      throw new IndexNotFoundException("Unknown paylevelDomain: " + paylevelDomain);
     }
 
     return index;
