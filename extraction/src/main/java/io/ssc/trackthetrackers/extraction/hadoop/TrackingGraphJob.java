@@ -18,17 +18,20 @@
 
 package io.ssc.trackthetrackers.extraction.hadoop;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.net.InternetDomainName;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
 import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
+import io.ssc.trackthetrackers.extraction.hadoop.util.TopPrivateDomainExtractor;
+import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostWithType;
+import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostsWithTypes;
+import io.ssc.trackthetrackers.extraction.resources.TrackingType;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.TwoDArrayWritable;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -37,15 +40,14 @@ import org.apache.hadoop.util.ToolRunner;
 import parquet.proto.ProtoParquetInputFormat;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class TrackingGraphJob extends HadoopJob {
+
+  public enum JobCounters {
+    INVALID_TRACKED_HOST_DOMAINS, INVALID_TRACKING_HOST_DOMAINS;
+  }
 
   public static void main(String[] args) throws Exception {
     ToolRunner.run(new TrackingGraphJob(), args);
@@ -60,8 +62,8 @@ public class TrackingGraphJob extends HadoopJob {
     Path outputPath = new Path(parsedArgs.get("--output"));
 
     Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
-        EdgeListMapper.class, IntWritable.class, TwoDIntArrayWritable.class, DistinctifyReducer.class,
-        IntWritable.class, Text.class, false);
+        EdgeListMapper.class, IntWritable.class, TrackingHostsWithTypes.class, DistinctifyReducer.class,
+        NullWritable.class, Text.class, false);
 
     Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
     DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
@@ -71,63 +73,47 @@ public class TrackingGraphJob extends HadoopJob {
     return 0;
   }
 
-  static class DistinctifyReducer extends Reducer<IntWritable, TwoDIntArrayWritable, IntWritable, Text> {
+  static class DistinctifyReducer extends Reducer<IntWritable, TrackingHostsWithTypes, NullWritable, Text> {
 
-    private final String DELIM = "#";
+    private static final String SEPARATOR = "\t";
 
     @Override
-    protected void reduce(IntWritable trackedHost, Iterable<TwoDIntArrayWritable> values, Context ctx)
+    protected void reduce(IntWritable trackedHost, Iterable<TrackingHostsWithTypes> trackingHostsWithTypes, Context ctx)
         throws IOException, InterruptedException {
-      Map<Integer, String> trackingHosts = new HashMap<Integer, String>();
+      Map<String, Set<TrackingType>> trackingHosts = Maps.newHashMap();
       int trackedHostIndex = trackedHost.get();
 
-      // fill out the trackers and tracking type into a set
-      for (TwoDArrayWritable trackersWithTypeMsg : values) {
-        try {
-          Writable[][] trackersWithType = trackersWithTypeMsg.get();
-          for (int i = 0; i < trackersWithType.length; i++) {
-            int trackingHostIndex = ((IntWritable) trackersWithType[i][0]).get();
-            int trackingHostType = ((IntWritable) trackersWithType[i][1]).get();
-
-            // don't add a link from the tracked node to itself concatenate the tracking types for each unique tracker-trackedsite
-            if (trackingHostIndex != trackedHostIndex) {
-              if (trackingHosts.containsKey(trackingHostIndex)) {
-                trackingHosts.put(trackingHostIndex,
-                    trackingHosts.get(trackingHostIndex) + String.valueOf(trackingHostType) + DELIM);
-              } else {
-                trackingHosts.put(trackingHostIndex, String.valueOf(trackingHostType) + DELIM);
-              }
+      for (TrackingHostsWithTypes someTrackingHostsWithTypes : trackingHostsWithTypes) {
+        for (TrackingHostWithType trackingHostWithType : someTrackingHostsWithTypes.values()) {
+          //int trackingHostIndex = trackingHostWithType.trackingDomain();
+          //if (trackingHostIndex != trackedHostIndex) {
+          String trackingHost = trackingHostWithType.trackingDomain();
+            if (!trackingHosts.containsKey(trackingHost)) {
+              trackingHosts.put(trackingHost, Sets.<TrackingType>newHashSet());
             }
-          }
-        } catch (Exception ex) {
-          // TODO log or count
-          continue;
+            trackingHosts.get(trackingHost).add(trackingHostWithType.type());
+          //}
         }
       }
 
-      for (Integer trackingHost : trackingHosts.keySet()) {
-        try {
-          List<String> tags = Arrays.asList(trackingHosts.get(trackingHost).split(DELIM));
-          String trackingTypeMask = "";
+      for (Map.Entry<String, Set<TrackingType>> tracker : trackingHosts.entrySet()) {
 
-          // the TrackingType enum is serialized as it's ordinal int value, so parse it as int
-          trackingTypeMask += tags.contains(String.valueOf(TrackingType.SCRIPT.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(String.valueOf(TrackingType.IFRAME.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(String.valueOf(TrackingType.IMAGE.ordinal())) ? "1" : "0";
-          trackingTypeMask += tags.contains(String.valueOf(TrackingType.LINK.ordinal())) ? "1" : "0";
+        Set<TrackingType> types = tracker.getValue();
 
-          String out = trackedHostIndex + "\t" + trackingTypeMask;
-          ctx.write(new IntWritable(trackingHost), new Text(out));
-        } catch (Exception ex) {
-          // TODO log or count
-          continue;
-        }
+        String line = String.valueOf(trackedHostIndex) + SEPARATOR
+                    + tracker.getKey() + SEPARATOR
+                    + (types.contains(TrackingType.SCRIPT) ? "1" : "0") + SEPARATOR
+                    + (types.contains(TrackingType.IFRAME) ? "1" : "0") + SEPARATOR
+                    + (types.contains(TrackingType.IMAGE)  ? "1" : "0") + SEPARATOR
+                    + (types.contains(TrackingType.LINK)   ? "1" : "0");
+
+        ctx.write(NullWritable.get(), new Text(line));
       }
     }
   }
 
   static class EdgeListMapper extends
-      Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, TwoDIntArrayWritable> {
+      Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, TrackingHostsWithTypes> {
 
     private static DomainIndex domainIndex;
 
@@ -143,75 +129,48 @@ public class TrackingGraphJob extends HadoopJob {
 
     public void map(Void key, ParsedPageProtos.ParsedPage.Builder parsedPageBuilder, Context ctx) throws IOException,
         InterruptedException {
-      try {
-        if (parsedPageBuilder != null) {
-          ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
-          if (parsedPage != null) {
-            // try to get the topPrivateDomain of the tracked host. If the lookup failed ignore this parsed page
-            String uri = "";
-            int trackedHostIndex = 0;
-            try {
-              uri = new URI(parsedPage.getUrl()).getHost().toString();
-              String trackedHost = InternetDomainName.from(uri).topPrivateDomain().toString();
-              trackedHostIndex = domainIndex.indexFor(trackedHost);
-            } catch (Exception e) {
-              // TODO: Log or count
-              return;
-            }
 
-            // extract all the potential trackers from the page
-            Set<TrackerWithType> allTrackingDomains = Sets.newHashSet();
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getScriptsList(), TrackingType.SCRIPT));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getIframesList(), TrackingType.IFRAME));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getImagesList(), TrackingType.IMAGE));
-            allTrackingDomains.addAll(createTrackersWithType(parsedPage.getLinksList(), TrackingType.LINK));
+      if (parsedPageBuilder != null) {
+        ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
+        if (parsedPage != null) {
 
-            // filter out the valid tracking hosts based on their topPrivateDomain and index lookup
-            Set<TrackerWithType> trackingHosts = Sets.newHashSet();
-            for (TrackerWithType trackingDomain : allTrackingDomains) {
-              try {
-                String trackingHost = InternetDomainName.from(trackingDomain.getTrackerDomain()).topPrivateDomain()
-                    .toString();
-                int trackingHostIndex = domainIndex.indexFor(trackingHost);
-                TrackerWithType trackerWithIndex = new TrackerWithType("", trackingHostIndex,
-                    trackingDomain.getTrackerType());
-                trackingHosts.add(trackerWithIndex);
-              } catch (Exception ex) {
-                // TODO: Log or count
-                // Do not stop if one tracker has failed in lookups
-                continue;
-              }
-            }
-
-            // copy the set containing valid trackers into 2DArray. Prepare for serialization
-            IntWritable[][] trackersWithType = new IntWritable[trackingHosts.size()][2];
-            int n = 0;
-            for (TrackerWithType tracker : trackingHosts) {
-              trackersWithType[n][0] = new IntWritable(tracker.getTrackerID());
-              trackersWithType[n][1] = new IntWritable(tracker.getTrackerType().ordinal());
-              n++;
-            }
-
-            // set the output to be serialized for reducers
-            TwoDIntArrayWritable trackersWithTypeMsg = new TwoDIntArrayWritable();
-            trackersWithTypeMsg.set(trackersWithType);
-
-            ctx.write(new IntWritable(trackedHostIndex), trackersWithTypeMsg);
+          String uri;
+          int trackedHostIndex;
+          try {
+            uri = new URI(parsedPage.getUrl()).getHost().toString();
+            String trackedHost = TopPrivateDomainExtractor.extract(uri);
+            trackedHostIndex = domainIndex.indexFor(trackedHost);
+          } catch (Exception e) {
+            ctx.getCounter(JobCounters.INVALID_TRACKED_HOST_DOMAINS).increment(1);
+            return;
           }
+
+          Set<TrackingHostWithType> trackingDomainsWithTypes = Sets.newHashSet();
+          addDomains(trackingDomainsWithTypes, parsedPage.getScriptsList(), TrackingType.SCRIPT);
+          addDomains(trackingDomainsWithTypes, parsedPage.getIframesList(), TrackingType.IFRAME);
+          addDomains(trackingDomainsWithTypes, parsedPage.getImagesList(), TrackingType.IMAGE);
+          addDomains(trackingDomainsWithTypes, parsedPage.getLinksList(), TrackingType.LINK);
+
+          Set<TrackingHostWithType> trackingHostsWithType = Sets.newHashSet();
+          for (TrackingHostWithType trackingDomain : trackingDomainsWithTypes) {
+            try {
+              String trackingHost = TopPrivateDomainExtractor.extract(trackingDomain.trackingDomain());
+              trackingHostsWithType.add(new TrackingHostWithType(trackingHost, trackingDomain.type()));
+            } catch (Exception e) {
+              ctx.getCounter(JobCounters.INVALID_TRACKING_HOST_DOMAINS).increment(1);
+            }
+          }
+
+          ctx.write(new IntWritable(trackedHostIndex), new TrackingHostsWithTypes(trackingHostsWithType));
         }
-      } catch (Exception ex) {
-        // TODO: Counter
-        // in case an un-handled exception. do not fail the job
-        return;
       }
     }
 
-    private Collection<TrackerWithType> createTrackersWithType(List<String> trackers, TrackingType type) {
-      List<TrackerWithType> trackerWithTypeList = new ArrayList<TrackerWithType>(trackers.size());
-      for (String tracker : trackers){
-        trackerWithTypeList.add(new TrackerWithType(tracker, 0, type));
+    private void addDomains(Set<TrackingHostWithType> trackingDomainsWithTypes, Iterable<String> domains,
+                            TrackingType type) {
+      for (String domain : domains) {
+        trackingDomainsWithTypes.add(new TrackingHostWithType(domain, type));
       }
-      return trackerWithTypeList;
     }
   }
 }

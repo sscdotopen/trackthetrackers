@@ -16,8 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop;
+package io.ssc.trackthetrackers.extraction.hadoop.util;
 
-public enum TrackingType {
-  SCRIPT, IFRAME, IMAGE, LINK
+import com.google.common.net.InternetDomainName;
+
+public class TopPrivateDomainExtractor {
+
+  private TopPrivateDomainExtractor() {}
+
+  public static String extract(String url) {
+
+    if (url.endsWith("s3.amazonaws.com")) {
+      return "amazonaws.com";
+    }
+    
+    String urlToInspect = url.replaceAll("http://", "");
+    if (urlToInspect.endsWith("/")) {
+      urlToInspect = urlToInspect.substring(0, urlToInspect.length() - 1);
+    }
+
+    return InternetDomainName.from(urlToInspect).topPrivateDomain().toString();
+  }
 }

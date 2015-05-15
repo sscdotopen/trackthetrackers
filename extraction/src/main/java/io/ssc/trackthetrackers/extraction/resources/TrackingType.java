@@ -16,18 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop;
+package io.ssc.trackthetrackers.extraction.resources;
 
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.TwoDArrayWritable;
-
-public class TwoDIntArrayWritable extends TwoDArrayWritable {
-
-  public TwoDIntArrayWritable() {
-    super(IntWritable.class);
-  }
-
-  public TwoDIntArrayWritable(Class valueClass) {
-    super(valueClass);
-  }
+public enum TrackingType {
+  SCRIPT, IFRAME, IMAGE, LINK
 }
