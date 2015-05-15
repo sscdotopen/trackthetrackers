@@ -32,7 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 
-import java.util.*;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class ResourceExtractor {
@@ -61,7 +63,6 @@ public class ResourceExtractor {
 
     for (Element element : elements) {
       uri = element.attr("src").trim();
-      
       if (!uri.contains(".")) {
         uri = element.attr("href").trim();
       }

@@ -61,23 +61,23 @@ class URLHandler {
     
     //parse domain from URL manually
     String nUrl = "";
-    final int len = url.length();
+    int len = url.length();
     boolean isDot = false;
     int startDomain = 0;
     for (int i = 0; i < len; i++) {
       if (url.charAt(i) == '=') { //for javascript parsing src "=" domain -> to get a starting point
         if (startDomain <= i) {
-          startDomain = i+1;
+          startDomain = i + 1;
         }
       }
       
-      if(isDot) {
+      if (isDot) {
         if (url.charAt(i) == '/') { // find google.com "/" to get the end point of domain
-          nUrl = url.substring(startDomain,i);
+          nUrl = url.substring(startDomain, i);
           return nUrl;        
         }
         if (url.charAt(i) == ':') {  // find google.com ":" 8080  to get the end point of domain
-          nUrl = url.substring(startDomain,i);
+          nUrl = url.substring(startDomain, i);
           return nUrl;
         }
       } else {
