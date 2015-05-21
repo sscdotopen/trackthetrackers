@@ -32,20 +32,14 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.ArrayList;
 
 
 public class ResourceExtractor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResourceExtractor.class);
-
-  private static final Pattern javascriptPattern =
-      Pattern.compile("((\"|\')(([-a-zA-Z0-9+&@#/%?=~_|!:,;\\.])*)(\"|\'))");
 
   private final JavascriptParser javascriptParser = new JavascriptParser();
 
@@ -69,7 +63,6 @@ public class ResourceExtractor {
 
     for (Element element : elements) {
       uri = element.attr("src").trim();
-
       if (!uri.contains(".")) {
         uri = element.attr("href").trim();
       }
@@ -78,9 +71,7 @@ public class ResourceExtractor {
         uri = URLHandler.expandIfInternalLink(prefixForInternalLinks, uri);
         try {
           uri = URLHandler.extractHost(uri);
-          if (URLHandler.isValidDomain(uri)) {
-            resources.add(new Resource(uri, type(element.tag().toString())));
-          }
+          resources.add(new Resource(uri, type(element.tag().toString())));
         } catch (MalformedURLException e) {
           if (LOG.isWarnEnabled()) {
             LOG.warn("Malformed URL: \"" + uri + "\"");
@@ -89,9 +80,7 @@ public class ResourceExtractor {
       }
     }
 
-
     List<String> javaScriptUrlCandidates = new ArrayList<String>();
-
     for (Element script : scripts) {
       try {
         String scriptContents = script.data();
@@ -101,60 +90,42 @@ public class ResourceExtractor {
         }
       } catch (Exception e) {}
     }
-
-    findUrlsInCode(javaScriptUrlCandidates);
-
-    resources.addAll(resourcesFromCandidates(javaScriptUrlCandidates));
+    
+    List<String> splittedUrlCandidates = findUrlsInCode(javaScriptUrlCandidates);
+    
+    resources.addAll(resourcesFromCandidates(splittedUrlCandidates));
 
     return resources;
   }
 
-  private void findUrlsInCode(List<String> candidateUrls) {
+  private List<String> findUrlsInCode(List<String> candidateUrls) {
 
-    List<String> urlsInCode = new ArrayList<String>();
+    List<String> urlsInCode = new ArrayList<String>();  
 
-    Iterator<String> iterator = candidateUrls.iterator();
-    while (iterator.hasNext()) {
-
-      String currentString = iterator.next();
-
-      if (currentString.contains("\"") || currentString.contains("'")) {
-        Matcher matcher = javascriptPattern.matcher("'" + currentString + "'");
-        boolean removedUponFind = false;
-        while (matcher.find()) {
-          if (!removedUponFind) {
-            removedUponFind = true;
-            iterator.remove();
-          }
-
-          for (int groupIndex = 0; groupIndex < matcher.groupCount(); groupIndex++) {
-            String token = matcher.group(groupIndex);
-
-            if (token != null && !token.contains("\"") && !token.contains("'") && URLHandler.couldBeUrl(token)) {
-              urlsInCode.add(token.trim());
-            }
-          }
+    for (String currentString : candidateUrls) {
+      String [] splits = currentString.split("\"|'");
+      
+      for (String token : splits) {
+        String tok = token.trim();
+        if (URLHandler.couldBeUrl(tok)) {
+          tok = tok.replace("\\.", ".");          
+          urlsInCode.add(tok);
         }
       }
     }
 
-    candidateUrls.addAll(urlsInCode);
+    return urlsInCode;
   }
-
 
   private Set<Resource> resourcesFromCandidates(List<String> candidateUrls) {
     Set<Resource> resources = Sets.newHashSet();
     for (String url : candidateUrls) {
-      if (URLHandler.couldBeUrl(url)) {
-        try {
-          url = URLHandler.extractHost(url);
-          if (URLHandler.isValidDomain(url)) {
-            resources.add(new Resource(url, Resource.Type.SCRIPT));
-          }
-        } catch (MalformedURLException e) {
-          if (LOG.isWarnEnabled()) {
-            LOG.warn("Malformed URL: \"" + url + "\"");
-          }
+      try {
+        url = URLHandler.extractHost(url);
+        resources.add(new Resource(url, Resource.Type.SCRIPT));
+      } catch (MalformedURLException e) {
+        if (LOG.isWarnEnabled()) {
+          LOG.warn("Malformed URL: \"" + url + "\"");
         }
       }
     }
@@ -165,7 +136,7 @@ public class ResourceExtractor {
 
     if (currentNode.isString()) {
       if (currentNode.getString().contains(".")) {
-        urlCandidates.add(currentNode.getString());
+        urlCandidates.add(currentNode.getString().trim());
       }
     }
 

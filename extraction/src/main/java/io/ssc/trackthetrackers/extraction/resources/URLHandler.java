@@ -20,7 +20,6 @@ package io.ssc.trackthetrackers.extraction.resources;
 
 import org.apache.commons.validator.routines.DomainValidator;
 
-import java.net.URL;
 import java.net.MalformedURLException;
 
 class URLHandler {
@@ -28,27 +27,11 @@ class URLHandler {
   private URLHandler() {}
 
   public static boolean couldBeUrl(String url) {
-
-    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n")) {
+    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n") || url.contains("@")) {
       return false;
     }
 
-    //TODO: check this condition
-    //this doesnt work for something like localhost:80/...
-    int colonIndex = url.indexOf(':');
-    if (colonIndex != -1) {
-      if (colonIndex < url.length() - 1 && url.charAt(colonIndex + 1) != '/') {
-        return false;
-      }
-    }
-
     return true;
-  }
-
-  public static boolean isValidDomain(String url) {
-    int startTopLevelDomain = url.lastIndexOf('.');
-    String topLevelDomain = url.substring(startTopLevelDomain + 1);
-    return DomainValidator.getInstance().isValidTld(topLevelDomain);
   }
 
   public static String expandIfInternalLink(String prefixForInternalLinks, String link) {
@@ -74,31 +57,58 @@ class URLHandler {
     return prefixForInternalLinks;
   }
 
+  public static String parseDomain(String url) {
+    
+    //parse domain from URL manually
+    String nUrl = "";
+    int len = url.length();
+    boolean isDot = false;
+    int startDomain = 0;
+    for (int i = 0; i < len; i++) {
+      if (url.charAt(i) == '=') { //for javascript parsing src "=" domain -> to get a starting point
+        if (startDomain <= i) {
+          startDomain = i + 1;
+        }
+      }
+      
+      if (isDot) {
+        if (url.charAt(i) == '/') { // find google.com "/" to get the end point of domain
+          nUrl = url.substring(startDomain, i);
+          return nUrl;        
+        }
+        if (url.charAt(i) == ':') {  // find google.com ":" 8080  to get the end point of domain
+          nUrl = url.substring(startDomain, i);
+          return nUrl;
+        }
+      } else {
+        if (url.charAt(i) == '/') { //find http: "//" to get a starting point
+          startDomain = i + 1;
+        }
+        if (url.charAt(i) == '.') { //if the dots are present, we are in the domain part of the string
+          isDot = true;
+        }        
+      }
+    }
+    return url.substring(startDomain);
+  }
+
   public static String extractHost(String candidateUrl) throws MalformedURLException {
 
     if (candidateUrl.isEmpty()) {           // permit empty
       return candidateUrl;
     }
 
-    String url = candidateUrl;
-
-    //add protocol if not existent
-    if (url.startsWith(".")) {
-      url = url.substring(1);
+    String domain = parseDomain(candidateUrl);
+    
+    if (domain.startsWith(".")) {
+      domain = domain.substring(1);
     }
 
-    if (!url.contains(":")) {
-      if (!url.startsWith("//")) {
-        url = "//" + url;
-      }
-      url = ":" + url;
+    if (!DomainValidator.getInstance().isValid(domain)) {
+      throw new MalformedURLException();
     }
 
-    if (url.startsWith(":")) {
-      url = "http" + url;
-    }
-
-    return new URL(url).getHost().toLowerCase();
+    return domain;
   }
 
 }

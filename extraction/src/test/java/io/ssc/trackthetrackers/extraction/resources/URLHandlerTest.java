@@ -19,13 +19,50 @@
 package io.ssc.trackthetrackers.extraction.resources;
 
 import org.junit.Test;
-
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertTrue;
+
 
 public class URLHandlerTest {
 
   @Test
   public void orgUk() {
-    assertTrue(URLHandler.isValidDomain("lala.co.uk"));
+    try {
+      assertTrue(URLHandler.extractHost("lala.co.uk").length() == 10);
+    } catch (Exception ex) {
+      fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
+    }
+  }
+
+  @Test
+  public void orgUk2() {
+    try {
+      assertTrue(URLHandler.extractHost("lala.co.uk:8080").length() == 10);
+    } catch (Exception ex) {
+      fail("Test failed due to a " + ex.getClass().getName() + ": " + ex.getMessage());
+    }
+  }
+
+  @Test
+  public void wrongURL() {
+    try {
+      URLHandler.extractHost("uk");
+      assertTrue(false);
+    } catch (Exception ex) {
+    }
+  }
+
+  @Test
+  public void wrongURL2() {
+    try {
+      URLHandler.extractHost(".uk");
+      assertTrue(false);
+    } catch (Exception ex) {
+    }
+  }
+
+  @Test
+  public void couldBeURL() {
+    assertTrue(!URLHandler.couldBeUrl("user@example.com"));
   }
 }
