@@ -78,9 +78,7 @@ public class GhostDriverExtractor {
             log.warn("Malformed URL: \"" + uri + "\"");
           }
         }
-        if (URLHandler.isValidDomain(uri)) {
-          resources.add(new Resource(uri, type(tag.tag().toString())));
-        }
+        resources.add(new Resource(uri, type(tag.tag().toString())));
       }
     }
 
@@ -159,9 +157,7 @@ public class GhostDriverExtractor {
                 log.warn("Malformed URL: \"" + url + "\"");
               }
             }
-            if (URLHandler.isValidDomain(url)) {
-              resources.add(new Resource(url, Resource.Type.SCRIPT));
-            }
+            resources.add(new Resource(url, Resource.Type.SCRIPT));
           }
         }
       }
