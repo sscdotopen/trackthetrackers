@@ -19,34 +19,38 @@
 package io.ssc.trackthetrackers.analysis.plots
 
 import java.io.File
-
 import org.jfree.data.category.DefaultCategoryDataset
-
 import scala.io.Source
-
 import java.awt._
-
 import io.ssc.trackthetrackers.Config
 
-object PlotTrackerDistribution extends App {
+object PlotThirdPartyDistribution extends App {
 
-  var trackersWithProbability = Seq[(String, Double)]()
+  var thirdPartiesWithProbability = Seq[(String, Double)]()
 
-  for (file <- new File(Config.get("analysis.results.path") + "trackerDistribution").listFiles) {
-    trackersWithProbability ++= Source.fromFile(file).getLines.map { line =>
+  for (file <- new File(Config.get("analysis.results.path") + "thirdPartyDistribution").listFiles) {
+    thirdPartiesWithProbability ++= Source.fromFile(file).getLines.map { line =>
       val tokens = line.split("\t")
       tokens(0) -> tokens(1).toDouble
     }
   }
 
-  val sortedTrackersWithProbability = trackersWithProbability.sortBy(_._2).reverse
+  val sortedThirdPartiesWithProbability = thirdPartiesWithProbability.sortBy(_._2).reverse
+
+  var index = 0
+  for ((thirdParty, probability) <- sortedThirdPartiesWithProbability) {
+    println(index  +" " + thirdParty + " " + probability)
+    index += 1
+  }
+
+
 
   val dataset = new DefaultCategoryDataset()
 
-  for ((tracker, probability) <- sortedTrackersWithProbability) {
-    dataset.addValue(probability, "", tracker)
+  for ((thirdParty, probability) <- sortedThirdPartiesWithProbability.take(60)) {
+    dataset.addValue(probability, "", thirdParty)
   }
 
-  new SingleSeriesBarChart("tracking domain distribution", "tracking domain", "probability", Color.RED, dataset)
+  //new SingleSeriesBarChart("third-party domain distribution", "third-party domain", "probability", Color.RED, dataset)
 }
 

@@ -44,7 +44,7 @@ object ToplevelCountryMap extends App {
     for (domainCountry <- lines) {
       val splits = domainCountry.split(",")
 
-      CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+      CompanyProbabilities.compute(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
         Config.get("analysis.results.path") + "companyDistribution", splits(0).toLowerCase, null, 0)
 
       for (file <- new File(Config.get("analysis.results.path") + "companyDistribution").listFiles) {

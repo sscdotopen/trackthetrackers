@@ -33,7 +33,7 @@ import org.apache.flink.shaded.com.google.common.io.Closeables
 import scala.collection.JavaConversions._
 
 object ToDirectedGexfFile extends App {
-
+/*
   compute(Config.get("analysis.trackingraphminisample.path"), Config.get("webdatacommons.pldarcfile.unzipped"),
     Config.get("webdatacommons.pldfile.unzipped"), Config.get("analysis.results.path") + "sample.gexf")
 
@@ -165,5 +165,5 @@ object ToDirectedGexfFile extends App {
       vertices.contains(edge.src) && vertices.contains(edge.target)
     }
   }
-
+*/
 }

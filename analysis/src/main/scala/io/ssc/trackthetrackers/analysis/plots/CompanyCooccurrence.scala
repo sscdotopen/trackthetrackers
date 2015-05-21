@@ -31,6 +31,7 @@ import scala.collection.mutable.{BitSet, ListBuffer}
 
 object CompanyCooccurrence extends App {
 
+  /*
   compute(Config.get("analysis.trackingraphsample.path"),
     "/home/ssc/Entwicklung/datasets/webdatacommons-hyperlink2012-payleveldomain/pld-index",
     "/home/ssc/Desktop/trackthetrackers/out/companyCooccurrence/")
@@ -88,5 +89,5 @@ object CompanyCooccurrence extends App {
                                companies.toArray, overlaps.toArray)
 
   }
-
+*/
 }

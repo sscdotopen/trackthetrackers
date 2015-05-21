@@ -35,6 +35,7 @@ object FlinkUtils {
       .reduceGroup { group => countByStr(extractKey, group) }
   }
 
+
   private[this] def countByStr[T](extractKey: T => String, group: Iterator[T]): (String, Long) = {
     val key = extractKey(group.next())
 

@@ -47,6 +47,6 @@ object PlotCompanyDistribution extends App {
     dataset.addValue(probability, "", tracker)
   }
 
-  new SingleSeriesBarChart("tracking company distribution", "company", "probability", Color.RED, dataset)
+  new SingleSeriesBarChart("Company occurrences", "company", "probability", Color.RED, dataset)
 }
 

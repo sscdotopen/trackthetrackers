@@ -24,7 +24,7 @@ import java.io.File
 import io.ssc.trackthetrackers.Config
 import org.jfree.data.category.DefaultCategoryDataset
 
-import io.ssc.trackthetrackers.analysis.statistics.CompanyDistribution
+import io.ssc.trackthetrackers.analysis.statistics.CompanyProbabilities
 
 import scala.io.Source
 
@@ -36,7 +36,7 @@ object PlotCompanyDistributionByRank extends App {
   
   for (k <- topK) {
 
-    CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+    CompanyProbabilities.compute(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
       Config.get("analysis.results.path") + "companyDistribution", null, Config.get("webdatacommons.hostgraph-pr.unzipped"), k)
     
 

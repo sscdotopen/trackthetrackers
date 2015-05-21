@@ -22,7 +22,7 @@ import java.awt._
 import java.io.File
 
 import io.ssc.trackthetrackers.Config
-import io.ssc.trackthetrackers.analysis.statistics.CompanyDistribution
+import io.ssc.trackthetrackers.analysis.statistics.CompanyProbabilities
 import org.jfree.data.category.DefaultCategoryDataset
 
 import scala.io.Source
@@ -39,7 +39,7 @@ object PlotCompanyDistributionByToplevelDomain extends App {
     
     val toplevelDomain = splits(0).toLowerCase()
 
-    CompanyDistribution.computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
+    CompanyProbabilities.compute(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),
       Config.get("analysis.results.path") + "companyDistribution", toplevelDomain, null, 0)
     
 

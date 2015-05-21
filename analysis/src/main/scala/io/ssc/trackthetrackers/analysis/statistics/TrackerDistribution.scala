@@ -25,6 +25,7 @@ import org.apache.flink.api.scala.ExecutionEnvironment
 import org.apache.flink.api.scala._
 import org.apache.flink.core.fs.FileSystem.WriteMode
 
+@Deprecated
 object TrackerDistribution extends App {
 
   computeDistribution(Config.get("analysis.trackingraphsample.path"), Config.get("webdatacommons.pldfile.unzipped"),

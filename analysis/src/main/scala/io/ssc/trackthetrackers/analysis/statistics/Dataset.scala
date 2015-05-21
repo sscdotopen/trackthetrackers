@@ -24,65 +24,218 @@ object Dataset {
 
   def domainsByCompany = Map(
 
-    //addthis.com
-    1136762 -> "AddThis",
+    "addthis.com" -> "AddThis",
 
-    //amazon.com
-    2150098 -> "Amazon",
-    //images-amazon.com
-    18691888 -> "Amazon",
+    "macromedia.com" -> "Adobe",
+    "adobe.com" -> "Adobe",
 
-    //casalemedia.com
-    6971664 -> "CasaleMedia",
+    "amazon.com" -> "Amazon",
+    "images-amazon.com" -> "Amazon",
+    "amazonaws.com" -> "Amazon",
 
-    //facebook.net
-    13237946 -> "Facebook",
-    //fbcdn.net
-    13481035 -> "Facebook",
-    //facebook.com
-    13237914 -> "Facebook",
+    "gravatar.com" -> "Automattic",
 
-    //google.com
-    15964788 -> "Google",
-    //doubleclick.net
-    11142763 -> "Google",
-    //googlesyndication.com
-    15967902 -> "Google",
-    //youtube.com
-    42467638 -> "Google",
-    //google-analytics.com
-    15964105 -> "Google",
-    //googleadservices.com
-    15965227 -> "Google",
-    //feedburner.com
-    13536774 -> "Google",
-    //recaptcha.net
-    31564322 -> "Google",
+    "casalemedia.com" -> "CasaleMedia",
 
-    //photobucket.com
-    29569518 -> "PhotoBucket",
+    "paypal.com" -> "Ebay",
+    "paypalobjects.com" -> "Ebay",
 
-    //statcounter.com
-    35757837 -> "StatCounter",
+    "facebook.net" -> "Facebook",
+    "fbcdn.net" -> "Facebook",
+    "facebook.com" -> "Facebook",
 
-    //twitter.com
-    39224483 -> "Twitter",
-    //twimg.com
-    39210295 -> "Twitter",
+    "godaddy.com" -> "GoDaddy",
 
-    //yahooapis.com
-    42207014 -> "Yahoo",
-    //yahoo.com
-    42206842 -> "Yahoo",
-    //yahoo.net
-    42206882 -> "Yahoo",
-    //yimg.com
-    42318764 -> "Yahoo",
-    //tumblr.com
-    39095913 -> "Yahoo",
-    //flickr.com
-    14050903 -> "Yahoo",
-    //geocities.com
-    15358455 -> "Yahoo"
+    "google.com" -> "Google",
+    "doubleclick.net" -> "Google",
+    "googlesyndication.com" -> "Google",
+    "youtube.com" -> "Google",
+    "google-analytics.com" -> "Google",
+    "googleadservices.com" -> "Google",
+    "feedburner.com"-> "Google",
+    "recaptcha.net" -> "Google",
+      //TODO fix
+    "fonts.googleapis.com" -> "Google",
+    "ajax.googleapis.com" -> "Google",
+    "youtube.com" -> "Google",
+    "feedburner.com" -> "Google",
+    "googleadservices.com" -> "Google",
+    "blogger.com" -> "Google",
+    "gstatic.com" -> "Google",
+    "googleusercontent.com" -> "Google",
+    "google.de" -> "Google",
+    "google.fr" -> "Google",
+    "google.co.uk" -> "Google",
+    "google.co.jp" -> "Google",
+
+    "photobucket.com" -> "PhotoBucket",
+
+    "quantserve.com" -> "Quantcast",
+
+    "statcounter.com" -> "StatCounter",
+
+    "twitter.com" -> "Twitter",
+    "twimg.com" -> "Twitter",
+
+    "yahooapis.com" -> "Yahoo",
+    "yahoo.com" -> "Yahoo",
+    "yahoo.net" -> "Yahoo",
+    "yimg.com" -> "Yahoo",
+    "tumblr.com" -> "Yahoo",
+    "flickr.com" -> "Yahoo",
+    "geocities.com" -> "Yahoo"
   )
+
+  /*
+imgaft.com
+gmpg.org
+dsnextgen.com
+wordpress.com
+nuseek.com
+
+
+yadro.ru
+
+quantserve.com
+liveinternet.ru
+akamai.net
+wp.me
+
+demdex.net
+
+
+bp.blogspot.com
+yandex.ru
+cnzz.com
+sharethis.com
+
+vimeo.com
+photobucket.com
+amazon.com
+rambler.ru
+w3.org
+linkedin.com
+
+secureserver.net
+mail.ru
+baidu.com
+blogblog.com
+images-amazon.com
+sitemeter.com
+addtoany.com
+domdex.com
+qq.com
+51.la
+imageshack.us
+jquery.com
+
+assoc-amazon.com
+sedoparking.com
+scorecardresearch.com
+extreme-dm.com
+piclens.com
+constantcontact.com
+
+disqus.com
+tumblr.com
+ytimg.com
+ggpht.com
+purl.org
+dsultra.com
+newrelic.com
+d1ros97qkrwjf5.cloudfront.net
+aweber.com
+creativecommons.org
+stumbleupon.com
+skype.com
+histats.com
+wsimg.com
+staticflickr.com
+wikimedia.org
+recaptcha.net
+tinypic.com
+shinystat.com
+getclicky.com
+realtracker.com
+parallels.com
+linksynergy.com
+wp.com
+ftjcfx.com
+homestead.com
+51yes.com
+lduhtrp.net
+awltovhc.com
+tqlkg.com
+xiti.com
+domainnamesales.com
+digg.com
+gmodules.com
+wunderground.com
+pinterest.com
+typekit.com
+securepaynet.net
+list.ru
+xrea.com
+toplist.cz
+jquerytools.org
+alexa.com
+tradedoubler.com
+bluehost.com
+microsoft.com
+shinobi.jp
+ebaystatic.com
+amung.us
+wix.com
+hotlog.ru
+a8.net
+wixpress.com
+flashquix.com
+apple.com
+tweetmeme.com
+officelive.com
+gigya.com
+officelivecontent.com
+typepad.com
+shareaholic.com
+bravenet.com
+editmysite.com
+mailchimp.com
+chango.com
+weather.com
+wibiya.com
+alphagodaddy.com
+technorati.com
+2o7.net
+rakuten.co.jp
+dtym7iokkjlif.cloudfront.net
+woopra.com
+chitika.net
+geocities.com
+yimg.jp
+ebay.com
+spylog.com
+widgetserver.com
+infolinks.com
+zanox.com
+github.com
+bigmir.net
+yandex.st
+msn.com
+linkwithin.com
+scanalert.com
+userapi.com
+thumbshots.org
+stat24.com
+webmasterplan.com
+bbb.org
+superstats.com
+freewebs.com
+liveperson.net
+feedjit.com
+jscache.com
+
+ */
+
+
+
 }

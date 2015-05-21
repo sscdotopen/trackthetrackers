@@ -52,7 +52,7 @@ public class Compaction {
 
     FileSystem fs = FileSystem.get(conf);
 
-    int block = 8;
+    int block = 9;
 
     FileStatus[] input = fs.listStatus(new Path("/home/ssc/Desktop/trackthetrackers/emr/block" + block +"/"),
         new PathFilter() {
