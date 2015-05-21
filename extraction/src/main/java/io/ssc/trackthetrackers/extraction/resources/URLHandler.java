@@ -27,7 +27,8 @@ class URLHandler {
   private URLHandler() {}
 
   public static boolean couldBeUrl(String url) {
-    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n") || url.contains("@")) {
+    if (!url.contains(".") || url.contains(" ") || url.contains("\t") || url.contains("\r") || url.contains("\n") ||
+        url.contains("@")) {
       return false;
     }
 
@@ -60,7 +61,6 @@ class URLHandler {
   public static String parseDomain(String url) {
     
     //parse domain from URL manually
-    String nUrl = "";
     int len = url.length();
     boolean isDot = false;
     int startDomain = 0;
@@ -73,12 +73,10 @@ class URLHandler {
       
       if (isDot) {
         if (url.charAt(i) == '/') { // find google.com "/" to get the end point of domain
-          nUrl = url.substring(startDomain, i);
-          return nUrl;        
+          return url.substring(startDomain, i);
         }
         if (url.charAt(i) == ':') {  // find google.com ":" 8080  to get the end point of domain
-          nUrl = url.substring(startDomain, i);
-          return nUrl;
+          return url.substring(startDomain, i);
         }
       } else {
         if (url.charAt(i) == '/') { //find http: "//" to get a starting point
