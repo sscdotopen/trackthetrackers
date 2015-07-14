@@ -18,10 +18,36 @@
 
 package io.ssc.trackthetrackers.analysis
 
+import java.io.{FileWriter, BufferedWriter}
+
 import org.apache.flink.api.scala.DataSet
 import org.apache.flink.api.scala._
+import org.apache.flink.core.fs.FileSystem
 
 object FlinkUtils {
+
+
+  def saveAsCsv[T1, T2](dataset: Seq[(T1, T2)], path: String): Unit = {
+
+    var writer: BufferedWriter = null
+    try {
+      writer = new BufferedWriter(new FileWriter(path))
+
+      dataset.foreach { case (v1, v2) =>
+        writer.write(v1.toString)
+        writer.write("\t")
+        writer.write(v2.toString)
+        writer.newLine()
+      }
+
+    } finally {
+      writer.close()
+    }
+  }
+
+  def saveAsCsv[T](dataset: DataSet[T], path: String): Unit = {
+    dataset.writeAsCsv(path, fieldDelimiter = "\t", writeMode = FileSystem.WriteMode.OVERWRITE).setParallelism(1)
+  }
 
   def countByKey[T](data: DataSet[T], extractKey: (T) => Int): DataSet[(Int, Long)] = {
 

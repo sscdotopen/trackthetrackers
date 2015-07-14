@@ -1,4 +1,4 @@
-package io.ssc.trackthetrackers.analysis.algorithms;
+package io.ssc.trackthetrackers.analysis.old.algorithms;
 
 final class MurmurHash3 {
 

@@ -20,21 +20,58 @@ package io.ssc.trackthetrackers.extraction.hadoop.util;
 
 import com.google.common.net.InternetDomainName;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public class TopPrivateDomainExtractor {
 
   private TopPrivateDomainExtractor() {}
 
-  public static String extract(String url) {
+  public static String extract(String url) throws URISyntaxException {
 
-    if (url.endsWith("s3.amazonaws.com")) {
+    String urlToInspect = url.replaceAll("\\[", "").replaceAll("\\]", "")
+                             .replaceAll("\\{", "").replaceAll("}", "")
+                             .replaceAll("_", "")
+                             .replaceAll("<", "").replaceAll(">", "")
+                             .replaceAll("\\|", "").replaceAll("\\^", "").replaceAll("\\\\", "").replaceAll("%", "");
+
+    String domainToInspect = urlToInspect;
+
+    if (domainToInspect.startsWith("http://")) {
+      domainToInspect = new URI(urlToInspect).getHost();
+
+      domainToInspect.replaceAll("http://", "");
+
+      if (domainToInspect.endsWith("/")) {
+        domainToInspect = domainToInspect.substring(0, domainToInspect.length() - 1);
+      }
+    }
+
+    if (domainToInspect.endsWith(".amazonaws.com")) {
       return "amazonaws.com";
     }
-    
-    String urlToInspect = url.replaceAll("http://", "");
-    if (urlToInspect.endsWith("/")) {
-      urlToInspect = urlToInspect.substring(0, urlToInspect.length() - 1);
+
+    if (domainToInspect.endsWith(".cloudfront.net") || domainToInspect.equalsIgnoreCase("cloudfront.net")) {
+      return "cloudfront.net";
     }
 
-    return InternetDomainName.from(urlToInspect).topPrivateDomain().toString();
+    if (domainToInspect.endsWith(".googlecode.com")) {
+      return "googlecode.com";
+    }
+
+    if (domainToInspect.endsWith(".blogspot.com") || domainToInspect.equalsIgnoreCase("blogspot.com")) {
+      return "blogspot.com";
+    }
+
+    if (domainToInspect.endsWith(".googleapis.com")) {
+      return "googleapis.com";
+    }
+
+    if (domainToInspect.endsWith(".appspot.com")) {
+      return "appspot.com";
+    }
+
+
+    return InternetDomainName.from(domainToInspect).topPrivateDomain().toString();
   }
 }

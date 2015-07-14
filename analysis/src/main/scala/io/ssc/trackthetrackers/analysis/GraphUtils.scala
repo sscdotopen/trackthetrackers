@@ -18,8 +18,7 @@
 
 package io.ssc.trackthetrackers.analysis
 
-import org.apache.flink.api.java.CollectionEnvironment
-import org.apache.flink.api.scala.{DataSet, _}
+import org.apache.flink.api.scala._
 
 object GraphUtils {
 
@@ -29,13 +28,6 @@ object GraphUtils {
 
   def readEdges(file: String)(implicit env: ExecutionEnvironment) = {
     env.readCsvFile[Edge](file, "\n", "\t")
-  }
-
-  def toAdjacencyList(edges: DataSet[Edge]): DataSet[AdjacencyList] = {
-
-    edges.map { edge => AdjacencyList(edge.src, Array(edge.target)) }
-         .groupBy { _.src }
-         .reduce { (list1, list2) => AdjacencyList(list1.src, list1.targets ++ list2.targets) }
   }
 
 }

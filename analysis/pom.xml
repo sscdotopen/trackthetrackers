@@ -43,53 +43,12 @@
       <artifactId>flink-clients</artifactId>
       <version>${flink.version}</version>
     </dependency>
-    <!--dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-gelly</artifactId>
-      <version>${flink.version}</version>
-    </dependency-->
     <dependency>
-      <groupId>org.jfree</groupId>
-      <artifactId>jfreechart</artifactId>
-      <version>1.0.19</version>
+      <groupId>it.unimi.dsi</groupId>
+      <artifactId>fastutil</artifactId>
+      <version>6.5.15</version>
     </dependency>
-    
-    <!-- Unfolding map app -->
-    <dependency>
-      <groupId>unfolding</groupId>
-      <artifactId>unfoldingmaps</artifactId>
-      <version>0.9.7</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/unfolding.0.9.7beta.jar</systemPath>
-    </dependency>      
-    <dependency>
-      <groupId>unfolding</groupId>
-      <artifactId>processing</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/core.jar</systemPath>
-    </dependency>     
-    <dependency>
-      <groupId>unfolding</groupId>
-      <artifactId>glexception</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/jogl-all.jar</systemPath>
-    </dependency> 
-    <dependency>
-      <groupId>unfolding</groupId>
-      <artifactId>json</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/json4processing.jar</systemPath>
-    </dependency>     
-    <dependency>
-      <groupId>unfolding</groupId>
-      <artifactId>gluegen</artifactId>
-      <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/lib/gluegen-rt.jar</systemPath>
-    </dependency> 
+
   </dependencies>
    
 
@@ -107,7 +66,7 @@
           </descriptors>
           <archive>
             <manifestEntries>
-              <Program-Class>de.tuberlin.trackthetrackers.Job</Program-Class>
+              <Program-Class>io.ssc.trackthetrackers.analysis.old.algorithms.DanglingPageRank</Program-Class>
             </manifestEntries>
           </archive>
         </configuration>
@@ -143,37 +102,6 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
-
-      <!-- Eclipse Integration -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-eclipse-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-          <downloadSources>true</downloadSources>
-          <projectnatures>
-            <projectnature>org.scala-ide.sdt.core.scalanature</projectnature>
-            <projectnature>org.eclipse.jdt.core.javanature</projectnature>
-          </projectnatures>
-          <buildcommands>
-            <buildcommand>org.scala-ide.sdt.core.scalabuilder</buildcommand>
-          </buildcommands>
-          <classpathContainers>
-            <classpathContainer>org.scala-ide.sdt.launching.SCALA_CONTAINER
-            </classpathContainer>
-            <classpathContainer>org.eclipse.jdt.launching.JRE_CONTAINER
-            </classpathContainer>
-          </classpathContainers>
-          <excludes>
-            <exclude>org.scala-lang:scala-library</exclude>
-            <exclude>org.scala-lang:scala-compiler</exclude>
-          </excludes>
-          <sourceIncludes>
-            <sourceInclude>**/*.scala</sourceInclude>
-            <sourceInclude>**/*.java</sourceInclude>
-          </sourceIncludes>
-        </configuration>
       </plugin>
 
       <!-- Adding scala source directories to build path -->

@@ -35,24 +35,20 @@ public class CommonCrawlSampleIntegrationTest {
     fs.delete(extractionOutput, true);
     fs.delete(trackingGraphOutput, true);
 
-    ExtractionJob extraction = new ExtractionJob();
-    TrackingGraphJob trackingGraph = new TrackingGraphJob();
-
     String inputs =
         Config.get("commoncrawl.samples.path") + "/1346914268347_246.arc.gz" + "," +
         Config.get("commoncrawl.samples.path") + "/1346916258648_2154.arc.gz" + "," +
         Config.get("commoncrawl.samples.path") + "/1346916752362_1803.arc.gz" + "," +
         Config.get("commoncrawl.problematic.path") + "/1346914042849_2441.arc.gz";
 
-    ToolRunner.run(extraction, new String[] {
+    ToolRunner.run(new ExtractionJob(), new String[] {
         "--input", inputs,
         "--output", extractionOutput.toString()
     });
 
-    ToolRunner.run(trackingGraph, new String[] {
+    ToolRunner.run(new TrackingGraphJob(), new String[] {
         "--input", extractionOutput.toString(),
-        "--output", trackingGraphOutput.toString(),
-        "--domainIndex", Config.get("webdatacommons.pldfile")
+        "--output", trackingGraphOutput.toString()
     });
   }
 }

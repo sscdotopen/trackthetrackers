@@ -48,13 +48,19 @@ public class Compaction {
 
   public static void main(String[] args) throws IOException, InterruptedException {
 
+    if (args.length != 2) {
+      System.out.println("Usage: <input folder> <output file>");
+      System.exit(-1);
+    }
+
+    String inputPath = args[0];
+    String outputFile = args[1];
+
     Configuration conf = new Configuration();
 
     FileSystem fs = FileSystem.get(conf);
 
-    int block = 9;
-
-    FileStatus[] input = fs.listStatus(new Path("/home/ssc/Desktop/trackthetrackers/emr/block" + block +"/"),
+    FileStatus[] input = fs.listStatus(new Path(inputPath),
         new PathFilter() {
           @Override
           public boolean accept(Path path) {
@@ -62,7 +68,7 @@ public class Compaction {
           }
         });
 
-    Path output = new Path("/home/ssc/Desktop/trackthetrackers/compacted/block" + block + ".snappy.parquet");
+    Path output = new Path(outputFile);
 
     fs.delete(output, true);
 

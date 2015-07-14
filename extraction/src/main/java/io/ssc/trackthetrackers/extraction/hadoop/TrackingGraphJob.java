@@ -21,16 +21,13 @@ package io.ssc.trackthetrackers.extraction.hadoop;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.ssc.trackthetrackers.commons.proto.ParsedPageProtos;
-import io.ssc.trackthetrackers.extraction.hadoop.util.DomainIndex;
-import io.ssc.trackthetrackers.extraction.hadoop.util.DistributedCacheHelper;
-import io.ssc.trackthetrackers.extraction.hadoop.util.IndexNotFoundException;
 import io.ssc.trackthetrackers.extraction.hadoop.util.TopPrivateDomainExtractor;
 import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostWithType;
 import io.ssc.trackthetrackers.extraction.hadoop.writables.TrackingHostsWithTypes;
 import io.ssc.trackthetrackers.extraction.resources.TrackingType;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -39,10 +36,16 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.ToolRunner;
 import parquet.proto.ProtoParquetInputFormat;
+
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URI;
+
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class TrackingGraphJob extends HadoopJob {
 
@@ -62,70 +65,119 @@ public class TrackingGraphJob extends HadoopJob {
     Path inputPath = new Path(parsedArgs.get("--input"));
     Path outputPath = new Path(parsedArgs.get("--output"));
 
-    Job toEdgeList = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
-        EdgeListMapper.class, IntWritable.class, TrackingHostsWithTypes.class, DistinctifyReducer.class,
+    Job thirdPartyGraph = mapReduce(inputPath, outputPath, ProtoParquetInputFormat.class, TextOutputFormat.class,
+        EdgeListMapper.class, Text.class, TrackingHostsWithTypes.class, DistinctifyReducer.class,
         NullWritable.class, Text.class, false);
 
-    Path domainIndex = new Path(parsedArgs.get("--domainIndex"));
-    DistributedCacheHelper.cacheFile(domainIndex, toEdgeList.getConfiguration());
+    thirdPartyGraph.getConfiguration().set("problemlog", new Path(outputPath, "problemlog").toString());
 
-    toEdgeList.waitForCompletion(true);
+    thirdPartyGraph.waitForCompletion(true);
 
     return 0;
   }
 
-  static class DistinctifyReducer extends Reducer<IntWritable, TrackingHostsWithTypes, NullWritable, Text> {
+  static class TrackingHostsCounter {
+    private final Map<String, Map<TrackingType, Integer>> trackingHostsAndCounts = Maps.newHashMap();
+
+    public void record(String trackingHost, TrackingType trackingType) {
+      if (!trackingHostsAndCounts.containsKey(trackingHost)) {
+
+        HashMap<TrackingType, Integer> typesAndCounts = Maps.newHashMap();
+        typesAndCounts.put(TrackingType.SCRIPT, 0);
+        typesAndCounts.put(TrackingType.IFRAME, 0);
+        typesAndCounts.put(TrackingType.IMAGE, 0);
+        typesAndCounts.put(TrackingType.LINK, 0);
+
+        trackingHostsAndCounts.put(trackingHost, typesAndCounts);
+      }
+
+      Map<TrackingType, Integer> typesAndCounts = trackingHostsAndCounts.get(trackingHost);
+      typesAndCounts.put(trackingType, typesAndCounts.get(trackingType) + 1);
+    }
+
+    public Set<Map.Entry<String, Map<TrackingType, Integer>>> counts() {
+      return trackingHostsAndCounts.entrySet();
+    }
+
+  }
+
+  static class DistinctifyReducer extends Reducer<Text, TrackingHostsWithTypes, NullWritable, Text> {
 
     private static final String SEPARATOR = "\t";
 
     @Override
-    protected void reduce(IntWritable trackedHost, Iterable<TrackingHostsWithTypes> trackingHostsWithTypes, Context ctx)
+    protected void reduce(Text trackedHost, Iterable<TrackingHostsWithTypes> trackingHostsWithTypes, Context ctx)
         throws IOException, InterruptedException {
-      Map<String, Set<TrackingType>> trackingHosts = Maps.newHashMap();
-      int trackedHostIndex = trackedHost.get();
+      TrackingHostsCounter counter = new TrackingHostsCounter();
+
+      int numPagesSeenFromDomain = 0;
 
       for (TrackingHostsWithTypes someTrackingHostsWithTypes : trackingHostsWithTypes) {
         for (TrackingHostWithType trackingHostWithType : someTrackingHostsWithTypes.values()) {
-
-          //int trackingHostIndex = trackingHostWithType.trackingDomain();
-          //if (trackingHostIndex != trackedHostIndex) {
           String trackingHost = trackingHostWithType.trackingDomain();
-            if (!trackingHosts.containsKey(trackingHost)) {
-              trackingHosts.put(trackingHost, Sets.<TrackingType>newHashSet());
-            }
-            trackingHosts.get(trackingHost).add(trackingHostWithType.type());
-          //}
+          counter.record(trackingHost, trackingHostWithType.type());
         }
+        numPagesSeenFromDomain++;
       }
 
-      for (Map.Entry<String, Set<TrackingType>> tracker : trackingHosts.entrySet()) {
+      StringBuilder out = new StringBuilder("");
 
-        Set<TrackingType> types = tracker.getValue();
+      out.append(trackedHost.toString());
+      out.append(SEPARATOR);
+      out.append(numPagesSeenFromDomain);
+      out.append(SEPARATOR);
 
-        String line = String.valueOf(trackedHostIndex) + SEPARATOR
-                    + tracker.getKey() + SEPARATOR
-                    + (types.contains(TrackingType.SCRIPT) ? "1" : "0") + SEPARATOR
-                    + (types.contains(TrackingType.IFRAME) ? "1" : "0") + SEPARATOR
-                    + (types.contains(TrackingType.IMAGE)  ? "1" : "0") + SEPARATOR
-                    + (types.contains(TrackingType.LINK)   ? "1" : "0");
 
-        ctx.write(NullWritable.get(), new Text(line));
+
+      for (Map.Entry<String, Map<TrackingType, Integer>> tracker : counter.counts()) {
+
+        Map<TrackingType, Integer> counts = tracker.getValue();
+
+        out.append("[");
+        out.append(tracker.getKey());
+        out.append(",");
+        out.append(String.valueOf(counts.get(TrackingType.SCRIPT)));
+        out.append(",");
+        out.append(String.valueOf(counts.get(TrackingType.IFRAME)));
+        out.append(",");
+        out.append(String.valueOf(counts.get(TrackingType.IMAGE)));
+        out.append(",");
+        out.append(String.valueOf(counts.get(TrackingType.LINK)));
+        out.append("]");
+        out.append(SEPARATOR);
       }
+
+      ctx.write(NullWritable.get(), new Text(out.toString().trim()));
     }
   }
 
   static class EdgeListMapper extends
-      Mapper<Void, ParsedPageProtos.ParsedPage.Builder, IntWritable, TrackingHostsWithTypes> {
+      Mapper<Void, ParsedPageProtos.ParsedPage.Builder, Text, TrackingHostsWithTypes> {
 
-    private static DomainIndex domainIndex;
+    private BufferedWriter problemLogWriter;
 
     @Override
     protected void setup(Context ctx) throws IOException, InterruptedException {
-      Path domainIndexFile = DistributedCacheHelper.getCachedFiles(ctx.getConfiguration())[0];
-      FileSystem fs = FileSystem.get(domainIndexFile.toUri(), ctx.getConfiguration());
-      // potentially exploit VM re-use
-      if (domainIndex == null) {
-        domainIndex = new DomainIndex(fs, domainIndexFile);
+      super.setup(ctx);
+      String randomID = UUID.randomUUID().toString();
+      Path problemlog = new Path(ctx.getConfiguration().get("problemlog"), randomID);
+      FileSystem fs = FileSystem.get(problemlog.toUri(), ctx.getConfiguration());
+
+      problemLogWriter = new BufferedWriter(new OutputStreamWriter(fs.create(problemlog)));
+    }
+
+    private void writeToProblemLog(String marker, String message) throws IOException {
+      problemLogWriter.write(marker);
+      problemLogWriter.write("\t");
+      problemLogWriter.write(message);
+      problemLogWriter.newLine();
+    }
+
+    @Override
+    protected void cleanup(Context ctx) throws IOException, InterruptedException {
+      super.cleanup(ctx);
+      if (problemLogWriter != null) {
+        problemLogWriter.close();
       }
     }
 
@@ -136,14 +188,13 @@ public class TrackingGraphJob extends HadoopJob {
         ParsedPageProtos.ParsedPage parsedPage = parsedPageBuilder.build();
         if (parsedPage != null) {
 
-          String uri;
-          int trackedHostIndex;
+          String trackedHost;
+
           try {
-            uri = new URI(parsedPage.getUrl()).getHost().toString();
-            String trackedHost = TopPrivateDomainExtractor.extract(uri);
-            trackedHostIndex = domainIndex.indexFor(trackedHost);
+            trackedHost = TopPrivateDomainExtractor.extract(parsedPage.getUrl());
           } catch (Exception e) {
             ctx.getCounter(JobCounters.INVALID_TRACKED_HOST_DOMAINS).increment(1);
+            writeToProblemLog("INVALID_TRACKED_HOST_DOMAINS", parsedPage.getUrl());
             return;
           }
 
@@ -156,23 +207,17 @@ public class TrackingGraphJob extends HadoopJob {
           Set<TrackingHostWithType> trackingHostsWithType = Sets.newHashSet();
           for (TrackingHostWithType trackingDomain : trackingDomainsWithTypes) {
             try {
-
-              boolean isSameHost = false;
-              try {
-                int trackingHostIndex = domainIndex.indexFor(trackingDomain.trackingDomain());
-                isSameHost = trackedHostIndex == trackingHostIndex;
-              } catch (IndexNotFoundException e) {}
-
-              if (!isSameHost) {
-                String trackingHost = TopPrivateDomainExtractor.extract(trackingDomain.trackingDomain());
+              String trackingHost = TopPrivateDomainExtractor.extract(trackingDomain.trackingDomain());
+              if (!trackedHost.equalsIgnoreCase(trackingHost)) {
                 trackingHostsWithType.add(new TrackingHostWithType(trackingHost, trackingDomain.type()));
               }
             } catch (Exception e) {
               ctx.getCounter(JobCounters.INVALID_TRACKING_HOST_DOMAINS).increment(1);
+              writeToProblemLog("INVALID_TRACKING_HOST_DOMAINS", trackingDomain.trackingDomain());
             }
           }
 
-          ctx.write(new IntWritable(trackedHostIndex), new TrackingHostsWithTypes(trackingHostsWithType));
+          ctx.write(new Text(trackedHost), new TrackingHostsWithTypes(trackingHostsWithType));
         }
       }
     }
