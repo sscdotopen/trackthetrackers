@@ -20,7 +20,7 @@ object RightVerticesWithMoreThanXPercentCoverage extends App {
 
     val numVertices = edges.distinct("src").map { _ => Tuple1(1L) }.sum(0).collect().head._1
 
-    val threshold = (thresholdInPercent * 0.01 * numVertices).toLong
+    val threshold = 10000//(thresholdInPercent * 0.01 * numVertices).toLong
 
     val rightDegrees =
       edges.map { edge => (edge.target, 1) }
@@ -38,7 +38,7 @@ object RightVerticesWithMoreThanXPercentCoverage extends App {
     val sorted = topDomainsWithDegree.collect().sortBy { case (domain, degree) => degree }.reverse
 
     val outputFile = if (tld.isEmpty) {
-      outputPath + "thirdparties_with_more_than_" + thresholdInPercent + "_percent.tsv"
+      outputPath + "thirdparties_with_more_than_" + threshold + ".tsv"
     } else {
       outputPath + "thirdparties_with_more_than_" + thresholdInPercent + "_percent-" + tld +".tsv"
     }

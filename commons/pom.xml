@@ -28,6 +28,19 @@
         </exclusion>
       </exclusions>
     </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>17.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <pluginRepositories>
@@ -77,8 +90,8 @@
         <artifactId>maven-protoc-plugin</artifactId>
         <version>0.3.2</version>
         <configuration>
-          <!-- configure here if the plugin doesn't find the protoc executable
-          <protocExecutable>/usr/bin/protoc</protocExecutable> -->
+          <!-- configure here if the plugin doesn't find the protoc executable-->
+          <protocExecutable>/usr/local/bin/protoc</protocExecutable>
         </configuration>
         <executions>
           <execution>

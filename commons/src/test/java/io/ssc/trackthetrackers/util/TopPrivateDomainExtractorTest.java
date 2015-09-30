@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.util;
+package io.ssc.trackthetrackers.util;
 
 import org.junit.Test;
 
@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 
 import static org.junit.Assert.assertEquals;
 
-@Deprecated
 public class TopPrivateDomainExtractorTest {
 
   @Test

@@ -16,14 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.ssc.trackthetrackers.extraction.hadoop.util;
+package io.ssc.trackthetrackers.util;
 
 import com.google.common.net.InternetDomainName;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-@Deprecated //use the one from commons
 public class TopPrivateDomainExtractor {
 
   private TopPrivateDomainExtractor() {}

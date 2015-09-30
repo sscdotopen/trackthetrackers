@@ -49,6 +49,18 @@
       <version>6.5.15</version>
     </dependency>
 
+    <dependency>
+      <groupId>it.uniroma1.dis.wsngroup.gexf4j</groupId>
+      <artifactId>gexf4j</artifactId>
+      <version>0.4.4-BETA</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-net</groupId>
+      <artifactId>commons-net</artifactId>
+      <version>3.3</version>
+    </dependency>
+
   </dependencies>
    
 
